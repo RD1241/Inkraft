@@ -13,3 +13,5 @@ ollama
 httpx
 python-multipart
 controlnet-aux>=0.0.7
+reportlab
+fal-client>=0.4.0

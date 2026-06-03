@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inkraft - Auth Debugger</title>
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: #0f0c1b;
+      color: #e9d5ff;
+      padding: 2rem;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      backdrop-filter: blur(4px);
+    }
+    h1 { color: #c084fc; margin-top: 0; }
+    h2 { color: #a78bfa; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 0.5rem; }
+    pre {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      color: #38bdf8;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    button {
+      background: #8b5cf6;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 1rem;
+      margin-top: 1rem;
+    }
+    button:hover { background: #7c3aed; }
+    .success { color: #4ade80; }
+    .error { color: #f87171; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Inkraft Auth Debugger 🔍</h1>
+    <p>Use this page to check why the login redirect loop is happening.</p>
+
+    <h2>1. Storage Verification</h2>
+    <div>
+      <h3>LocalStorage:</h3>
+      <pre id="local-storage-val">Checking...</pre>
+    </div>
+    <div>
+      <h3>SessionStorage:</h3>
+      <pre id="session-storage-val">Checking...</pre>
+    </div>
+
+    <h2>2. authStore In-Memory State</h2>
+    <pre id="auth-store-val">Checking...</pre>
+
+    <h2>3. Origin and Browser Metadata</h2>
+    <pre id="metadata-val">Checking...</pre>
+
+    <h2>4. Quick Actions</h2>
+    <button id="btn-clear">🧹 Clear All Storage</button>
+    <button id="btn-mock">🔧 Set Mock Login Session</button>
+    <a href="/login.html"><button style="background:rgba(255,255,255,0.1); color:white;">Go to Login Page</button></a>
+    <a href="/dashboard.html"><button style="background:rgba(255,255,255,0.1); color:white;">Go to Dashboard</button></a>
+  </div>
+
+  <script type="module">
+    import { authStore } from './auth.js';
+
+    function refresh() {
+      // 1. Storage values
+      try {
+        const local = {
+          ntc_token: localStorage.getItem('ntc_token'),
+          ntc_user: localStorage.getItem('ntc_user'),
+          ntc_credits: localStorage.getItem('ntc_credits'),
+        };
+        document.getElementById('local-storage-val').textContent = JSON.stringify(local, null, 2);
+      } catch (e) {
+        document.getElementById('local-storage-val').textContent = "ERROR: " + e.message;
+      }
+
+      try {
+        const sess = {
+          ntc_token: sessionStorage.getItem('ntc_token'),
+          ntc_user: sessionStorage.getItem('ntc_user'),
+          ntc_credits: sessionStorage.getItem('ntc_credits'),
+        };
+        document.getElementById('session-storage-val').textContent = JSON.stringify(sess, null, 2);
+      } catch (e) {
+        document.getElementById('session-storage-val').textContent = "ERROR: " + e.message;
+      }
+
+      // 2. authStore
+      try {
+        const store = {
+          isLoggedIn: authStore.isLoggedIn(),
+          token: authStore.getToken(),
+          user: authStore.getUser()
+        };
+        document.getElementById('auth-store-val').textContent = JSON.stringify(store, null, 2);
+      } catch (e) {
+        document.getElementById('auth-store-val').textContent = "ERROR: " + e.message;
+      }
+
+      // 3. Metadata
+      const meta = {
+        location: window.location.href,
+        origin: window.location.origin,
+        userAgent: navigator.userAgent,
+        cookieEnabled: navigator.cookieEnabled
+      };
+      document.getElementById('metadata-val').textContent = JSON.stringify(meta, null, 2);
+    }
+
+    document.getElementById('btn-clear').addEventListener('click', () => {
+      localStorage.clear();
+      sessionStorage.clear();
+      alert("Cleared all localStorage and sessionStorage!");
+      refresh();
+    });
+
+    document.getElementById('btn-mock').addEventListener('click', () => {
+      authStore.setAuth("mock-debug-token", { email: "debug@example.com", id: "00000000-0000-0000-0000-000000000000" });
+      alert("Set mock debug session!");
+      refresh();
+    });
+
+    refresh();
+  </script>
+</body>
+</html>

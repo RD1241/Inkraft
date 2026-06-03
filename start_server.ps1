@@ -1,4 +1,4 @@
-# NovelToComic - One-Click Startup Script
+# Inkraft - One-Click Startup Script
 # Usage: .\start_server.ps1
 #
 # Steps:
@@ -24,7 +24,7 @@ $env:HUGGINGFACE_HUB_CACHE = "D:\AI_Models\HuggingFace"
 [System.Environment]::SetEnvironmentVariable("OLLAMA_MODELS", $OLLAMA_MODEL_PATH, "User")
 
 Write-Host ""
-Write-Host "=== NovelToComic Startup ===" -ForegroundColor Cyan
+Write-Host "=== Inkraft Startup ===" -ForegroundColor Cyan
 Write-Host "OLLAMA_MODELS = $env:OLLAMA_MODELS"
 Write-Host "HF_HOME       = $env:HF_HOME"
 Write-Host ""
@@ -130,7 +130,7 @@ try {
     & $UVICORN api.main:app --host 127.0.0.1 --port 8000
 } finally {
     Write-Host ""
-    Write-Host ">>> Stopping NovelToComic and cleaning up..." -ForegroundColor Yellow
+    Write-Host ">>> Stopping Inkraft and cleaning up..." -ForegroundColor Yellow
 
     # Kill Ollama when the app stops so it does not stay in the background
     Get-Process | Where-Object { $_.Name -like "*ollama*" } | ForEach-Object {

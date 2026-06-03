@@ -1,80 +1,34 @@
-import sqlite3
 import os
-import uuid
-import json
-from datetime import datetime
 from config import settings
+from services.job_service import JobService
 
 class JobManager:
+    """
+    JobManager acts as a backward-compatible wrapper delegating to JobService.
+    All DB initialization, Supabase synchronization, and progress percentage Calculations
+    are handled by JobService in services/job_service.py.
+    """
     def __init__(self, db_path=None):
-        self.db_path = db_path or os.path.join(settings.BASE_DIR, "core", "jobs.db")
-        self._init_db()
+        # Resolve base DB path
+        resolved_db_path = db_path or os.path.join(settings.BASE_DIR, "core", "jobs.db")
+        # Delegate to the newly created JobService
+        self.job_service = JobService(resolved_db_path)
 
-    def _init_db(self):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS jobs (
-                job_id TEXT PRIMARY KEY,
-                status TEXT,
-                progress TEXT,
-                created_at TEXT,
-                updated_at TEXT,
-                result TEXT,
-                error TEXT
-            )
-        ''')
-        # Add progress column if upgrading from old schema
-        try:
-            cursor.execute("ALTER TABLE jobs ADD COLUMN progress TEXT")
-        except Exception:
-            pass
-        conn.commit()
-        conn.close()
-
-    def create_job(self) -> str:
-        job_id = str(uuid.uuid4())
-        now = datetime.now().isoformat()
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO jobs (job_id, status, progress, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (job_id, 'queued', 'Waiting in queue...', now, now))
-        conn.commit()
-        conn.close()
-        return job_id
+    def create_job(self, panel_count: int = None, layout_type: str = None, panel_count_mode: str = None) -> str:
+        return self.job_service.create_job(
+            panel_count=panel_count,
+            layout_type=layout_type,
+            panel_count_mode=panel_count_mode
+        )
 
     def update_job(self, job_id: str, status: str, result: str = None, error: str = None, progress: str = None):
-        now = datetime.now().isoformat()
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute('''
-            UPDATE jobs SET status = ?, updated_at = ?, result = ?, error = ?, progress = ?
-            WHERE job_id = ?
-        ''', (status, now, result, error, progress, job_id))
-        conn.commit()
-        conn.close()
+        self.job_service.update_job(
+            job_id=job_id,
+            status=status,
+            result=result,
+            error=error,
+            progress=progress
+        )
 
     def get_job(self, job_id: str) -> dict:
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute('''
-            SELECT job_id, status, progress, created_at, updated_at, result, error
-            FROM jobs WHERE job_id = ?
-        ''', (job_id,))
-        row = cursor.fetchone()
-        conn.close()
-
-        if not row:
-            return None
-
-        return {
-            "job_id": row[0],
-            "status": row[1],
-            "progress": row[2],
-            "created_at": row[3],
-            "updated_at": row[4],
-            "result": json.loads(row[5]) if row[5] else None,
-            "error": row[6],
-        }
+        return self.job_service.get_job(job_id)

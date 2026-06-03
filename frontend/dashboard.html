@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inkraft - Dashboard</title>
+  <meta name="description" content="Your Inkraft dashboard — recent comics, credit balance, and quick generation.">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="app-shell.css">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <!-- ── Shared Header ────────────────────────────────────── -->
+  <header class="app-header glass-panel" id="app-header">
+    <a href="/" class="header-logo">Inkraft</a>
+    <nav class="header-nav">
+      <a href="/dashboard.html" class="nav-link active">Dashboard</a>
+      <a href="/"               class="nav-link">Generate</a>
+      <a href="/history.html"   class="nav-link">History</a>
+      <a href="/gallery.html"   class="nav-link">Gallery</a>
+    </nav>
+    <div class="header-right">
+      <div class="credit-badge" id="credit-badge" title="Your credits">
+        <span class="credit-icon">⚡</span>
+        <span id="credit-count">—</span>
+      </div>
+      <div class="user-menu" id="user-menu">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <div class="user-dropdown glass-panel" id="user-dropdown">
+          <span id="user-email-label" class="dropdown-email">Loading…</span>
+          <hr class="dropdown-divider">
+          <a href="/history.html" class="dropdown-item">📚 My Comics</a>
+          <a href="/gallery.html" class="dropdown-item">🌐 Gallery</a>
+          <hr class="dropdown-divider">
+          <button id="logout-btn" class="dropdown-item dropdown-logout">🚪 Sign out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Dashboard Body ───────────────────────────────────── -->
+  <main class="dashboard-main">
+
+    <!-- Greeting -->
+    <section class="dash-greeting">
+      <div>
+        <h1 class="dash-title" id="greeting-text">Good evening ✨</h1>
+        <p class="dash-subtitle">Ready to turn your next chapter into a comic?</p>
+      </div>
+    </section>
+
+    <!-- Stats Row -->
+    <section class="dash-stats-row">
+      <div class="stat-card glass-panel">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-body">
+          <span class="stat-value" id="stat-credits">—</span>
+          <span class="stat-label">Credits remaining</span>
+        </div>
+      </div>
+      <div class="stat-card glass-panel">
+        <div class="stat-icon">🎨</div>
+        <div class="stat-body">
+          <span class="stat-value" id="stat-total">—</span>
+          <span class="stat-label">Comics generated</span>
+        </div>
+      </div>
+      <div class="stat-card glass-panel">
+        <div class="stat-icon">📅</div>
+        <div class="stat-body">
+          <span class="stat-value" id="stat-today">—</span>
+          <span class="stat-label">Generated today</span>
+        </div>
+      </div>
+      <div class="stat-card glass-panel">
+        <div class="stat-icon">🌐</div>
+        <div class="stat-body">
+          <span class="stat-value" id="stat-shared">—</span>
+          <span class="stat-label">Shared to gallery</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Generate + Recent Comics (2-column grid) -->
+    <section class="dash-content-grid">
+
+      <!-- Quick Generate Card -->
+      <div class="quick-gen-card glass-panel">
+        <h2 class="section-heading">⚡ Quick Generate</h2>
+        <form id="quick-gen-form" novalidate>
+          <div class="form-group">
+            <label for="qg-text">Novel excerpt</label>
+            <textarea id="qg-text" rows="5" placeholder="Paste a scene or chapter excerpt…" maxlength="3000"></textarea>
+            <span class="char-counter" id="qg-counter">0 / 3000</span>
+          </div>
+          <div class="qg-options">
+            <div class="form-group">
+              <label for="qg-style">Art style</label>
+              <select id="qg-style">
+                <option value="">Auto-detect</option>
+                <option value="manga">Manga</option>
+                <option value="manhwa">Manhwa</option>
+                <option value="anime">Anime</option>
+                <option value="cinematic">Cinematic</option>
+                <option value="realistic">Realistic</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="qg-layout">Layout</label>
+              <select id="qg-layout">
+                <option value="">AI decides</option>
+                <option value="action">Action</option>
+                <option value="drama">Drama</option>
+                <option value="dialogue">Dialogue</option>
+              </select>
+            </div>
+          </div>
+          <div id="qg-error" class="auth-error hidden"></div>
+          <button type="submit" class="glow-button" id="qg-btn">Generate Comic</button>
+        </form>
+
+        <!-- Progress feedback (hidden until generating) -->
+        <div id="qg-progress" class="qg-progress hidden">
+          <div class="spinner"></div>
+          <p id="qg-progress-text">Initializing…</p>
+          <div class="progress-steps" id="qg-steps">
+            <span class="step active" id="qg-step-llm">📖 Extracting Scenes</span>
+            <span class="step" id="qg-step-board">🎬 Storyboard</span>
+            <span class="step" id="qg-step-draw">🎨 Drawing</span>
+            <span class="step" id="qg-step-assemble">📄 Assembling</span>
+          </div>
+        </div>
+
+        <!-- Result thumbnail -->
+        <div id="qg-result" class="qg-result hidden">
+          <img id="qg-result-img" src="" alt="Generated comic page">
+          <div class="qg-result-actions">
+            <a id="qg-result-view" href="#" class="glow-button qg-btn-view">View Full Comic</a>
+            <button id="qg-result-new" class="glow-button qg-btn-new">Generate Another</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Comics 2×2 Grid -->
+      <div class="recent-comics-card glass-panel">
+        <div class="recent-header">
+          <h2 class="section-heading">📚 Recent Comics</h2>
+          <a href="/history.html" class="view-all-link">View all →</a>
+        </div>
+        <div class="recent-grid" id="recent-grid">
+          <!-- Populated by JS -->
+          <div class="recent-placeholder">
+            <div class="placeholder-icon">📖</div>
+            <p>No comics yet. Generate your first one!</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <script type="module">
+    import { authStore, requireAuth, startCreditPolling, apiFetch } from './auth.js?v=2';
+
+    // ── Guard: redirect to login if not authenticated ──
+    if (!requireAuth('/login.html')) { /* redirected */ }
+
+    // ── Greeting by time of day ──
+    const hour = new Date().getHours();
+    const greetingText =
+      hour < 12 ? 'Good morning ☀️' :
+      hour < 17 ? 'Good afternoon 🌤' :
+                  'Good evening ✨';
+    document.getElementById('greeting-text').textContent = greetingText;
+
+    // ── Auth state → populate UI ──
+    const unsubscribe = authStore.subscribe(({ user, credits }) => {
+      if (user) {
+        const emailLabel = user.email || 'User';
+        document.getElementById('user-email-label').textContent = emailLabel;
+        document.getElementById('user-avatar').textContent = emailLabel[0].toUpperCase();
+      }
+      if (credits !== null && credits !== undefined) {
+        document.getElementById('credit-count').textContent = credits;
+        document.getElementById('stat-credits').textContent  = credits;
+      }
+    });
+
+    // ── Credit polling ──
+    const pollInterval = startCreditPolling(30000);
+
+    // ── User menu toggle ──
+    const userMenu     = document.getElementById('user-menu');
+    const userDropdown = document.getElementById('user-dropdown');
+    document.getElementById('user-avatar').addEventListener('click', (e) => {
+      e.stopPropagation();
+      userDropdown.classList.toggle('open');
+    });
+    document.addEventListener('click', () => userDropdown.classList.remove('open'));
+
+    // ── Logout ──
+    document.getElementById('logout-btn').addEventListener('click', () => authStore.logout());
+
+    // ── Load stats + recent comics ──
+    async function loadDashboardData() {
+      try {
+        const [histRes, credRes] = await Promise.all([
+          apiFetch('/api/history?page=1&limit=4'),
+          apiFetch('/api/credits/balance'),
+        ]);
+
+        if (credRes.ok) {
+          const credData = await credRes.json();
+          if (credData.balance !== undefined) {
+            authStore.setCredits(credData.balance);
+          }
+        }
+
+        if (histRes.ok) {
+          const histData = await histRes.json();
+          const comics   = histData.comics || histData.items || [];
+          const total    = histData.total  || comics.length;
+
+          document.getElementById('stat-total').textContent = total;
+
+          // Count today's comics
+          const today = new Date().toDateString();
+          const todayCount = comics.filter(c => {
+            const d = c.created_at || c.timestamp || '';
+            return new Date(d).toDateString() === today;
+          }).length;
+          document.getElementById('stat-today').textContent = todayCount;
+
+          // Count shared
+          const sharedCount = comics.filter(c => c.is_public).length;
+          document.getElementById('stat-shared').textContent = sharedCount;
+
+          renderRecentComics(comics.slice(0, 4));
+        }
+      } catch (err) {
+        console.warn('[Dashboard] Failed to load data:', err.message);
+        document.getElementById('stat-total').textContent   = '—';
+        document.getElementById('stat-today').textContent   = '—';
+        document.getElementById('stat-shared').textContent  = '—';
+      }
+    }
+
+    function renderRecentComics(comics) {
+      const grid = document.getElementById('recent-grid');
+      if (!comics.length) return; // keep placeholder
+
+      grid.innerHTML = '';
+      comics.forEach(c => {
+        const title    = c.title || c.auto_title || 'Untitled Comic';
+        const style    = c.style || '';
+        const imgSrc   = c.final_page || c.thumbnail || '';
+        const comicId  = c.id || c.comic_id;
+        const dateStr  = c.created_at ? new Date(c.created_at).toLocaleDateString() : '';
+
+        const card = document.createElement('a');
+        card.href  = `/history.html#${comicId}`;
+        card.className = 'recent-comic-card';
+
+        card.innerHTML = `
+          <div class="recent-thumb-wrap">
+            ${imgSrc
+              ? `<img src="${imgSrc}" alt="${title}" class="recent-thumb" loading="lazy">`
+              : `<div class="recent-thumb-placeholder">🎨</div>`
+            }
+            ${style ? `<span class="recent-style-badge">${style}</span>` : ''}
+          </div>
+          <div class="recent-card-info">
+            <span class="recent-card-title">${title}</span>
+            <span class="recent-card-date">${dateStr}</span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    loadDashboardData();
+
+    // ── Quick Generate form ──
+    const qgText    = document.getElementById('qg-text');
+    const qgCounter = document.getElementById('qg-counter');
+    const qgError   = document.getElementById('qg-error');
+    const qgProgress= document.getElementById('qg-progress');
+    const qgPText   = document.getElementById('qg-progress-text');
+    const qgResult  = document.getElementById('qg-result');
+    const qgBtn     = document.getElementById('qg-btn');
+
+    qgText.addEventListener('input', () => {
+      qgCounter.textContent = `${qgText.value.length} / 3000`;
+    });
+
+    function setQgStep(id) {
+      document.querySelectorAll('#qg-steps .step').forEach(s => s.classList.remove('active'));
+      const el = document.getElementById(id);
+      if (el) el.classList.add('active');
+    }
+
+    document.getElementById('quick-gen-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = qgText.value.trim();
+      if (text.length < 20) {
+        qgError.textContent = 'Please enter at least 20 characters.';
+        qgError.classList.remove('hidden');
+        return;
+      }
+      qgError.classList.add('hidden');
+      qgResult.classList.add('hidden');
+      qgProgress.classList.remove('hidden');
+      qgBtn.disabled = true;
+      qgBtn.textContent = 'Generating…';
+      setQgStep('qg-step-llm');
+
+      const style  = document.getElementById('qg-style').value;
+      const layout = document.getElementById('qg-layout').value;
+
+      try {
+        const submitRes = await apiFetch('/api/generate_comic', {
+          method: 'POST',
+          body: JSON.stringify({ text, style: style || undefined, layout_type: layout || undefined }),
+        });
+        const submitData = await submitRes.json();
+        if (!submitRes.ok) throw new Error(submitData.detail || submitData.message || 'Generation failed');
+        const jobId = submitData.job_id || submitData.data?.job_id;
+        if (!jobId) throw new Error('Server did not return a job ID.');
+
+        // Poll
+        let lastProgress = '';
+        while (true) {
+          const statusRes  = await apiFetch(`/api/status/${jobId}`);
+          const statusData = await statusRes.json();
+          const progress   = statusData.progress || '';
+
+          if (progress !== lastProgress) {
+            lastProgress    = progress;
+            qgPText.textContent = progress || 'AI is working…';
+
+            if (progress.includes('extraction'))  setQgStep('qg-step-llm');
+            else if (progress.includes('Storyboard') || progress.includes('storyboard')) setQgStep('qg-step-board');
+            else if (progress.toLowerCase().includes('drawing')) setQgStep('qg-step-draw');
+            else if (progress.includes('Assembl') || progress.includes('assembly')) setQgStep('qg-step-assemble');
+          }
+
+          if (statusData.status === 'completed') {
+            let result = statusData.result;
+            if (typeof result === 'string') result = JSON.parse(result);
+
+            qgProgress.classList.add('hidden');
+            document.getElementById('qg-result-img').src = (result.final_page || '') + '?t=' + Date.now();
+            document.getElementById('qg-result-view').href = '/history.html';
+            qgResult.classList.remove('hidden');
+
+            // Refresh stats after generation
+            loadDashboardData();
+            break;
+          } else if (statusData.status === 'failed') {
+            throw new Error(statusData.error || 'Generation failed.');
+          }
+
+          await new Promise(r => setTimeout(r, 3000));
+        }
+      } catch (err) {
+        qgProgress.classList.add('hidden');
+        qgError.textContent = err.message;
+        qgError.classList.remove('hidden');
+      } finally {
+        qgBtn.disabled = false;
+        qgBtn.textContent = 'Generate Comic';
+      }
+    });
+
+    document.getElementById('qg-result-new').addEventListener('click', () => {
+      qgResult.classList.add('hidden');
+      qgText.value = '';
+      qgCounter.textContent = '0 / 3000';
+    });
+
+    // Cleanup on unload
+    window.addEventListener('unload', () => {
+      clearInterval(pollInterval);
+      unsubscribe();
+    });
+  </script>
+</body>
+</html>

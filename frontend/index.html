@@ -1,68 +1,1063 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="scroll-behavior: smooth;">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Novel to Comic Studio</title>
-    <meta name="description" content="Convert your novel text into AI-generated comics with dynamic panel counts and multiple art styles — 100% free and local.">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inkraft - AI Comic Generator</title>
+  <meta name="description" content="Convert your novel text into AI-generated manga and manhwa comics. Dynamic panel counts, cinematic layouts, multiple art styles. 100% local AI pipeline.">
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="app-shell.css">
 </head>
 <body>
-    <div class="app-container">
-        <header class="glass-panel">
-            <h1>Novel <span>to</span> Comic</h1>
-            <p>100% Free Local AI Pipeline</p>
-        </header>
-
-        <main>
-            <section class="input-section glass-panel">
-                <h2>1. Enter Novel Text</h2>
-                <textarea id="novel-input" placeholder="Paste a chapter or scene from your novel here... (min 20 characters)" maxlength="3000"></textarea>
-                <div id="char-counter" class="char-counter">0 / 3000</div>
-                <div class="style-selector">
-                    <label for="style-select">Art Style</label>
-                    <select id="style-select">
-                        <option value="">Auto-detect</option>
-                        <option value="anime">Anime</option>
-                        <option value="manga">Manga</option>
-                        <option value="manhwa">Manhwa</option>
-                        <option value="realistic">Realistic</option>
-                        <option value="cinematic">Cinematic</option>
-                    </select>
-                </div>
-                <button id="generate-btn" class="glow-button">Generate Comic</button>
-
-                <!-- Error Banner -->
-                <div id="error-banner" class="error-banner hidden">
-                    <span id="error-text"></span>
-                    <button onclick="document.getElementById('error-banner').classList.add('hidden')">✕</button>
-                </div>
-            </section>
-
-            <section class="output-section glass-panel">
-                <h2>2. Comic Output</h2>
-                
-                <div id="loading-state" class="hidden">
-                    <div class="spinner"></div>
-                    <p id="loading-text">Initializing AI pipeline...</p>
-                    <div class="progress-steps" id="progress-steps">
-                        <span id="step-llm" class="step">📖 Extracting Scenes</span>
-                        <!-- Panel steps are injected dynamically by script.js -->
-                        <span id="step-assemble" class="step">📄 Assembling</span>
-                    </div>
-                </div>
-
-                <div id="results-state" class="hidden">
-                    <h3>Final Comic Page</h3>
-                    <img id="final-comic-img" src="" alt="Final Comic Page">
-                    
-                    <h3>Individual Panels</h3>
-                    <div id="panels-grid" class="panels-grid"></div>
-                </div>
-            </section>
-        </main>
+  <!-- ── App Header ──────────────────────────────────────── -->
+  <header class="app-header glass-panel">
+    <a href="/" class="header-logo">Inkraft</a>
+    <nav class="header-nav">
+      <a href="/dashboard.html" class="nav-link" id="nav-dashboard">Dashboard</a>
+      <a href="#generator-workspace" class="nav-link active">Generate</a>
+      <a href="/history.html"   class="nav-link" id="nav-history">History</a>
+      <a href="/gallery.html"   class="nav-link">Gallery</a>
+    </nav>
+    <div class="header-right" id="header-right">
+      <!-- Populated by JS -->
     </div>
-    <script src="script.js"></script>
+  </header>
+
+  <!-- ── Section 1: Hero ─────────────────────────────────── -->
+  <section class="hero-section">
+    <div class="speed-lines-bg"></div>
+    <div class="hero-grid">
+      <div class="hero-content">
+        <h1 class="hero-title">Your Story.<br>Your Manga.</h1>
+        <p class="hero-subtitle">
+          Transform raw text, scripts, or storyboards into beautifully stylized manga and manhwa panels instantly. Powered by advanced local AI consistency engines.
+        </p>
+        <button class="glow-button hero-cta-btn" onclick="document.getElementById('generator-workspace').scrollIntoView({behavior: 'smooth'})">
+          Launch Generator →
+        </button>
+      </div>
+      <div class="hero-showcase">
+        <div class="showcase-container">
+          <!-- Card 1: Manga style preview -->
+          <div class="showcase-card">
+            <div class="showcase-header">
+              <span class="showcase-tag">MANGA</span>
+              <h3 class="showcase-title">SHADOW BLADE</h3>
+            </div>
+            <div class="showcase-body">
+              <div style="position: absolute; bottom: 10px; left: 10px; background: #000; border: 2px solid #fff; padding: 0.2rem 0.5rem; font-family: 'Bangers', cursive; font-size: 0.8rem; transform: rotate(-3deg);">
+                "THIS ENDS NOW!"
+              </div>
+            </div>
+            <div class="showcase-footer">
+              <span>VOL. 01</span>
+              <span>INKRAFT STUDIOS</span>
+            </div>
+          </div>
+          <!-- Card 2: Manhwa style preview -->
+          <div class="showcase-card">
+            <div class="showcase-header">
+              <span class="showcase-tag" style="background-color: #3b82f6;">MANHWA</span>
+              <h3 class="showcase-title">SOLO ASCENT</h3>
+            </div>
+            <div class="showcase-body" style="background-image: radial-gradient(rgba(59, 130, 246, 0.1) 15%, transparent 16%);">
+              <div style="position: absolute; bottom: 15px; right: 10px; background: #000; border: 2px solid #3b82f6; padding: 0.2rem 0.5rem; font-family: 'Bangers', cursive; font-size: 0.8rem; transform: rotate(2deg);">
+                "STATUS WINDOW ACTIVE."
+              </div>
+            </div>
+            <div class="showcase-footer">
+              <span>CHAP. 42</span>
+              <span>INKRAFT COMICS</span>
+            </div>
+          </div>
+          <!-- Card 3: Cinematic style preview -->
+          <div class="showcase-card">
+            <div class="showcase-header">
+              <span class="showcase-tag" style="background-color: #10b981;">CINEMATIC</span>
+              <h3 class="showcase-title">NEON RUNNERS</h3>
+            </div>
+            <div class="showcase-body" style="background-image: radial-gradient(rgba(16, 185, 129, 0.1) 15%, transparent 16%);">
+              <div style="position: absolute; top: 15px; left: 15px; background: #000; border: 2px solid #10b981; padding: 0.2rem 0.5rem; font-family: 'Bangers', cursive; font-size: 0.75rem; transform: rotate(-1deg);">
+                "NEON GLARE IN THE RAIN..."
+              </div>
+            </div>
+            <div class="showcase-footer">
+              <span>SCENE 3</span>
+              <span>STUDIO INKRAFT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Interactive Workspace Section ───────────────────── -->
+  <section class="generator-workspace-section" id="generator-workspace">
+    <div class="app-container" style="max-width: 1200px; margin: 0 auto;">
+      <main>
+        <!-- Input section -->
+        <section class="input-section glass-panel">
+          <h2>Enter Novel Text</h2>
+          <textarea id="novel-input" placeholder="Paste a chapter or scene from your novel here… (min 20 characters)" maxlength="3000"></textarea>
+          <div id="char-counter" class="char-counter">0 / 3000</div>
+
+          <!-- Style Selection pills -->
+          <div class="style-selector-wrap" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+            <span class="selector-label">Art Style Selection</span>
+            <div class="style-pills-container">
+              <button type="button" class="style-pill active" data-value="">
+                <span class="style-thumb">✨</span>
+                <span class="style-label">Auto-detect</span>
+              </button>
+              <button type="button" class="style-pill" data-value="manga">
+                <span class="style-thumb"><img src="assets/Manga.png" alt="Manga" class="style-preview-img"></span>
+                <span class="style-label">Manga</span>
+              </button>
+              <button type="button" class="style-pill" data-value="manhwa">
+                <span class="style-thumb"><img src="assets/Manhwa.png" alt="Manhwa" class="style-preview-img"></span>
+                <span class="style-label">Manhwa</span>
+              </button>
+              <button type="button" class="style-pill" data-value="anime">
+                <span class="style-thumb"><img src="assets/anime_style_example.png" alt="Anime" class="style-preview-img"></span>
+                <span class="style-label">Anime</span>
+              </button>
+              <button type="button" class="style-pill" data-value="cinematic">
+                <span class="style-thumb"><img src="assets/Cinematic.png" alt="Cinematic" class="style-preview-img"></span>
+                <span class="style-label">Cinematic</span>
+              </button>
+              <button type="button" class="style-pill" data-value="realistic">
+                <span class="style-thumb"><img src="assets/realistic_style_example.png" alt="Realistic" class="style-preview-img"></span>
+                <span class="style-label">Realistic</span>
+              </button>
+            </div>
+            <!-- Hidden select elements kept to preserve original script behaviors -->
+            <select id="style-select" style="display: none;">
+              <option value="">Auto-detect</option>
+              <option value="anime">Anime</option>
+              <option value="manga">Manga</option>
+              <option value="manhwa">Manhwa</option>
+              <option value="realistic">Realistic</option>
+              <option value="cinematic">Cinematic</option>
+            </select>
+          </div>
+
+          <!-- Layout Selection pills -->
+          <div class="layout-selector-wrap" style="margin-top: 1rem; margin-bottom: 1.5rem;">
+            <span class="selector-label">Panel Layout Style</span>
+            <div class="layout-pills-container">
+              <button type="button" class="layout-pill active" data-value="" title="AI dynamically decides layout coordinates based on pace">
+                AI Decides
+              </button>
+              <button type="button" class="layout-pill tooltip" data-value="action">
+                Action
+                <span class="tooltiptext">Fast cuts, dynamic angles</span>
+              </button>
+              <button type="button" class="layout-pill tooltip" data-value="drama">
+                Drama
+                <span class="tooltiptext">Close-ups, emotional pacing</span>
+              </button>
+              <button type="button" class="layout-pill tooltip" data-value="dialogue">
+                Dialogue
+                <span class="tooltiptext">Conversation framing</span>
+              </button>
+            </div>
+            <!-- Hidden select elements kept to preserve original script behaviors -->
+            <select id="layout-select" style="display: none;">
+              <option value="">AI decides</option>
+              <option value="action">Action</option>
+              <option value="drama">Drama</option>
+              <option value="dialogue">Dialogue</option>
+            </select>
+          </div>
+
+          <!-- Your Characters (Optional) -->
+          <div class="character-design-section" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <h3 style="margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-primary);">Your Characters (Optional)</h3>
+                <p style="margin: 0; font-size: 0.75rem; color: var(--text-secondary);">Define your characters for consistent appearance across panels</p>
+              </div>
+              <button id="add-char-btn" class="step" style="cursor: pointer; border-color: var(--accent-color); color: var(--text-primary); background: rgba(232, 50, 74, 0.1); padding: 0.4rem 0.8rem; font-size: 0.75rem; border-radius: 0px;">+ Add Character</button>
+            </div>
+            
+            <!-- Character list container -->
+            <div id="character-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; margin-top: 0.75rem;">
+              <!-- Injected character cards -->
+            </div>
+          </div>
+
+          <button id="generate-btn" class="glow-button" style="margin-top: 1rem;">Generate Comic</button>
+
+          <!-- Credits warning for guests -->
+          <div id="guest-notice" class="guest-notice hidden">
+            ⚡ <a href="/register.html">Register free</a> to save your comics and track your history.
+          </div>
+
+          <!-- Error Banner -->
+          <div id="error-banner" class="error-banner hidden">
+            <span id="error-text"></span>
+            <button onclick="document.getElementById('error-banner').classList.add('hidden')">✕</button>
+          </div>
+        </section>
+
+        <!-- Output section -->
+        <section class="output-section glass-panel" style="position: relative;">
+          <!-- CSS Ink splash overlay -->
+          <div id="ink-splash-overlay" class="ink-splash-overlay hidden">
+            <div class="ink-drop drop-1"></div>
+            <div class="ink-drop drop-2"></div>
+            <div class="ink-drop drop-3"></div>
+            <div class="ink-drop drop-4"></div>
+          </div>
+
+          <h2>Comic Output</h2>
+
+          <div id="loading-state" class="hidden">
+            <div class="spinner"></div>
+            <p id="loading-text">Initializing AI pipeline…</p>
+            <div class="progress-steps" id="progress-steps">
+              <span id="step-llm" class="step">📖 Extracting Scenes</span>
+              <!-- Panel steps injected by script.js -->
+              <span id="step-assemble" class="step">📄 Assembling</span>
+            </div>
+          </div>
+
+          <div id="results-state" class="hidden">
+            <h3>Final Comic Page</h3>
+            <img id="final-comic-img" src="" alt="Final Comic Page">
+
+            <div class="result-actions">
+              <a id="download-png-btn" href="#" class="glow-button result-btn" target="_blank">⬇ Download PNG</a>
+              <a href="/history.html" class="glow-button result-btn result-btn-outline" id="view-history-link">📚 View History</a>
+            </div>
+
+            <!-- Share to Gallery toggle visible immediately after completion -->
+            <div class="share-gallery-container">
+              <label class="switch">
+                <input type="checkbox" id="share-gallery-toggle">
+                <span class="slider round"></span>
+              </label>
+              <span style="font-weight: 700; font-size: 0.9rem;">Share to Community Gallery</span>
+            </div>
+            <div id="share-gallery-status" style="font-size: 0.8rem; margin-top: 0.5rem; font-weight: bold; color: var(--accent-color);"></div>
+
+            <h3 style="margin-top: 1.5rem;">Individual Panels</h3>
+            <div id="panels-grid" class="panels-grid"></div>
+          </div>
+
+          <!-- Empty state before generation -->
+          <div id="idle-state" class="idle-state">
+            <div class="idle-icon">🎨</div>
+            <p>Your comic will appear here once generated.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </section>
+
+  <!-- ── Section 2: How It Works ─────────────────────────── -->
+  <section class="landing-section" id="how-it-works">
+    <div class="section-title-wrap">
+      <h2 class="section-title">How It Works</h2>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <span class="step-num">01</span>
+        <span class="step-icon">📝</span>
+        <h3>Paste Story</h3>
+        <p>Input raw script details, novel passages, or action descriptions directly into the generator text area.</p>
+      </div>
+      <div class="step-card">
+        <span class="step-num">02</span>
+        <span class="step-icon">🎨</span>
+        <h3>Choose Style</h3>
+        <p>Select your desired format: black-and-white manga, full-color manhwa, vibrant anime, or epic cinematic lines.</p>
+      </div>
+      <div class="step-card">
+        <span class="step-num">03</span>
+        <span class="step-icon">⚡</span>
+        <h3>Get Comic</h3>
+        <p>Watch as local AI plans panels, coordinates consistency, and paints your comic frame by frame in seconds.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Section 3: Style Showcase ───────────────────────── -->
+  <section class="landing-section" id="style-showcase">
+    <div class="section-title-wrap">
+      <h2 class="section-title">Style Showcase</h2>
+    </div>
+    <div class="style-showcase-row">
+      <div class="showcase-style-card" data-style="manga">
+        <div class="showcase-style-badge">Traditional Ink</div>
+        <h3>Manga</h3>
+        <p>Retro black-and-white screen tones, hand-drawn hatching, and sharp action speed lines.</p>
+        <div class="showcase-style-cta">Try Style →</div>
+      </div>
+      <div class="showcase-style-card" data-style="manhwa">
+        <div class="showcase-style-badge">Webtoon Style</div>
+        <h3>Manhwa</h3>
+        <p>Vibrant webcomic colors, clean layouts, and epic system window overlay styling.</p>
+        <div class="showcase-style-cta">Try Style →</div>
+      </div>
+      <div class="showcase-style-card" data-style="anime">
+        <div class="showcase-style-badge">Vibrant Cel</div>
+        <h3>Anime</h3>
+        <p>Rich cinematic lighting, cel-shaded details, and gorgeous modern digital illustration.</p>
+        <div class="showcase-style-cta">Try Style →</div>
+      </div>
+      <div class="showcase-style-card" data-style="cinematic">
+        <div class="showcase-style-badge">Cine-Shot</div>
+        <h3>Cinematic</h3>
+        <p>Moody lighting, realistic shadows, dramatic camera angles, and wide aspect frames.</p>
+        <div class="showcase-style-cta">Try Style →</div>
+      </div>
+      <div class="showcase-style-card" data-style="manhwa">
+        <div class="showcase-style-badge">Wuxia / Xianxia</div>
+        <h3>Manhua</h3>
+        <p>Epic Chinese fantasy illustration style, sweeping action, and vibrant color detailing.</p>
+        <div class="showcase-style-cta">Try Style →</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Section 4: Features Grid ────────────────────────── -->
+  <section class="landing-section" id="features-grid">
+    <div class="section-title-wrap">
+      <h2 class="section-title">Features Grid</h2>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">🎬</span>
+        <h3>AI Storyboard Director</h3>
+        <p>Plans complex camera shot compositions, lighting details, and layouts before drawing.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🧠</span>
+        <h3>Character Memory</h3>
+        <p>Locks visual traits like hair, clothing, and eyes across panels via IP-Adapter anchor locks.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📐</span>
+        <h3>Smart Panel Layout</h3>
+        <p>Arranges frames using asymmetrical offsets, dynamic panel count heights, and manga frames.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🎭</span>
+        <h3>10 Emotions</h3>
+        <p>Expressive facial configurations from quiet shock to intense rage mapped dynamically.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🖼️</span>
+        <h3>6 Layout Styles</h3>
+        <p>Configure pacing layouts customized for fast-paced action, conversational flow, or slow drama.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">💾</span>
+        <h3>Instant Download</h3>
+        <p>Export your full pages in high resolution PNG or printable PDF books directly to your device.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Section 5: Pricing Preview ──────────────────────── -->
+  <section class="landing-section" id="pricing-preview">
+    <div class="section-title-wrap">
+      <h2 class="section-title">Pricing Plans</h2>
+    </div>
+    <div class="pricing-container">
+      <div class="pricing-card">
+        <h3>Free</h3>
+        <div class="price">$0</div>
+        <p class="price-desc">Perfect for testing the pipeline</p>
+        <ul>
+          <li>5 free daily credits</li>
+          <li>Standard rendering queue</li>
+          <li>Default Anime & Manga styles</li>
+        </ul>
+        <button class="pricing-btn glow-button" onclick="document.getElementById('generator-workspace').scrollIntoView({behavior: 'smooth'})">Generate Free</button>
+      </div>
+      <div class="pricing-card premium">
+        <div class="badge">POPULAR</div>
+        <h3>Basic</h3>
+        <div class="price">$5</div>
+        <p class="price-desc">Best for hobbyist writers</p>
+        <ul>
+          <li>50 generation credits / mo</li>
+          <li>Priority queue rendering</li>
+          <li>All styles & layouts unlocked</li>
+          <li>Individual panel downloads</li>
+        </ul>
+        <button class="pricing-btn glow-button">Choose Basic</button>
+      </div>
+      <div class="pricing-card pro">
+        <h3>Pro</h3>
+        <div class="price">$12</div>
+        <p class="price-desc">For serious comic creators</p>
+        <ul>
+          <li>150 generation credits / mo</li>
+          <li>Super priority rendering</li>
+          <li>Advanced character profiles</li>
+          <li>Multi-character support</li>
+          <li>PDF book exports</li>
+        </ul>
+        <button class="pricing-btn glow-button">Choose Pro</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Section 6: Footer ───────────────────────────────── -->
+  <footer class="app-footer">
+    <div class="footer-content">
+      <a href="/" class="footer-logo">Inkraft</a>
+      <div class="footer-links">
+        <a href="#how-it-works">How it works</a>
+        <a href="#style-showcase">Showcase</a>
+        <a href="#pricing-preview">Pricing</a>
+        <a href="/gallery.html">Gallery</a>
+        <a href="/history.html">My Comics</a>
+      </div>
+    </div>
+    <div class="footer-copy">
+      © 2026 Inkraft. Generate your story. All rights reserved.
+    </div>
+  </footer>
+
+  <!-- ── Character Design Modal ── -->
+  <div id="char-modal" class="modal-overlay hidden">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <h3 id="modal-title" style="margin: 0; color: var(--accent-color); font-size: 1.1rem; font-weight: 600;">Add Character Design</h3>
+        <button id="close-modal-btn" class="close-btn">&times;</button>
+      </div>
+      <input type="hidden" id="char-original-name">
+      <form id="char-form" onsubmit="event.preventDefault();" style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <div class="form-group">
+          <label for="char-name">Character Name</label>
+          <input type="text" id="char-name" placeholder="must match story text (e.g. Hero, Alex)" required>
+        </div>
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label for="char-gender">Gender</label>
+            <select id="char-gender">
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="non-binary">Non-binary</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="char-age">Age Range</label>
+            <select id="char-age">
+              <option value="child">Child</option>
+              <option value="teen">Teen</option>
+              <option value="young adult" selected>Young Adult</option>
+              <option value="adult">Adult</option>
+              <option value="elder">Elder</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label for="char-hair-style">Hair Style</label>
+            <input type="text" id="char-hair-style" placeholder="e.g. short spiky">
+          </div>
+          <div class="form-group">
+            <label for="char-hair-color">Hair Color</label>
+            <input type="text" id="char-hair-color" placeholder="e.g. black">
+          </div>
+        </div>
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label for="char-eyes">Eye Color</label>
+            <input type="text" id="char-eyes" placeholder="e.g. blue">
+          </div>
+          <div class="form-group">
+            <label for="char-body">Body Type</label>
+            <input type="text" id="char-body" placeholder="e.g. slender">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="char-outfit">Primary Outfit</label>
+          <input type="text" id="char-outfit" placeholder="e.g. blue hoodie and black jeans">
+        </div>
+        <div class="form-group">
+          <label for="char-features">Special Features</label>
+          <input type="text" id="char-features" placeholder="e.g. scar over left eye, glasses">
+        </div>
+        <div class="form-group">
+          <label for="char-personality">Personality Note</label>
+          <input type="text" id="char-personality" placeholder="e.g. energetic and optimistic">
+        </div>
+        <button type="button" id="save-char-btn" class="glow-button" style="margin-top: 0.5rem; padding: 0.6rem; font-size: 0.9rem;">Save Character</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { authStore, startCreditPolling, apiFetch } from './auth.js?v=2';
+
+    // ── Header: auth-aware UI ──
+    const headerRight = document.getElementById('header-right');
+    const unsubscribe = authStore.subscribe(({ token, user, credits }) => {
+      if (token && user) {
+        document.getElementById('guest-notice')?.classList.add('hidden');
+        headerRight.innerHTML = `
+          <div class="credit-badge">
+            <span class="credit-icon">⚡</span>
+            <span id="credit-count">${credits !== null ? credits : '—'}</span>
+          </div>
+          <div class="user-menu">
+            <div class="user-avatar" id="user-avatar">${(user.email || 'U')[0].toUpperCase()}</div>
+            <div class="user-dropdown glass-panel" id="user-dropdown">
+              <span class="dropdown-email">${user.email || ''}</span>
+              <hr class="dropdown-divider">
+              <a href="/dashboard.html" class="dropdown-item">📊 Dashboard</a>
+              <a href="/history.html"   class="dropdown-item">📚 My Comics</a>
+              <a href="/gallery.html"   class="dropdown-item">🌐 Gallery</a>
+              <hr class="dropdown-divider">
+              <button id="logout-btn" class="dropdown-item dropdown-logout">🚪 Sign out</button>
+            </div>
+          </div>
+        `;
+        document.getElementById('user-avatar')?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          document.getElementById('user-dropdown')?.classList.toggle('open');
+        });
+        document.getElementById('logout-btn')?.addEventListener('click', () => authStore.logout());
+      } else {
+        document.getElementById('guest-notice')?.classList.remove('hidden');
+        headerRight.innerHTML = `
+          <div class="header-auth-links">
+            <a href="/login.html"    class="auth-link-btn outline">Sign In</a>
+            <a href="/register.html" class="auth-link-btn filled">Register Free</a>
+          </div>
+        `;
+      }
+    });
+    document.addEventListener('click', () => document.getElementById('user-dropdown')?.classList.remove('open'));
+    startCreditPolling();
+
+    // ── Sync Pills with hidden selects ──
+    const styleSelect = document.getElementById('style-select');
+    document.querySelectorAll('.style-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.style-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        styleSelect.value = pill.getAttribute('data-value');
+      });
+    });
+
+    const layoutSelect = document.getElementById('layout-select');
+    document.querySelectorAll('.layout-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.layout-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        layoutSelect.value = pill.getAttribute('data-value');
+      });
+    });
+
+    // ── Style Showcase Cards Integration ──
+    document.querySelectorAll('.showcase-style-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const styleVal = card.getAttribute('data-style');
+        const pill = document.querySelector(`.style-pill[data-value="${styleVal}"]`);
+        if (pill) {
+          pill.click();
+        }
+        document.getElementById('generator-workspace').scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+
+    // ── Character counter ──
+    const novelInput  = document.getElementById('novel-input');
+    const charCounter = document.getElementById('char-counter');
+    const MIN_CHARS   = 20;
+    const MAX_CHARS   = 3000;
+
+    novelInput.addEventListener('input', () => {
+      const len = novelInput.value.length;
+      charCounter.textContent = `${len} / ${MAX_CHARS}`;
+      charCounter.style.color =
+        len < MIN_CHARS ? '#e8324a' :
+        len > MAX_CHARS * 0.9 ? '#e8324a' : '#a0a0a0';
+    });
+
+    // ── Helpers ──
+    function showError(msg) {
+      document.getElementById('error-text').textContent = msg;
+      document.getElementById('error-banner').classList.remove('hidden');
+    }
+
+    function setStep(stepId) {
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+      const el = document.getElementById(stepId);
+      if (el) el.classList.add('active');
+    }
+
+    let panelStepsBuilt = false;
+    function buildPanelSteps(totalPanels) {
+      if (panelStepsBuilt) return;
+      panelStepsBuilt = true;
+      const container  = document.getElementById('progress-steps');
+      const assembleEl = document.getElementById('step-assemble');
+      for (let i = 1; i <= totalPanels; i++) {
+        const span = document.createElement('span');
+        span.id = `step-panel${i}`;
+        span.className = 'step';
+        span.textContent = `🎨 Panel ${i}`;
+        container.insertBefore(span, assembleEl);
+      }
+    }
+
+    function parsePanelProgress(progress) {
+      const match = progress.match(/panel\s+(\d+)\/(\d+)/i);
+      if (match) return { current: parseInt(match[1]), total: parseInt(match[2]) };
+      return null;
+    }
+
+    // ── Progress string mapper (manga-themed steps) ──
+    function getMangaProgressMessage(progressStr) {
+      if (!progressStr) return "Analyzing your story...";
+      const lower = progressStr.toLowerCase();
+      if (lower.includes("waiting") || lower.includes("queued")) {
+        return "Analyzing your story...";
+      }
+      if (lower.includes("extracting")) {
+        return "Extracting scenes and characters...";
+      }
+      if (lower.includes("scene extraction complete") || lower.includes("20%")) {
+        return "Extracting scenes and characters...";
+      }
+      if (lower.includes("storyboard plan complete") || lower.includes("35%")) {
+        return "Planning your storyboard...";
+      }
+      if (lower.includes("drawing panel")) {
+        const match = progressStr.match(/drawing panel\s+(\d+)/i);
+        if (match) {
+          return `Drawing panel ${match[1]}...`;
+        }
+        return "Drawing panel...";
+      }
+      if (lower.includes("assembl") || lower.includes("rendering") || lower.includes("100%")) {
+        return "Your comic is ready!";
+      }
+      return progressStr;
+    }
+
+    // ── Confetti & Ink-Splash Animator ──
+    function triggerConfetti() {
+      const container = document.getElementById('results-state');
+      const overlay = document.getElementById('ink-splash-overlay');
+      
+      // Trigger ink-splash
+      overlay.classList.remove('hidden');
+      overlay.classList.add('ink-splash-active');
+      setTimeout(() => {
+        overlay.classList.remove('ink-splash-active');
+        overlay.classList.add('hidden');
+      }, 2000);
+
+      // Spawn 40 confetti particles
+      for (let i = 0; i < 40; i++) {
+        const p = document.createElement('div');
+        p.className = 'confetti-particle';
+        const color = ['#e8324a', '#000000', '#f0f0f0'][Math.floor(Math.random() * 3)];
+        p.style.backgroundColor = color;
+        p.style.left = Math.random() * 100 + '%';
+        p.style.top = '-10px';
+        p.style.width = (Math.random() * 8 + 6) + 'px';
+        p.style.height = (Math.random() * 8 + 6) + 'px';
+        p.style.opacity = Math.random();
+        
+        const animName = `confetti-fall-${Math.floor(Math.random() * 3)}`;
+        const duration = (Math.random() * 1.5 + 1) + 's';
+        p.style.animation = `${animName} ${duration} ease-out forwards`;
+        
+        container.appendChild(p);
+        setTimeout(() => p.remove(), 2500);
+      }
+    }
+
+    // ── Share to Gallery toggle logic ──
+    const shareToggle = document.getElementById('share-gallery-toggle');
+    const shareStatus = document.getElementById('share-gallery-status');
+    let generatedComicId = null;
+
+    shareToggle.addEventListener('change', async () => {
+      if (!generatedComicId) {
+        shareStatus.textContent = "Error: Comic not found in user history database.";
+        shareToggle.checked = !shareToggle.checked;
+        return;
+      }
+      
+      const isPublic = shareToggle.checked;
+      shareStatus.textContent = isPublic ? "Sharing comic page..." : "Unsharing comic page...";
+      
+      try {
+        const res = await apiFetch(`/api/history/${generatedComicId}/share?is_public=${isPublic}`, {
+          method: 'POST'
+        });
+        
+        if (res.ok) {
+          shareStatus.textContent = isPublic 
+            ? "✅ Shared to community gallery!" 
+            : "Removed from community gallery.";
+        } else {
+          throw new Error("Failed to sync share settings on backend server.");
+        }
+      } catch (err) {
+        shareStatus.textContent = "❌ " + err.message;
+        shareToggle.checked = !isPublic; // revert checkbox
+      }
+    });
+
+    // ── Generate handler ──
+    document.getElementById('generate-btn').addEventListener('click', async () => {
+      const text   = novelInput.value.trim();
+      const style  = styleSelect.value;
+      const layout = layoutSelect.value;
+
+      if (text.length < MIN_CHARS) {
+        showError(`Text too short. Please enter at least ${MIN_CHARS} characters.`);
+        return;
+      }
+      if (text.length > MAX_CHARS) {
+        showError(`Text too long. Max ${MAX_CHARS} characters allowed.`);
+        return;
+      }
+
+      // Reset panel steps & share parameters for a fresh run
+      panelStepsBuilt = false;
+      document.querySelectorAll('[id^="step-panel"]').forEach(el => el.remove());
+      generatedComicId = null;
+      shareToggle.checked = false;
+      shareStatus.textContent = '';
+
+      document.getElementById('error-banner').classList.add('hidden');
+      document.getElementById('generate-btn').disabled = true;
+      document.getElementById('generate-btn').innerText = 'Generating…';
+      document.getElementById('results-state').classList.add('hidden');
+      document.getElementById('idle-state').classList.add('hidden');
+      document.getElementById('loading-state').classList.remove('hidden');
+
+      const loadingText = document.getElementById('loading-text');
+      loadingText.innerText = getMangaProgressMessage('0% - Waiting in queue...');
+      setStep('step-llm');
+
+      try {
+        // Use apiFetch so auth token is injected if user is logged in
+        const body = { 
+          text, 
+          style: style || undefined, 
+          layout_type: layout || undefined,
+          characters: localCharacters.length > 0 ? localCharacters : undefined
+        };
+        const response = await apiFetch('/api/generate_comic', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        });
+
+        const data = await response.json();
+        if (!response.ok || data.status === 'error') {
+          throw new Error(data.message || data.detail || 'Server error');
+        }
+
+        const jobId = data.job_id || (data.data && data.data.job_id);
+        if (!jobId) throw new Error('Server did not return a job ID.');
+
+        // Poll status
+        let resultData   = null;
+        let lastProgress = '';
+
+        while (true) {
+          const statusRes  = await apiFetch(`/api/status/${jobId}`);
+          const statusData = await statusRes.json();
+
+          if (statusData.status === 'completed') {
+            resultData = statusData.result;
+            if (typeof resultData === 'string') resultData = JSON.parse(resultData);
+            
+            // Collect enriched comic ID from backend
+            generatedComicId = statusData.comic_id || (resultData && resultData.comic_id);
+            break;
+          } else if (statusData.status === 'failed') {
+            throw new Error(statusData.error || 'Generation failed.');
+          }
+
+          const progress = statusData.progress || '';
+          if (progress !== lastProgress) {
+            lastProgress          = progress;
+            loadingText.innerText = getMangaProgressMessage(progress);
+
+            if (progress.includes('Extracting') || progress.includes('extraction')) {
+              setStep('step-llm');
+            } else if (progress.toLowerCase().includes('drawing panel')) {
+              const parsed = parsePanelProgress(progress);
+              if (parsed) {
+                buildPanelSteps(parsed.total);
+                setStep(`step-panel${parsed.current}`);
+              }
+            } else if (progress.includes('Assembl')) {
+              setStep('step-assemble');
+            }
+          }
+          await new Promise(r => setTimeout(r, 3000));
+        }
+
+        // Render results
+        setStep('step-assemble');
+        const finalSrc = (resultData.final_page || '') + '?t=' + Date.now();
+        document.getElementById('final-comic-img').src = finalSrc;
+        document.getElementById('download-png-btn').href = resultData.final_page || '#';
+
+        const panelsGrid = document.getElementById('panels-grid');
+        panelsGrid.innerHTML = '';
+        (resultData.panels || []).forEach(panelPath => {
+          const img = document.createElement('img');
+          img.src = panelPath + '?t=' + Date.now();
+          img.alt = 'Comic Panel';
+          panelsGrid.appendChild(img);
+        });
+
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('results-state').classList.remove('hidden');
+
+        // Trigger ink-splash and confetti!
+        triggerConfetti();
+
+        // Fallback search to get comic ID if enrich failed
+        if (!generatedComicId) {
+          try {
+            const histRes = await apiFetch('/api/history?page=1&limit=5');
+            if (histRes.ok) {
+              const histData = await histRes.json();
+              const comics = histData.comics || histData.items || [];
+              const matching = comics.find(c => c.job_id === jobId);
+              if (matching) {
+                generatedComicId = matching.id || matching.comic_id;
+              }
+            }
+          } catch (e) {
+            console.warn("Failed to find comic ID from history:", e);
+          }
+        }
+
+        // Refresh credit count after generation
+        const credRes = await apiFetch('/api/credits/balance');
+        if (credRes.ok) {
+          const credData = await credRes.json();
+          if (credData.balance !== undefined) authStore.setCredits(credData.balance);
+        }
+      } catch (error) {
+        showError(error.message);
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('idle-state').classList.remove('hidden');
+      } finally {
+        document.getElementById('generate-btn').disabled  = false;
+        document.getElementById('generate-btn').innerText = 'Generate Comic';
+      }
+    });
+
+    // ── Character Design Section State & Methods ──
+    let localCharacters = [];
+    const charListContainer = document.getElementById('character-list');
+    const charModal = document.getElementById('char-modal');
+    const charForm = document.getElementById('char-form');
+    const addCharBtn = document.getElementById('add-char-btn');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const modalTitle = document.getElementById('modal-title');
+    const charOriginalName = document.getElementById('char-original-name');
+    
+    async function loadCharacters() {
+      const state = authStore.getState();
+      if (state.token && state.user) {
+        try {
+          const res = await apiFetch('/api/characters');
+          if (res.ok) {
+            localCharacters = await res.json();
+            renderCharacters();
+            return;
+          }
+        } catch (e) {
+          console.warn("Failed to fetch characters from server, using local fallback:", e);
+        }
+      }
+      
+      const cached = localStorage.getItem('inkraft_characters');
+      localCharacters = cached ? JSON.parse(cached) : [];
+      renderCharacters();
+    }
+    
+    function renderCharacters() {
+      charListContainer.innerHTML = '';
+      if (localCharacters.length === 0) {
+        charListContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); font-size: 0.8rem; padding: 1.5rem; border: 2px dashed var(--glass-border); background: rgba(0,0,0,0.2);">No characters added yet. Characters you add here will be used to enforce visual consistency.</div>';
+        return;
+      }
+      
+      localCharacters.forEach(char => {
+        const card = document.createElement('div');
+        card.style.background = '#151515';
+        card.style.border = '2px solid #000';
+        card.style.padding = '1rem';
+        card.style.display = 'flex';
+        card.style.flexDirection = 'column';
+        card.style.justifyContent = 'space-between';
+        card.style.gap = '0.5rem';
+        card.style.boxShadow = '3px 3px 0 #000';
+        
+        card.innerHTML = `
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: start; gap: 0.5rem;">
+              <span style="font-weight: 800; color: var(--accent-color); font-size: 0.95rem; word-break: break-all;">${char.name}</span>
+              <span style="font-size: 0.7rem; color: var(--text-secondary); background: #050505; border: 1px solid #222; padding: 0.1rem 0.4rem; white-space: nowrap;">${char.gender} • ${char.age_range}</span>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem; line-height: 1.4;">
+              ${char.hair_style || char.hair_color ? `<div><strong>Hair:</strong> ${char.hair_style} ${char.hair_color}</div>` : ''}
+              ${char.eye_color ? `<div><strong>Eyes:</strong> ${char.eye_color}</div>` : ''}
+              ${char.body_type ? `<div><strong>Body:</strong> ${char.body_type}</div>` : ''}
+              ${char.primary_outfit ? `<div><strong>Outfit:</strong> ${char.primary_outfit}</div>` : ''}
+              ${char.distinguishing_features ? `<div><strong>Features:</strong> ${char.distinguishing_features}</div>` : ''}
+              ${char.personality_note ? `<div><strong>Personality:</strong> ${char.personality_note}</div>` : ''}
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.5rem; border-top: 1px solid #222; padding-top: 0.5rem;">
+            <button class="step edit-btn" style="cursor: pointer; padding: 0.2rem 0.5rem; font-size: 0.7rem; background: transparent; color: var(--text-primary);">Edit</button>
+            <button class="step delete-btn" style="cursor: pointer; padding: 0.2rem 0.5rem; font-size: 0.7rem; border-color: rgba(232, 50, 74, 0.4); color: #fff; background: var(--accent-color);">Delete</button>
+          </div>
+        `;
+        
+        card.querySelector('.edit-btn').onclick = () => openEditModal(char);
+        card.querySelector('.delete-btn').onclick = () => deleteCharacter(char.name);
+        charListContainer.appendChild(card);
+      });
+    }
+    
+    function openEditModal(char) {
+      modalTitle.textContent = "Edit Character Design";
+      charOriginalName.value = char.name;
+      document.getElementById('char-name').value = char.name;
+      document.getElementById('char-gender').value = char.gender;
+      document.getElementById('char-age').value = char.age_range;
+      document.getElementById('char-hair-style').value = char.hair_style || '';
+      document.getElementById('char-hair-color').value = char.hair_color || '';
+      document.getElementById('char-eyes').value = char.eye_color || '';
+      document.getElementById('char-body').value = char.body_type || '';
+      document.getElementById('char-outfit').value = char.primary_outfit || '';
+      document.getElementById('char-features').value = char.distinguishing_features || '';
+      document.getElementById('char-personality').value = char.personality_note || '';
+      charModal.classList.remove('hidden');
+    }
+    
+    function openAddModal() {
+      modalTitle.textContent = "Add Character Design";
+      charOriginalName.value = '';
+      charForm.reset();
+      charModal.classList.remove('hidden');
+    }
+    
+    async function deleteCharacter(name) {
+      if (!confirm(`Are you sure you want to delete '${name}'?`)) return;
+      
+      const state = authStore.getState();
+      if (state.token && state.user) {
+        try {
+          const res = await apiFetch(`/api/characters/${encodeURIComponent(name)}`, {
+            method: 'DELETE'
+          });
+          if (res.ok) {
+            await loadCharacters();
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to delete character:", e);
+        }
+      }
+      
+      localCharacters = localCharacters.filter(c => c.name.toLowerCase() !== name.toLowerCase());
+      localStorage.setItem('inkraft_characters', JSON.stringify(localCharacters));
+      renderCharacters();
+    }
+    
+    addCharBtn.onclick = openAddModal;
+    closeModalBtn.onclick = () => charModal.classList.add('hidden');
+    
+    document.getElementById('save-char-btn').onclick = async () => {
+      const name = document.getElementById('char-name').value.trim();
+      if (!name) {
+        alert("Character Name is required.");
+        return;
+      }
+      
+      const sheet = {
+        name,
+        gender: document.getElementById('char-gender').value,
+        age_range: document.getElementById('char-age').value,
+        hair_style: document.getElementById('char-hair-style').value.trim(),
+        hair_color: document.getElementById('char-hair-color').value.trim(),
+        eye_color: document.getElementById('char-eyes').value.trim(),
+        body_type: document.getElementById('char-body').value.trim(),
+        primary_outfit: document.getElementById('char-outfit').value.trim(),
+        distinguishing_features: document.getElementById('char-features').value.trim(),
+        personality_note: document.getElementById('char-personality').value.trim()
+      };
+      
+      const state = authStore.getState();
+      const isEdit = charOriginalName.value !== '';
+      
+      if (state.token && state.user) {
+        try {
+          if (isEdit && charOriginalName.value.toLowerCase() !== name.toLowerCase()) {
+            await apiFetch(`/api/characters/${encodeURIComponent(charOriginalName.value)}`, {
+              method: 'DELETE'
+            });
+          }
+          
+          const res = await apiFetch('/api/characters', {
+            method: 'POST',
+            body: JSON.stringify(sheet)
+          });
+          
+          if (res.ok) {
+            charModal.classList.add('hidden');
+            await loadCharacters();
+            return;
+          } else {
+            const err = await res.json();
+            alert("Error saving character: " + (err.detail || "Server error"));
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to save character:", e);
+        }
+      }
+      
+      if (isEdit) {
+        localCharacters = localCharacters.filter(c => c.name.toLowerCase() !== charOriginalName.value.toLowerCase());
+      }
+      
+      if (localCharacters.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+        alert("A character with this name already exists.");
+        return;
+      }
+      
+      localCharacters.push(sheet);
+      localStorage.setItem('inkraft_characters', JSON.stringify(localCharacters));
+      charModal.classList.add('hidden');
+      renderCharacters();
+    };
+
+    // Initialize character list
+    const unsubscribeAuth = authStore.subscribe(() => {
+      loadCharacters();
+    });
+    loadCharacters();
+
+    window.addEventListener('unload', () => {
+      unsubscribe();
+      unsubscribeAuth();
+    });
+  </script>
 </body>
 </html>

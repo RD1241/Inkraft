@@ -31,21 +31,63 @@ from config import settings
 def _draw_pose(pose_type: int) -> Image.Image:
     img  = Image.new("RGB", (512, 512), "black")
     draw = ImageDraw.Draw(img)
-    if pose_type == 0:          # full body upright
+    if pose_type == 0:          # UPRIGHT_STANDING
         draw.line([(256, 100), (256, 300)], fill="red",   width=5)
         draw.line([(256, 150), (200, 250)], fill="green", width=5)
         draw.line([(256, 150), (312, 250)], fill="blue",  width=5)
         draw.line([(256, 300), (220, 450)], fill="green", width=5)
         draw.line([(256, 300), (292, 450)], fill="blue",  width=5)
         draw.ellipse([(236, 50), (276, 90)], fill="red")
-    elif pose_type == 1:        # mid-air / jump
-        draw.line([(256, 150), (300, 350)], fill="red",   width=5)
-        draw.line([(270, 200), (400, 100)], fill="green", width=5)
-        draw.line([(270, 200), (150, 300)], fill="blue",  width=5)
-        draw.line([(300, 350), (200, 450)], fill="green", width=5)
-        draw.line([(300, 350), (450, 400)], fill="blue",  width=5)
-        draw.ellipse([(226, 70), (266, 110)], fill="red")
-    else:                       # generic action
+    elif pose_type == 1:        # FORWARD_LEAN
+        draw.ellipse([(186, 100), (226, 140)], fill="red")
+        draw.line([(206, 140), (280, 280)], fill="red", width=5)
+        draw.line([(220, 170), (160, 260)], fill="green", width=5)
+        draw.line([(220, 170), (290, 230)], fill="blue", width=5)
+        draw.line([(280, 280), (240, 430)], fill="green", width=5)
+        draw.line([(280, 280), (340, 420)], fill="blue", width=5)
+    elif pose_type == 2:        # ACTION_TWIST
+        draw.ellipse([(236, 60), (276, 100)], fill="red")
+        draw.line([(256, 100), (240, 280)], fill="red", width=5)
+        draw.line([(250, 140), (160, 100)], fill="green", width=5)
+        draw.line([(250, 140), (340, 220)], fill="blue", width=5)
+        draw.line([(240, 280), (160, 400)], fill="green", width=5)
+        draw.line([(240, 280), (320, 430)], fill="blue", width=5)
+    elif pose_type == 3:        # RELAXED_SITTING
+        draw.ellipse([(236, 120), (276, 160)], fill="red")
+        draw.line([(256, 160), (256, 320)], fill="red", width=5)
+        draw.line([(256, 200), (200, 290)], fill="green", width=5)
+        draw.line([(256, 200), (312, 290)], fill="blue", width=5)
+        draw.line([(256, 320), (180, 320), (180, 450)], fill="green", width=5)
+        draw.line([(256, 320), (332, 320), (332, 450)], fill="blue", width=5)
+    elif pose_type == 4:        # COWERING_FEARFUL
+        draw.ellipse([(216, 220), (256, 260)], fill="red")
+        draw.line([(236, 260), (276, 360)], fill="red", width=5)
+        draw.line([(250, 280), (210, 210), (240, 190)], fill="green", width=5)
+        draw.line([(250, 280), (290, 210), (260, 190)], fill="blue", width=5)
+        draw.line([(276, 360), (220, 340), (210, 450)], fill="green", width=5)
+        draw.line([(276, 360), (320, 350), (310, 450)], fill="blue", width=5)
+    elif pose_type == 5:        # REACHING_EXTENDING
+        draw.ellipse([(286, 80), (326, 120)], fill="red")
+        draw.line([(306, 120), (220, 280)], fill="red", width=5)
+        draw.line([(280, 160), (420, 60)], fill="green", width=5)
+        draw.line([(280, 160), (200, 200)], fill="blue", width=5)
+        draw.line([(220, 280), (280, 430)], fill="green", width=5)
+        draw.line([(220, 280), (120, 360)], fill="blue", width=5)
+    elif pose_type == 6:        # CONFRONTATION
+        draw.ellipse([(236, 70), (276, 110)], fill="red")
+        draw.line([(256, 110), (256, 280)], fill="red", width=5)
+        draw.line([(256, 150), (180, 180), (170, 240)], fill="green", width=5)
+        draw.line([(256, 150), (330, 160), (380, 160)], fill="blue", width=5)
+        draw.line([(256, 280), (180, 450)], fill="green", width=5)
+        draw.line([(256, 280), (332, 450)], fill="blue", width=5)
+    elif pose_type == 7:        # GROUND_FALLEN
+        draw.ellipse([(100, 410), (140, 450)], fill="red")
+        draw.line([(140, 430), (320, 430)], fill="red", width=5)
+        draw.line([(180, 430), (150, 380)], fill="green", width=5)
+        draw.line([(180, 430), (220, 450)], fill="blue", width=5)
+        draw.line([(320, 430), (380, 400), (420, 440)], fill="green", width=5)
+        draw.line([(320, 430), (450, 450)], fill="blue", width=5)
+    else:                       # fallback
         draw.line([(256, 150), (256, 350)], fill="red",   width=5)
         draw.line([(256, 200), (200, 300)], fill="green", width=5)
         draw.line([(256, 200), (312, 250)], fill="blue",  width=5)
@@ -55,20 +97,20 @@ def _draw_pose(pose_type: int) -> Image.Image:
     return img
 
 
-# Pose type indices available in _draw_pose()
-# Add new integers here as more poses are implemented — no other changes needed.
-POSE_TYPES = [0, 1, 2]   # 0=upright, 1=mid-air/jump, 2=generic action
-
-
 class PoseLibrary:
     """Lightweight registry of available pose types.
-    Extend by appending to POSE_TYPES — random.choice picks from the full list.
+    Pre-generates 8 distinct OpenPose-format skeletons on 512x512 black canvas at init time.
     """
     def __init__(self):
-        self.poses: list[int] = list(POSE_TYPES)
+        self.poses: dict[int, Image.Image] = {}
+        for pose_type in range(8):
+            self.poses[pose_type] = _draw_pose(pose_type)
 
     def random_pose(self) -> int:
-        return random.choice(self.poses)
+        return random.choice(list(self.poses.keys()))
+
+    def get_pose_image(self, pose_type: int) -> Image.Image:
+        return self.poses.get(pose_type, self.poses[0])
 
 
 # ---------------------------------------------------------------------------
@@ -433,6 +475,8 @@ class SDGenerator:
         panel_index: int = 0,
         style: str = None,
         action: str = "",
+        panel_count: int = None,
+        layout_type: str = None,
     ):
         # Ensure correct model is loaded for the requested style
         self.load_model(style=style)
@@ -440,10 +484,13 @@ class SDGenerator:
         generator = self._generator(seed)
 
         # Load reference image for IP-Adapter if provided
-        if reference_image_path and self.ip_reference_image is None:
+        if reference_image_path:
             self.ip_reference_image = Image.open(reference_image_path).convert("RGB").resize(
                 (settings.SD_WIDTH, settings.SD_HEIGHT), Image.Resampling.LANCZOS
             )
+        elif panel_index == 0:
+            # Clear reference for the first panel of a new sequence
+            self.ip_reference_image = None
 
         # ================================================================
         # SDXL PATH — plain string prompts, no ControlNet, no IP-Adapter
@@ -490,18 +537,47 @@ class SDGenerator:
                 is_action = should_use_pose(action or positive_prompt)
                 combat_keywords = ["enemy", "beast", "monster", "dragon", "creature", "demon"]
                 has_combat = any(kw in positive_prompt.lower() for kw in combat_keywords)
-                ip_scale = 0.3 if (is_action or has_combat) else 0.5
+                ip_scale = 0.75 if (is_action or has_combat) else 0.80
             else:
                 # Panel 1 or no reference yet — bypass adapter, character forms freely
                 ip_kwargs["ip_adapter_image"] = _black
                 ip_scale = 0.0
             self.pipeline.set_ip_adapter_scale(ip_scale)
+            
+            # [CharacterConsistency] log line matching requirements exactly
+            total = panel_count if panel_count else (panel_index + 1)
+            print(f"[CharacterConsistency] Panel {panel_index + 1}/{total} — IP scale: {ip_scale:.2f}")
 
-        # --- Conditional pose (action scenes only, random variation) ------
-        pose_image = None
-        if should_use_pose(action or positive_prompt):
-            pose_type  = self.pose_library.random_pose()
-            pose_image = _draw_pose(pose_type)
+        # --- Dynamic Pose Selection Mapping ---
+        if panel_count is None or panel_count <= 1:
+            # Single panel or invalid count -> first panel -> UPRIGHT_STANDING
+            pose_id = 0
+        elif panel_index == 0:
+            pose_id = 0
+        elif panel_index == panel_count - 1:
+            pose_id = 3
+        else:
+            # Middle panels: panel_index % 6 biased by layout_type
+            base_pose = panel_index % 6
+            if layout_type:
+                layout_lower = layout_type.lower()
+                panel_rng = random.Random(seed + panel_index)
+                if panel_rng.random() < 0.6:
+                    if "action" in layout_lower:
+                        pose_id = panel_rng.choice([2, 5])
+                    elif "drama" in layout_lower:
+                        pose_id = panel_rng.choice([1, 4])
+                    elif "dialog" in layout_lower or "talk" in layout_lower:
+                        pose_id = panel_rng.choice([6, 1])
+                    else:
+                        pose_id = base_pose
+                else:
+                    pose_id = base_pose
+            else:
+                pose_id = base_pose
+
+        # --- Draw pose skeleton based on dynamic selection ---
+        pose_image = self.pose_library.get_pose_image(pose_id)
 
         # --- Prompt embeds -----------------------------------------------
         p_embeds, n_embeds = self.get_prompt_embeds(positive_prompt, negative_prompt)
@@ -519,20 +595,13 @@ class SDGenerator:
         )
 
         try:
-            if self.controlnet_enabled and pose_image is not None:
+            if self.controlnet_enabled:
                 image = self.pipeline(
                     **common,
                     image=pose_image,
                     controlnet_conditioning_scale=getattr(
-                        settings, "SD_CONTROLNET_CONDITIONING_SCALE", 0.5
+                        settings, "SD_CONTROLNET_CONDITIONING_SCALE", 0.70
                     ),
-                ).images[0]
-            elif self.controlnet_enabled:
-                # ControlNet pipeline but no pose — pass black dummy at scale 0
-                image = self.pipeline(
-                    **common,
-                    image=Image.new("RGB", (settings.SD_WIDTH, settings.SD_HEIGHT), "black"),
-                    controlnet_conditioning_scale=0.0,
                 ).images[0]
             else:
                 image = self.pipeline(**common).images[0]

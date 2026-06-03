@@ -269,18 +269,49 @@ Rules:
             normalized.append(char)
         scene["characters"] = normalized
 
-    def _normalize_storyboard(self, parsed: dict, source_text: str) -> dict:
+    def _normalize_storyboard(self, parsed: dict, source_text: str, panel_count: int = None, layout_type: str = None) -> dict:
         """
         Lightweight post-processing:
         - Lock the global environment
         - Clean characters
-        - Trim scene count to what the narrative supports
+        - Trim or pad scene count to what the user / layout / narrative demands
         """
         scenes = parsed.get("scenes") or []
 
         # Determine how many panels we actually need
-        panel_count = compute_panel_count(source_text, scenes)
-        scenes = scenes[:panel_count]
+        if panel_count is not None:
+            target_count = min(max(panel_count, 2), 10)
+        elif layout_type is not None:
+            layout_lower = layout_type.lower()
+            if "action" in layout_lower:
+                target_count = 4
+            elif "drama" in layout_lower:
+                target_count = 3
+            elif "dialog" in layout_lower or "talk" in layout_lower:
+                target_count = 2
+            else:
+                target_count = compute_panel_count(source_text, scenes)
+        else:
+            target_count = compute_panel_count(source_text, scenes)
+
+        # Enforce exact scene count
+        if len(scenes) > target_count:
+            scenes = scenes[:target_count]
+        elif len(scenes) < target_count:
+            while len(scenes) < target_count:
+                new_scene = dict(scenes[-1]) if scenes else {
+                    "scene_id": len(scenes) + 1,
+                    "environment": "cinematic scene",
+                    "focus_character": "",
+                    "characters": [],
+                    "action": "The scene continues.",
+                    "emotion": "calm",
+                    "dialogue": []
+                }
+                if scenes:
+                    new_scene["scene_id"] = len(scenes) + 1
+                scenes.append(new_scene)
+
         parsed["scenes"] = scenes
 
         # Lock environment across all panels from first scene
@@ -309,11 +340,105 @@ Rules:
     # Public API
     # ------------------------------------------------------------------
 
-    def process_text(self, text: str) -> dict:
+    def _rule_based_extraction(self, text: str, panel_count: int = None, layout_type: str = None) -> dict:
+        """
+        Rule-based scene extraction fallback used when Ollama is unreachable.
+        Splits text into sentence groups, builds structured scene dicts using
+        classify_scene(), and runs full _normalize_storyboard().
+        """
+        print("[LLM] Using rule-based extraction fallback (Ollama offline).")
+
+        # Split on sentence boundaries, group into beats
+        sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+        sentences = [s.strip() for s in sentences if s.strip()]
+
+        # Determine target panel count
+        if panel_count is not None:
+            target = min(max(panel_count, 2), 10)
+        elif layout_type == "action":
+            target = 4
+        elif layout_type == "drama":
+            target = 3
+        elif layout_type in ("dialogue", "dialog"):
+            target = 2
+        else:
+            target = min(max(len(sentences), 2), 5)
+
+        # Group sentences into scene chunks
+        chunk_size = max(1, len(sentences) // target)
+        chunks = []
+        for i in range(target):
+            start = i * chunk_size
+            end = start + chunk_size if i < target - 1 else len(sentences)
+            chunk_text = " ".join(sentences[start:end])
+            chunks.append(chunk_text)
+        if not chunks:
+            chunks = [text]
+
+        # Extract rough character names using capitalized words heuristic
+        cap_words = re.findall(r'\b([A-Z][a-z]{2,})\b', text)
+        # Filter common English words that aren't names
+        skip = {"The", "He", "She", "It", "His", "Her", "They", "You", "We",
+                "And", "But", "Then", "That", "This", "When", "After", "For"}
+        char_names = list(dict.fromkeys(w for w in cap_words if w not in skip))[:3]
+        if not char_names:
+            char_names = ["Character"]
+
+        # Build the characters list
+        characters = []
+        for j, name in enumerate(char_names):
+            role = "main_character" if j == 0 else "secondary_character"
+            characters.append({
+                "name": name,
+                "character_role": role,
+                "description": f"{name.lower()} character"
+            })
+
+        # Detect environment
+        global_env = self._extract_global_environment(text, {"scenes": []})
+
+        # Extract dialogue lines from text
+        dialogue_raw = re.findall(r'"([^"]{3,80})"', text)
+
+        # Build scene list
+        scenes = []
+        for i, chunk in enumerate(chunks):
+            flags = classify_scene(chunk)
+            # Pick dialogue for this scene if available
+            dlg_list = []
+            if dialogue_raw:
+                dlg_text = dialogue_raw[i % len(dialogue_raw)]
+                dlg_list = [{
+                    "speaker": char_names[0] if char_names else "Character",
+                    "type": "speech",
+                    "text": dlg_text
+                }]
+            emotion = "determined" if flags["is_action"] else ("sad" if "cry" in chunk.lower() else "neutral")
+            scenes.append({
+                "scene_id": i + 1,
+                "environment": global_env,
+                "global_environment": global_env,
+                "focus_character": char_names[0] if char_names else "Character",
+                "characters": characters,
+                "action": chunk[:120],
+                "emotion": emotion,
+                "dialogue": dlg_list,
+                "is_action": flags["is_action"],
+                "is_dialogue": flags["is_dialogue"],
+                "is_calm": flags["is_calm"],
+            })
+
+        parsed = {
+            "global_environment": global_env,
+            "scenes": scenes
+        }
+        return self._normalize_storyboard(parsed, text, panel_count=panel_count, layout_type=layout_type)
+
+    def process_text(self, text: str, panel_count: int = None, layout_type: str = None) -> dict:
         # Wait for Ollama to be reachable before first attempt
         if not _wait_for_ollama(timeout=30):
-            print("[LLM] Ollama not reachable after 30s — aborting.")
-            return {"scenes": []}
+            print("[LLM] Ollama not reachable after 30s — using rule-based fallback.")
+            return self._rule_based_extraction(text, panel_count=panel_count, layout_type=layout_type)
 
         for attempt in range(3):
             content = None
@@ -328,8 +453,8 @@ Rules:
                         "temperature": 0.3,
                         "num_ctx":     6144,   # llama3 supports 8192; 6144 gives ~5k tokens for output
                         "num_predict": 3000,   # cap runaway generation
+                        "keep_alive":  settings.LLM_KEEP_ALIVE,
                     },
-                    keep_alive=settings.LLM_KEEP_ALIVE,
                 )
                 content = response["message"]["content"]
 
@@ -339,10 +464,10 @@ Rules:
                 # Repair llama3's broken split-array output BEFORE parsing
                 clean = self._repair_json(clean)
 
-                # Use bracket-depth extraction — immune to trailing text after '}'  
+                # Use bracket-depth extraction — immune to trailing text after '}'
                 parsed = self._extract_json(clean)
                 if parsed and parsed.get("scenes"):
-                    parsed = self._normalize_storyboard(parsed, text)
+                    parsed = self._normalize_storyboard(parsed, text, panel_count=panel_count, layout_type=layout_type)
                     return parsed
 
                 print(f"[LLM] Invalid JSON or empty scenes on attempt {attempt + 1}. Raw output snippet:\n{clean[:500]}")
@@ -354,4 +479,7 @@ Rules:
                 import time
                 time.sleep(2)
 
-        return {"scenes": []}
+        # All 3 Ollama attempts failed — use rule-based fallback instead of returning empty
+        print("[LLM] All 3 Ollama attempts failed — using rule-based fallback.")
+        return self._rule_based_extraction(text, panel_count=panel_count, layout_type=layout_type)
+

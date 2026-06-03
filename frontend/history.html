@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inkraft - My Comics</title>
+  <meta name="description" content="Your Inkraft generation history — browse, download, and manage all your created comics.">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="app-shell.css">
+  <link rel="stylesheet" href="history.css">
+</head>
+<body>
+  <!-- ── Header ─────────────────────────────────────────── -->
+  <header class="app-header glass-panel">
+    <a href="/" class="header-logo">Inkraft</a>
+    <nav class="header-nav">
+      <a href="/dashboard.html" class="nav-link">Dashboard</a>
+      <a href="/"               class="nav-link">Generate</a>
+      <a href="/history.html"   class="nav-link active">History</a>
+      <a href="/gallery.html"   class="nav-link">Gallery</a>
+    </nav>
+    <div class="header-right">
+      <div class="credit-badge" id="credit-badge">
+        <span class="credit-icon">⚡</span>
+        <span id="credit-count">—</span>
+      </div>
+      <div class="user-menu">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <div class="user-dropdown glass-panel" id="user-dropdown">
+          <span id="user-email-label" class="dropdown-email">Loading…</span>
+          <hr class="dropdown-divider">
+          <a href="/dashboard.html" class="dropdown-item">📊 Dashboard</a>
+          <a href="/gallery.html"   class="dropdown-item">🌐 Gallery</a>
+          <hr class="dropdown-divider">
+          <button id="logout-btn" class="dropdown-item dropdown-logout">🚪 Sign out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main ──────────────────────────────────────────── -->
+  <main class="history-main">
+    <div class="history-toolbar">
+      <h1 class="history-title">My Comics</h1>
+      <div class="history-controls">
+        <input type="search" id="search-input" class="history-search" placeholder="🔍 Search comics…">
+        <select id="filter-style" class="history-filter">
+          <option value="">All styles</option>
+          <option value="manga">Manga</option>
+          <option value="manhwa">Manhwa</option>
+          <option value="anime">Anime</option>
+          <option value="cinematic">Cinematic</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="history-loading" class="history-loading">
+      <div class="spinner"></div>
+      <p>Loading your comics…</p>
+    </div>
+
+    <!-- Error -->
+    <div id="history-error" class="auth-error hidden" style="max-width:500px;margin:2rem auto;"></div>
+
+    <!-- Empty state -->
+    <div id="history-empty" class="history-empty hidden">
+      <div class="history-empty-icon">📖</div>
+      <h2>No comics yet</h2>
+      <p>Generate your first comic to see it here.</p>
+      <a href="/" class="glow-button history-gen-btn">Start Generating</a>
+    </div>
+
+    <!-- Comic grid -->
+    <div id="history-grid" class="history-grid hidden"></div>
+
+    <!-- Pagination -->
+    <div id="history-pagination" class="history-pagination hidden">
+      <button id="prev-btn" class="page-btn" disabled>← Prev</button>
+      <span id="page-info" class="page-info"></span>
+      <button id="next-btn" class="page-btn">Next →</button>
+    </div>
+  </main>
+
+  <!-- ── Comic Detail Modal ─────────────────────────────── -->
+  <div id="comic-modal" class="modal-overlay hidden">
+    <div class="modal-box glass-panel">
+      <button class="modal-close" id="modal-close">✕</button>
+      <div class="modal-content">
+        <div class="modal-img-wrap">
+          <img id="modal-img" src="" alt="Comic page">
+        </div>
+        <div class="modal-info">
+          <h2 id="modal-title"></h2>
+          <p id="modal-date" class="modal-meta"></p>
+          <p id="modal-style" class="modal-meta modal-style-badge"></p>
+          <div class="modal-actions">
+            <a id="modal-download-png" href="#" class="glow-button modal-btn" target="_blank">⬇ Download PNG</a>
+            <a id="modal-download-pdf" href="#" class="glow-button modal-btn modal-btn-outline" target="_blank">📄 Download PDF</a>
+            <button id="modal-share-btn" class="glow-button modal-btn modal-btn-outline">🌐 Share</button>
+            <button id="modal-delete-btn" class="glow-button modal-btn modal-btn-danger">🗑 Delete</button>
+          </div>
+          <div id="modal-share-status" class="auth-success hidden" style="margin-top:0.75rem;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { authStore, requireAuth, startCreditPolling, apiFetch } from './auth.js?v=2';
+    if (!requireAuth('/login.html')) { /* redirected */ }
+
+    // Auth UI
+    const unsubscribe = authStore.subscribe(({ user, credits }) => {
+      if (user) {
+        document.getElementById('user-email-label').textContent = user.email || 'User';
+        document.getElementById('user-avatar').textContent = (user.email || 'U')[0].toUpperCase();
+      }
+      if (credits !== null && credits !== undefined) {
+        document.getElementById('credit-count').textContent = credits;
+      }
+    });
+    startCreditPolling();
+
+    document.getElementById('user-avatar').addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('user-dropdown').classList.toggle('open');
+    });
+    document.addEventListener('click', () => document.getElementById('user-dropdown').classList.remove('open'));
+    document.getElementById('logout-btn').addEventListener('click', () => authStore.logout());
+
+    // ── State ──
+    let currentPage    = 1;
+    const LIMIT        = 12;
+    let totalPages     = 1;
+    let allComics      = [];
+    let selectedComicId= null;
+
+    // ── Load history ──
+    async function loadHistory(page = 1) {
+      document.getElementById('history-loading').style.display = 'flex';
+      document.getElementById('history-grid').classList.add('hidden');
+      document.getElementById('history-pagination').classList.add('hidden');
+      document.getElementById('history-empty').classList.add('hidden');
+      document.getElementById('history-error').classList.add('hidden');
+
+      try {
+        const res  = await apiFetch(`/api/history?page=${page}&limit=${LIMIT}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Failed to load history');
+
+        allComics   = data.comics || data.items || [];
+        const total = data.total || allComics.length;
+        totalPages  = Math.ceil(total / LIMIT) || 1;
+        currentPage = page;
+
+        document.getElementById('history-loading').style.display = 'none';
+
+        if (!allComics.length) {
+          document.getElementById('history-empty').classList.remove('hidden');
+          return;
+        }
+
+        renderGrid(allComics);
+        updatePagination();
+      } catch (err) {
+        document.getElementById('history-loading').style.display = 'none';
+        const errEl = document.getElementById('history-error');
+        errEl.textContent = err.message;
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    function renderGrid(comics) {
+      const grid = document.getElementById('history-grid');
+      grid.innerHTML = '';
+      comics.forEach(c => {
+        const card = document.createElement('div');
+        card.className   = 'hist-card';
+        card.dataset.id  = c.id || c.comic_id;
+
+        const title   = c.title || c.auto_title || 'Untitled Comic';
+        const style   = c.style || '';
+        const imgSrc  = c.final_page || c.thumbnail || '';
+        const dateStr = c.created_at ? new Date(c.created_at).toLocaleDateString() : '';
+        const isPublic= c.is_public;
+
+        card.innerHTML = `
+          <div class="hist-thumb-wrap">
+            ${imgSrc
+              ? `<img src="${imgSrc}" alt="${title}" class="hist-thumb" loading="lazy">`
+              : `<div class="hist-thumb-placeholder">🎨</div>`
+            }
+            ${style ? `<span class="hist-style-badge">${style}</span>` : ''}
+            ${isPublic ? `<span class="hist-public-badge">🌐</span>` : ''}
+          </div>
+          <div class="hist-card-info">
+            <span class="hist-card-title">${title}</span>
+            <span class="hist-card-date">${dateStr}</span>
+          </div>
+        `;
+        card.addEventListener('click', () => openModal(c));
+        grid.appendChild(card);
+      });
+      grid.classList.remove('hidden');
+    }
+
+    function updatePagination() {
+      const pag     = document.getElementById('history-pagination');
+      const info    = document.getElementById('page-info');
+      const prevBtn = document.getElementById('prev-btn');
+      const nextBtn = document.getElementById('next-btn');
+
+      if (totalPages <= 1) { pag.classList.add('hidden'); return; }
+      pag.classList.remove('hidden');
+      info.textContent    = `Page ${currentPage} of ${totalPages}`;
+      prevBtn.disabled    = currentPage <= 1;
+      nextBtn.disabled    = currentPage >= totalPages;
+    }
+
+    document.getElementById('prev-btn').addEventListener('click', () => loadHistory(currentPage - 1));
+    document.getElementById('next-btn').addEventListener('click', () => loadHistory(currentPage + 1));
+
+    // ── Search / Filter ──
+    let filterTimeout;
+    function applyFilters() {
+      const query = document.getElementById('search-input').value.toLowerCase();
+      const style = document.getElementById('filter-style').value.toLowerCase();
+      const filtered = allComics.filter(c => {
+        const title = (c.title || c.auto_title || '').toLowerCase();
+        const cs    = (c.style || '').toLowerCase();
+        const matchQ = !query || title.includes(query);
+        const matchS = !style || cs.includes(style);
+        return matchQ && matchS;
+      });
+      renderGrid(filtered);
+    }
+    document.getElementById('search-input').addEventListener('input', () => {
+      clearTimeout(filterTimeout);
+      filterTimeout = setTimeout(applyFilters, 300);
+    });
+    document.getElementById('filter-style').addEventListener('change', applyFilters);
+
+    // ── Modal ──
+    function openModal(comic) {
+      selectedComicId = comic.id || comic.comic_id;
+      const title  = comic.title || comic.auto_title || 'Untitled Comic';
+      const imgSrc = comic.final_page || comic.thumbnail || '';
+      const date   = comic.created_at ? new Date(comic.created_at).toLocaleString() : '';
+      const style  = comic.style || '';
+
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-date').textContent  = `Created: ${date}`;
+      document.getElementById('modal-style').textContent = style ? `Style: ${style}` : '';
+      document.getElementById('modal-img').src = imgSrc;
+
+      const pdfHref = `/api/download/${selectedComicId}/pdf`;
+      const pngHref = imgSrc;
+      document.getElementById('modal-download-png').href = pngHref;
+      document.getElementById('modal-download-pdf').href = pdfHref;
+
+      const shareBtn = document.getElementById('modal-share-btn');
+      shareBtn.textContent = comic.is_public ? '🔒 Unshare' : '🌐 Share';
+      document.getElementById('modal-share-status').classList.add('hidden');
+
+      document.getElementById('comic-modal').classList.remove('hidden');
+    }
+
+    document.getElementById('modal-close').addEventListener('click', () => {
+      document.getElementById('comic-modal').classList.add('hidden');
+    });
+    document.getElementById('comic-modal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('comic-modal'))
+        document.getElementById('comic-modal').classList.add('hidden');
+    });
+
+    document.getElementById('modal-share-btn').addEventListener('click', async () => {
+      if (!selectedComicId) return;
+      const btn = document.getElementById('modal-share-btn');
+      const isCurrentlyPublic = btn.textContent.includes('Unshare');
+      try {
+        const res = await apiFetch(`/api/history/${selectedComicId}/share?is_public=${!isCurrentlyPublic}`, { method: 'POST' });
+        if (res.ok) {
+          btn.textContent = isCurrentlyPublic ? '🌐 Share' : '🔒 Unshare';
+          const status = document.getElementById('modal-share-status');
+          status.textContent = isCurrentlyPublic ? 'Removed from gallery.' : '✅ Shared to community gallery!';
+          status.classList.remove('hidden');
+          loadHistory(currentPage);
+        }
+      } catch (err) {
+        console.error('Share failed:', err);
+      }
+    });
+
+    document.getElementById('modal-delete-btn').addEventListener('click', async () => {
+      if (!selectedComicId) return;
+      if (!confirm('Delete this comic permanently?')) return;
+      try {
+        const res = await apiFetch(`/api/history/${selectedComicId}`, { method: 'DELETE' });
+        if (res.ok) {
+          document.getElementById('comic-modal').classList.add('hidden');
+          loadHistory(currentPage);
+        }
+      } catch (err) {
+        console.error('Delete failed:', err);
+      }
+    });
+
+    // ── Handle hash link from dashboard ──
+    const hashId = window.location.hash.replace('#', '');
+    if (hashId) {
+      apiFetch(`/api/history/${hashId}`)
+        .then(r => r.json())
+        .then(data => { if (data.id || data.comic_id) openModal(data); })
+        .catch(() => {});
+    }
+
+    loadHistory(1);
+
+    window.addEventListener('unload', () => unsubscribe());
+  </script>
+</body>
+</html>

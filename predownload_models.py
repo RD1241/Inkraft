@@ -1,7 +1,7 @@
 """
 predownload_models.py
 ---------------------
-Downloads ALL models used by NovelToComic directly to D:\AI_Models\HuggingFace.
+Downloads ALL models used by Inkraft directly to D:\AI_Models\HuggingFace.
 Run ONCE. After this, the pipeline runs fully offline forever.
 
 Usage:
@@ -114,7 +114,7 @@ def download_ip_adapter():
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    print("NovelToComic — Model Pre-Downloader")
+    print("Inkraft — Model Pre-Downloader")
     print(f"All files will be saved to: {HF_HOME}\n")
 
     # --- SD 1.5 models (core pipeline) ---

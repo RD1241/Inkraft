@@ -1,0 +1,20 @@
+{
+    "layout_type": "drama",
+    "scenes": [
+        {
+            "panel_id": 1,
+            "tension_level": 3,
+            "dialogue": []
+        },
+        {
+            "panel_id": 2,
+            "tension_level": 9,
+            "dialogue": []
+        },
+        {
+            "panel_id": 3,
+            "tension_level": 4,
+            "dialogue": []
+        }
+    ]
+}

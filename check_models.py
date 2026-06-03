@@ -1,7 +1,7 @@
 import os, sys
 os.environ['HF_HOME']      = 'D:\\AI_Models\\HuggingFace'
 os.environ['HF_HUB_CACHE'] = 'D:\\AI_Models\\HuggingFace'
-sys.path.insert(0, 'd:/Project_I/NovelToComic')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import settings
 from pathlib import Path

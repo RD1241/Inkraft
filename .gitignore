@@ -8,3 +8,7 @@ __pycache__/
 .env
 .idea/
 .vscode/
+test_outputs/
+*.pyc
+.DS_Store
+node_modules/

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inkraft - Community Gallery</title>
+  <meta name="description" content="Explore the Inkraft community gallery — discover stunning manga and manhwa comics created by users worldwide.">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="app-shell.css">
+  <link rel="stylesheet" href="gallery.css">
+</head>
+<body>
+  <!-- ── Header (public — no auth required) ─────────────── -->
+  <header class="app-header glass-panel">
+    <a href="/" class="header-logo">Inkraft</a>
+    <nav class="header-nav">
+      <a href="/dashboard.html" class="nav-link" id="nav-dashboard">Dashboard</a>
+      <a href="/"               class="nav-link">Generate</a>
+      <a href="/history.html"   class="nav-link" id="nav-history">History</a>
+      <a href="/gallery.html"   class="nav-link active">Gallery</a>
+    </nav>
+    <div class="header-right" id="header-right">
+      <!-- Populated by JS based on auth state -->
+    </div>
+  </header>
+
+  <!-- ── Gallery Body ──────────────────────────────────── -->
+  <main class="gallery-main">
+    <div class="gallery-hero">
+      <h1 class="gallery-hero-title">Community Gallery</h1>
+      <p class="gallery-hero-sub">Discover comics created by writers around the world</p>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="gallery-filters glass-panel">
+      <div class="filter-pills">
+        <button class="filter-pill active" data-style="">✨ All</button>
+        <button class="filter-pill" data-style="manga">🗾 Manga</button>
+        <button class="filter-pill" data-style="manhwa">🇰🇷 Manhwa</button>
+        <button class="filter-pill" data-style="anime">🌸 Anime</button>
+        <button class="filter-pill" data-style="cinematic">🎬 Cinematic</button>
+        <button class="filter-pill" data-style="realistic">📷 Realistic</button>
+      </div>
+      <input type="search" id="gallery-search" class="gallery-search" placeholder="Search comics…">
+    </div>
+
+    <!-- Stats bar -->
+    <div class="gallery-stats" id="gallery-stats"></div>
+
+    <!-- Loading -->
+    <div id="gallery-loading" class="history-loading">
+      <div class="spinner"></div>
+      <p>Loading gallery…</p>
+    </div>
+
+    <!-- Error -->
+    <div id="gallery-error" class="auth-error hidden" style="max-width:500px;margin:0 auto;"></div>
+
+    <!-- Empty -->
+    <div id="gallery-empty" class="history-empty hidden">
+      <div class="history-empty-icon">🎨</div>
+      <h2>No public comics yet</h2>
+      <p>Be the first to share your creation!</p>
+      <a href="/" class="glow-button history-gen-btn">Generate Now</a>
+    </div>
+
+    <!-- Masonry grid -->
+    <div id="gallery-grid" class="gallery-grid hidden"></div>
+
+    <!-- Load more -->
+    <div id="gallery-pagination" class="gallery-load-more hidden">
+      <button id="load-more-btn" class="glow-button gallery-load-btn">Load More</button>
+    </div>
+  </main>
+
+  <!-- ── Preview Modal ─────────────────────────────────── -->
+  <div id="gallery-modal" class="modal-overlay hidden">
+    <div class="modal-box glass-panel" style="max-width:700px;">
+      <button class="modal-close" id="gallery-modal-close">✕</button>
+      <div class="gallery-modal-inner">
+        <img id="gallery-modal-img" src="" alt="Comic preview" class="gallery-modal-img">
+        <div class="gallery-modal-info">
+          <h2 id="gallery-modal-title"></h2>
+          <div class="gallery-modal-meta">
+            <span class="gallery-modal-style" id="gallery-modal-style"></span>
+            <span class="gallery-modal-date" id="gallery-modal-date"></span>
+          </div>
+          <a id="gallery-modal-generate" href="/" class="glow-button gallery-modal-btn">Create Your Own →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { authStore, startCreditPolling, apiFetch } from './auth.js?v=2';
+
+    // ── Header: show auth or login links ──
+    const headerRight = document.getElementById('header-right');
+    const unsubscribe = authStore.subscribe(({ token, user, credits }) => {
+      if (token && user) {
+        headerRight.innerHTML = `
+          <div class="credit-badge">
+            <span class="credit-icon">⚡</span>
+            <span id="credit-count">${credits !== null ? credits : '—'}</span>
+          </div>
+          <div class="user-menu">
+            <div class="user-avatar" id="user-avatar">${(user.email || 'U')[0].toUpperCase()}</div>
+            <div class="user-dropdown glass-panel" id="user-dropdown">
+              <span class="dropdown-email">${user.email || ''}</span>
+              <hr class="dropdown-divider">
+              <a href="/dashboard.html" class="dropdown-item">📊 Dashboard</a>
+              <a href="/history.html"   class="dropdown-item">📚 My Comics</a>
+              <hr class="dropdown-divider">
+              <button id="logout-btn" class="dropdown-item dropdown-logout">🚪 Sign out</button>
+            </div>
+          </div>
+        `;
+        document.getElementById('user-avatar')?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          document.getElementById('user-dropdown')?.classList.toggle('open');
+        });
+        document.getElementById('logout-btn')?.addEventListener('click', () => authStore.logout());
+      } else {
+        headerRight.innerHTML = `
+          <div class="header-auth-links">
+            <a href="/login.html"    class="auth-link-btn outline">Sign In</a>
+            <a href="/register.html" class="auth-link-btn filled">Register Free</a>
+          </div>
+        `;
+      }
+    });
+
+    document.addEventListener('click', () => document.getElementById('user-dropdown')?.classList.remove('open'));
+
+    startCreditPolling();
+
+    // ── Gallery data ──
+    let currentStyleFilter = '';
+    let currentPage = 1;
+    const PAGE_SIZE = 20;
+    let allItems = [];
+
+    async function loadGallery(page = 1, append = false) {
+      document.getElementById('gallery-loading').style.display = append ? 'none' : 'flex';
+      document.getElementById('gallery-error').classList.add('hidden');
+      document.getElementById('gallery-empty').classList.add('hidden');
+
+      try {
+        let url = `/api/gallery?page=${page}&limit=${PAGE_SIZE}`;
+        if (currentStyleFilter) url += `&style=${encodeURIComponent(currentStyleFilter)}`;
+
+        // Gallery is public — use plain fetch (no auth required)
+        const res  = await fetch(url);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Failed to load gallery');
+
+        const items = data.comics || data.items || data.gallery || [];
+        const total = data.total || items.length;
+
+        document.getElementById('gallery-loading').style.display = 'none';
+
+        if (page === 1 && !items.length) {
+          document.getElementById('gallery-empty').classList.remove('hidden');
+          return;
+        }
+
+        if (append) {
+          allItems = [...allItems, ...items];
+        } else {
+          allItems = items;
+        }
+
+        document.getElementById('gallery-stats').textContent =
+          total ? `${total} comic${total !== 1 ? 's' : ''} shared by the community` : '';
+
+        renderGallery(allItems, append);
+        currentPage = page;
+
+        const hasMore = (page * PAGE_SIZE) < total;
+        const pag = document.getElementById('gallery-pagination');
+        if (hasMore) { pag.classList.remove('hidden'); } else { pag.classList.add('hidden'); }
+      } catch (err) {
+        document.getElementById('gallery-loading').style.display = 'none';
+        const errEl = document.getElementById('gallery-error');
+        errEl.textContent = err.message;
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    function renderGallery(items, append = false) {
+      const grid = document.getElementById('gallery-grid');
+      if (!append) grid.innerHTML = '';
+      grid.classList.remove('hidden');
+
+      items.forEach(c => {
+        const title  = c.title || c.auto_title || 'Untitled';
+        const style  = c.style || '';
+        const imgSrc = c.final_page || c.thumbnail || '';
+        const date   = c.created_at ? new Date(c.created_at).toLocaleDateString() : '';
+
+        const card = document.createElement('div');
+        card.className = 'gallery-card';
+        card.innerHTML = `
+          <div class="gallery-thumb-wrap">
+            ${imgSrc
+              ? `<img src="${imgSrc}" alt="${title}" class="gallery-thumb" loading="lazy">`
+              : `<div class="gallery-thumb-placeholder">🎨</div>`
+            }
+            <div class="gallery-card-overlay">
+              <button class="gallery-preview-btn">👁 Preview</button>
+            </div>
+            ${style ? `<span class="gallery-style-badge">${style}</span>` : ''}
+          </div>
+          <div class="gallery-card-info">
+            <span class="gallery-card-title">${title}</span>
+            <span class="gallery-card-date">${date}</span>
+          </div>
+        `;
+        card.querySelector('.gallery-preview-btn').addEventListener('click', () => openGalleryModal(c));
+        card.addEventListener('click', () => openGalleryModal(c));
+        grid.appendChild(card);
+      });
+    }
+
+    // Filter pills
+    document.querySelectorAll('.filter-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        currentStyleFilter = btn.dataset.style;
+        currentPage = 1;
+        allItems = [];
+        loadGallery(1, false);
+      });
+    });
+
+    // Search
+    let searchTimeout;
+    document.getElementById('gallery-search').addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        const q = e.target.value.toLowerCase();
+        if (!q) { renderGallery(allItems); return; }
+        const filtered = allItems.filter(c => (c.title || c.auto_title || '').toLowerCase().includes(q));
+        renderGallery(filtered);
+      }, 300);
+    });
+
+    // Load more
+    document.getElementById('load-more-btn').addEventListener('click', () => {
+      loadGallery(currentPage + 1, true);
+    });
+
+    // Gallery modal
+    function openGalleryModal(comic) {
+      document.getElementById('gallery-modal-img').src   = comic.final_page || comic.thumbnail || '';
+      document.getElementById('gallery-modal-title').textContent = comic.title || comic.auto_title || 'Untitled';
+      document.getElementById('gallery-modal-style').textContent = comic.style ? `Style: ${comic.style}` : '';
+      document.getElementById('gallery-modal-date').textContent  = comic.created_at
+        ? new Date(comic.created_at).toLocaleDateString() : '';
+      document.getElementById('gallery-modal').classList.remove('hidden');
+    }
+    document.getElementById('gallery-modal-close').addEventListener('click', () => {
+      document.getElementById('gallery-modal').classList.add('hidden');
+    });
+    document.getElementById('gallery-modal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('gallery-modal'))
+        document.getElementById('gallery-modal').classList.add('hidden');
+    });
+
+    loadGallery(1, false);
+    window.addEventListener('unload', () => unsubscribe());
+  </script>
+</body>
+</html>
