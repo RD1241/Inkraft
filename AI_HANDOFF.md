@@ -54,16 +54,16 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 6. Launch blockers / risks beyond bugs
 
-- **LLM is local Ollama** (`127.0.0.1:11434`). Dockerfile has no Ollama → in a container EVERY comic falls to the crude rule-based extractor. Must switch `LLM_PROVIDER` to the existing `GroqLLMProvider` (free tier) before deploy, then re-verify quality through that path.
+- **[RESOLVED 2026-06-26 · 88f6723] LLM was local Ollama.** Pipeline now runs on Groq cloud (`providers/llm/chat_client.py` adapter, `LLM_PROVIDER=groq`, `GROQ_API_KEY` in `.env`). No local Ollama needed in a container. Live-verified Kaito/Mei: 2 clean scenes, correct characters, coherent panels (also cleaner than llama3-local — fewer ghosts/merged beats). Set `LLM_PROVIDER=groq` + `GROQ_API_KEY` (+ optional `GROQ_MODEL`) as host env vars on deploy.
 - **Free-credit runway.** New users get 10 credits (`credits_service.py:180`), flat 1/comic, while multi-char comics cost $0.15-$0.45. Cut free tier to ~2-3 and recompute before any beta invite. Consider defaulting beta to SDXL-only (cheap ~$0.01) and gating the $0.15 premium path behind a flag.
 
 ## 7. Priorities (recommended order)
 
-1. Reference-portrait validation + retry + graceful fallback; invalidate black cached refs. (free)
-2. Make Vault the single source of truth for character descriptions in prompt + reference paths. (free, biggest quality win)
-3. Switch LLM to Groq + verify pipeline without local Ollama. (free)
-4. Cut free-credit tier + recompute pricing; consider gating premium routing for beta. (free, protects runway)
-5. One paid Kaito/Mei e2e to confirm both panel types look consistent. (needs founder OK, ~$0.30)
+1. ~~Reference-portrait validation + retry + graceful fallback; invalidate black cached refs.~~ ✅ DONE (367ddd7)
+2. ~~Make Vault the single source of truth for character descriptions.~~ ✅ DONE (b872980)
+3. ~~Switch LLM to Groq + verify pipeline without local Ollama.~~ ✅ DONE (88f6723)
+4. Cut free-credit tier + recompute pricing; consider gating premium routing for beta. (free, protects runway) — NEXT
+5. One paid Kaito/Mei e2e to confirm #1–#3 together visually. (needs founder OK, ~$0.30)
 6. UI regression pass (Antigravity): confirm Phase 1/2 fixes intact.
 7. Deploy: Vercel (frontend, free) + Render/Railway (backend, free tier) + Groq env vars. Domain optional.
 8. Lemon Squeezy payments (deferred, post-deploy).
@@ -76,6 +76,11 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 - **NEEDED for deploy:** Groq API key (free tier), Render/Railway account, Vercel account. Set secrets as host env vars — never commit them.
 
 ## 9. Task Log (append newest at top)
+
+### 2026-06-26 — Claude Code — Priority #3 (LLM on Groq, no local Ollama)
+- New `providers/llm/chat_client.py`: `get_chat_client()` returns an ollama-compatible client backed by Ollama or Groq per `LLM_PROVIDER`. `llm_processor` + `storyboard_director` now use it; their `_wait_for_ollama()` returns True under Groq. `GroqLLMProvider` delegates to `LLMProcessor` (was a stub). `groq>=1.5.0` installed + pinned. `.env` LLM_PROVIDER=groq (gitignored; `.env.example` updated).
+- Live-verified on Groq `llama-3.3-70b-versatile` with Ollama off: Kaito/Mei → 2 clean scenes, correct characters (no ghosts), 2 coherent panels, no merged-beat contradiction. Quality is visibly better than llama3-local. No fal.ai spend.
+- **Next:** Priority #4 (cut free-credit tier + recompute pricing, consider gating premium routing for beta), then the single paid e2e to confirm #1–#3 visually.
 
 ### 2026-06-26 — Claude Code — Priority #1 + #2 (reference validation + Vault source of truth)
 - **#1 (367ddd7):** Added `is_valid_portrait()` to `providers/image/fal_ai.py`; validate generated AND cached reference portraits (reject black/blank/low-variance), retry once with a fresh seed, discard stale blank cached refs, and gracefully downgrade a shared-frame panel to SDXL multi-char if no valid ref is producible. Unit-verified against the real black `kaito_ref.png` (stddev 0.0 → rejected; valid images 63–105 → accepted).
