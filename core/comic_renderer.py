@@ -11,12 +11,11 @@ class ComicRenderer:
         self._rendered_dialogues = {}
         
     def _get_default_font(self):
-        # Try to find a standard Windows font (Arial)
-        windows_font = "C:\\Windows\\Fonts\\arialbd.ttf" # Bold font looks better for comics
-        if not os.path.exists(windows_font):
-            windows_font = "C:\\Windows\\Fonts\\arial.ttf"
-        if os.path.exists(windows_font):
-            return windows_font
+        # Try to find standard comic-friendly fonts on Windows
+        for font_name in ["comicbd.ttf", "comic.ttf", "arialbd.ttf", "arial.ttf"]:
+            windows_font = os.path.join("C:\\Windows\\Fonts", font_name)
+            if os.path.exists(windows_font):
+                return windows_font
         return None
 
     def _wrap_text(self, text: str, font, max_width: int, draw: ImageDraw) -> list:
@@ -72,7 +71,7 @@ class ComicRenderer:
             draw = ImageDraw.Draw(overlay)
             
             # Recalculate speech bubble parameters relative to actual panel dimensions
-            font_size = 16
+            font_size = max(14, int(img.width * 0.024))
             
             # Bubble Style configuration
             style_name = style.lower() if style else "anime"
@@ -115,8 +114,8 @@ class ComicRenderer:
             if self.font_path:
                 try:
                     speech_font = ImageFont.truetype(self.font_path, font_size)
-                    # For narration, use non-bold Arial if available
-                    regular_font_path = self.font_path.replace("arialbd.ttf", "arial.ttf")
+                    # For narration, use non-bold version if available
+                    regular_font_path = self.font_path.replace("arialbd.ttf", "arial.ttf").replace("comicbd.ttf", "comic.ttf")
                     if os.path.exists(regular_font_path):
                         narration_font = ImageFont.truetype(regular_font_path, font_size)
                     else:
@@ -188,20 +187,23 @@ class ComicRenderer:
                 if not is_narration and text_case == "uppercase" and dlg_type != "thought":
                     text = text.upper()
 
-                # Padding based on text length
+                # Padding based on text length, scaled to font size to avoid clipping
                 text_len = len(text)
                 if text_len < 20:
-                    padding_x = 12
-                    padding_y = 8
+                    padding_x = int(font_size * 0.8)
+                    padding_y = int(font_size * 0.5)
                 elif text_len <= 60:
-                    padding_x = 18
-                    padding_y = 12
+                    padding_x = int(font_size * 1.1)
+                    padding_y = int(font_size * 0.7)
                 else:
-                    padding_x = 24
-                    padding_y = 18
+                    padding_x = int(font_size * 1.4)
+                    padding_y = int(font_size * 0.9)
 
-                # Maximum width limit (45% of panel width)
-                max_width = int(img.width * 0.45)
+                # Maximum width limit (70% for narration, 50% for speech bubbles)
+                if is_narration:
+                    max_width = int(img.width * 0.70)
+                else:
+                    max_width = int(img.width * 0.50)
                 active_font = narration_font if is_narration else speech_font
 
                 lines = self._wrap_text(text, active_font, max_width, draw)
@@ -216,9 +218,10 @@ class ComicRenderer:
 
                 # Calculate Coordinates
                 if is_narration:
-                    # Narration boxes always at top
+                    # Narration boxes always at top, centered horizontally
                     y = y_offset
                     y_offset += bubble_height + 15
+                    x = (img.width - bubble_width) // 2
                 else:
                     if pos.startswith('top'):
                         y = y_offset
@@ -226,10 +229,10 @@ class ComicRenderer:
                     else:
                         y = img.height - bubble_height - 30
 
-                if pos.endswith('left'):
-                    x = 20
-                else:
-                    x = img.width - bubble_width - 20
+                    if pos.endswith('left'):
+                        x = 20
+                    else:
+                        x = img.width - bubble_width - 20
                 
                 # Bounds clamping
                 x = max(10, min(x, img.width - bubble_width - 10))
@@ -297,10 +300,11 @@ class ComicRenderer:
 
                 # Draw Text
                 text_y = y + padding_y
+                text_color = (255, 255, 255, 255) if is_narration else text_fill_color
                 for line in lines:
                     line_w = draw.textbbox((0, 0), line, font=active_font)[2] - draw.textbbox((0, 0), line, font=active_font)[0]
                     line_x = x + (bubble_width - line_w) // 2
-                    draw.text((line_x, text_y), line, font=active_font, fill=text_fill_color)
+                    draw.text((line_x, text_y), line, font=active_font, fill=text_color)
                     text_y += line_height + 2
 
             # 5. Emotion sound effects for action panels (Manga Sound Effects)
