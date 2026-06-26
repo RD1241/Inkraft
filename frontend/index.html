@@ -940,7 +940,7 @@
 
     // ── Header: auth-aware UI ──
     const headerRight = document.getElementById('header-right');
-    const unsubscribe = authStore.subscribe(({ token, user, credits, usageToday, dailyLimit }) => {
+    const unsubscribe = authStore.subscribe(({ token, user, credits }) => {
       if (token && user) {
         document.getElementById('guest-notice')?.classList.add('hidden');
         headerRight.innerHTML = `

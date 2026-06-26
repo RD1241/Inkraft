@@ -247,7 +247,7 @@
     }
 
     // ── Auth state → populate UI ──
-    const unsubscribe = authStore.subscribe(({ user, credits, usageToday, dailyLimit }) => {
+    const unsubscribe = authStore.subscribe(({ user, credits }) => {
       if (user) {
         const emailLabel = user.email || 'User';
         document.getElementById('user-email-label').textContent = emailLabel;

@@ -7,8 +7,6 @@
 let initialToken = null;
 let initialUser = null;
 let initialCredits = null;
-let initialUsageToday = null;
-let initialDailyLimit = null;
 
 try {
   initialToken = localStorage.getItem('ntc_token') || null;
@@ -16,10 +14,6 @@ try {
   initialUser = rawUser ? JSON.parse(rawUser) : null;
   const rawCredits = localStorage.getItem('ntc_credits');
   initialCredits = rawCredits ? parseInt(rawCredits, 10) : null;
-  const rawUsage = localStorage.getItem('ntc_usage_today');
-  initialUsageToday = rawUsage ? parseInt(rawUsage, 10) : null;
-  const rawLimit = localStorage.getItem('ntc_daily_limit');
-  initialDailyLimit = rawLimit ? parseInt(rawLimit, 10) : null;
 } catch (e) {
   console.warn('[authStore] Failed to load local storage:', e);
 }
@@ -28,8 +22,6 @@ const _state = {
   token: initialToken,
   user: initialUser,
   credits: initialCredits,
-  usageToday: initialUsageToday,
-  dailyLimit: initialDailyLimit,
   listeners: [],
 };
 
@@ -75,24 +67,15 @@ export const authStore = {
 
   setCredits(credits, usageToday = null, dailyLimit = null) {
     _state.credits = credits;
-    if (usageToday !== null) _state.usageToday = usageToday;
-    if (dailyLimit !== null) _state.dailyLimit = dailyLimit;
     try {
       if (credits !== null && credits !== undefined) {
         localStorage.setItem('ntc_credits', credits.toString());
       } else {
         localStorage.removeItem('ntc_credits');
       }
-      if (_state.usageToday !== null && _state.usageToday !== undefined) {
-        localStorage.setItem('ntc_usage_today', _state.usageToday.toString());
-      } else {
-        localStorage.removeItem('ntc_usage_today');
-      }
-      if (_state.dailyLimit !== null && _state.dailyLimit !== undefined) {
-        localStorage.setItem('ntc_daily_limit', _state.dailyLimit.toString());
-      } else {
-        localStorage.removeItem('ntc_daily_limit');
-      }
+      // Clean up any historical keys from local storage
+      localStorage.removeItem('ntc_usage_today');
+      localStorage.removeItem('ntc_daily_limit');
     } catch (e) {
       console.warn('[authStore] Failed to write credits to localStorage:', e);
     }
@@ -110,8 +93,6 @@ export const authStore = {
     _state.token = null;
     _state.user = null;
     _state.credits = null;
-    _state.usageToday = null;
-    _state.dailyLimit = null;
     try {
       localStorage.removeItem('ntc_token');
       localStorage.removeItem('ntc_user');

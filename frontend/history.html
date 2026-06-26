@@ -181,7 +181,7 @@
     if (!requireAuth('/login.html')) { /* redirected */ }
 
     // Auth UI
-    const unsubscribe = authStore.subscribe(({ user, credits, usageToday, dailyLimit }) => {
+    const unsubscribe = authStore.subscribe(({ user, credits }) => {
       if (user) {
         document.getElementById('user-email-label').textContent = user.email || 'User';
         document.getElementById('user-avatar').textContent = (user.email || 'U')[0].toUpperCase();
