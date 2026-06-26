@@ -485,8 +485,6 @@ class CreditsService:
         return {
             "balance": balance,
             "usage_today": usage_today,
-            "daily_limit": 3,
-            "remaining_generations": max(0, 3 - usage_today),
             "reset_countdown_seconds": reset_countdown_seconds
         }
 

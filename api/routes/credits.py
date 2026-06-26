@@ -38,8 +38,6 @@ def get_balance(
             "user_id": target_user_id,
             "balance": usage_info["balance"],
             "usage_today": usage_info["usage_today"],
-            "daily_limit": usage_info["daily_limit"],
-            "remaining_generations": usage_info["remaining_generations"],
             "reset_countdown_seconds": usage_info["reset_countdown_seconds"]
         }
     except Exception as e:
