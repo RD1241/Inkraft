@@ -5,9 +5,11 @@ import httpx
 import ollama
 from config import settings
 from core.scene_interpreter import classify_scene, compute_panel_count
+from providers.llm.chat_client import get_chat_client, using_groq
 
-# Module-level client bound to the configured Ollama host
-_ollama_client = ollama.Client(host=settings.OLLAMA_HOST)
+# Module-level chat client — Ollama locally, or Groq cloud when LLM_PROVIDER=groq.
+# Both expose the same .chat(model, messages, options) -> {"message": {"content": ...}} shape.
+_ollama_client = get_chat_client()
 
 
 _ollama_offline_cache = None
@@ -16,11 +18,15 @@ def _wait_for_ollama(timeout: int = 30) -> bool:
     """
     Poll the Ollama HTTP endpoint until it responds or timeout expires.
     Returns True if ready, False if timed out.
+    When using a remote provider (Groq), there is no local server to wait for.
     """
+    if using_groq():
+        return True
+
     global _ollama_offline_cache
     if _ollama_offline_cache is not None:
         return _ollama_offline_cache
-        
+
     deadline = time.time() + timeout
     while time.time() < deadline:
         try:

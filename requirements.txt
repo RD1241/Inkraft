@@ -10,6 +10,7 @@ torchvision
 pillow
 opencv-python
 ollama
+groq>=1.5.0
 httpx
 python-multipart
 controlnet-aux>=0.0.7

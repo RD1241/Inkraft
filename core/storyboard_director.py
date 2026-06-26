@@ -12,6 +12,7 @@ from typing import List, Dict, Any, Optional
 import httpx
 import ollama
 from config import settings
+from providers.llm.chat_client import get_chat_client, using_groq
 
 
 ACTION_CLASSIFIER = {
@@ -187,12 +188,17 @@ class StoryboardDirector:
 
     def __init__(self, model_name: Optional[str] = None):
         self.model_name = model_name or getattr(settings, "LLM_MODEL", "llama3")
-        self.client = ollama.Client(host=getattr(settings, "OLLAMA_HOST", "http://127.0.0.1:11434"))
+        # Ollama locally, or Groq cloud when LLM_PROVIDER=groq (same .chat() shape).
+        self.client = get_chat_client()
 
     def _wait_for_ollama(self, timeout: int = 30) -> bool:
         """
         Poll the Ollama HTTP endpoint until it responds or timeout expires.
+        When using a remote provider (Groq), there is no local server to wait for.
         """
+        if using_groq():
+            return True
+
         deadline = time.time() + timeout
         while time.time() < deadline:
             try:

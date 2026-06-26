@@ -1,17 +1,18 @@
 from providers.llm.base import LLMProvider
+from core.llm_processor import LLMProcessor
+
 
 class GroqLLMProvider(LLMProvider):
-    def __init__(self, api_key: str = None, model_name: str = None):
+    def __init__(self, model_name: str = None):
         """
-        Initializes the Groq LLM provider stub.
-        """
-        self.api_key = api_key
-        self.model_name = model_name or "llama3-70b-8192"
+        Groq-backed LLM provider.
 
-    def process_text(self, text: str) -> dict:
+        Scene extraction is handled by the core LLMProcessor, which talks to
+        whichever backend `providers.llm.chat_client.get_chat_client()` selects.
+        With LLM_PROVIDER=groq that is the Groq cloud API, so no local Ollama is
+        required (this is what makes the pipeline deployable in a container).
         """
-        Groq stub implementation for extracting scenes.
-        """
-        print(f"[GroqLLMProvider] STUB: Generating storyboard for text with model {self.model_name}")
-        # Return a simple mock or empty response since it's a stub
-        return {"scenes": []}
+        self.processor = LLMProcessor(model_name=model_name)
+
+    def process_text(self, text: str, panel_count: int = None, layout_type: str = None) -> dict:
+        return self.processor.process_text(text, panel_count=panel_count, layout_type=layout_type)
