@@ -101,7 +101,7 @@
 
     // ── Header: show auth or login links ──
     const headerRight = document.getElementById('header-right');
-    const unsubscribe = authStore.subscribe(({ token, user, credits, usageToday, dailyLimit }) => {
+    const unsubscribe = authStore.subscribe(({ token, user, credits }) => {
       if (token && user) {
         headerRight.innerHTML = `
           <div class="credit-badge" title="Credits Remaining (PDF downloads cost 1 credit)">

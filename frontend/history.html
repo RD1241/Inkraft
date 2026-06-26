@@ -413,7 +413,7 @@
         if (credRes.ok) {
           const credData = await credRes.json();
           if (credData.balance !== undefined) {
-            authStore.setCredits(credData.balance, credData.usage_today, credData.daily_limit);
+            authStore.setCredits(credData.balance);
           }
         }
       } catch (err) {

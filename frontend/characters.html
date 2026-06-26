@@ -241,7 +241,7 @@
     }
 
     // ── Auth state → populate header UI ────────────────────
-    const unsubscribe = authStore.subscribe(({ user, credits, usageToday, dailyLimit }) => {
+    const unsubscribe = authStore.subscribe(({ user, credits }) => {
       if (user) {
         const emailLabel = user.email || 'User';
         const el = document.getElementById('user-email-label');

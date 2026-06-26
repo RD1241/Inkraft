@@ -65,7 +65,7 @@ export const authStore = {
     _notify();
   },
 
-  setCredits(credits, usageToday = null, dailyLimit = null) {
+  setCredits(credits) {
     _state.credits = credits;
     try {
       if (credits !== null && credits !== undefined) {
@@ -144,7 +144,7 @@ export function startCreditPolling(intervalMs = 30000) {
       if (res.ok) {
         const data = await res.json();
         if (data.balance !== undefined) {
-          authStore.setCredits(data.balance, data.usage_today, data.daily_limit);
+          authStore.setCredits(data.balance);
         }
       }
     } catch (_) {}
