@@ -77,6 +77,13 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-26 — Claude Code — Option 1 routing + cost work (19b9fef, ad49fd9)
+- **Routing (19b9fef):** Config-driven tiered routing in `config/settings.py` (`IMAGE_ROUTING_MODE`=nano_all|hybrid|pro_shared, `PREMIUM_IMAGE_MODEL`=fal-ai/nano-banana/edit, `MAX_COST_PER_JOB`=0.60). `fal_ai.py` now routes EVERY panel with a named character through the cheap reference-conditioned Nano Banana (1 ref single-char, 2 refs shared); SDXL is fallback only. Soft per-job cost cap. Architected so a Standard/HQ toggle later = just changing PREMIUM_IMAGE_MODEL.
+- **Cost/credits (ad49fd9):** free tier 10→3 credits; fixed broken manhwa default model (noobai→animagine).
+- **Evidence (real spend ~$0.28 total this session):** cheap Nano Banana ≈ 85–90% of Pro at ~¼ cost; single-char nano confirmed high-quality (was the one unverified assumption); Kaito stays consistent across single-char + shared panels. Realistic/cinematic SDXL good; manhwa default fixed. Per-comic cost ~$0.16 (was ~$0.31) AND no ugly SDXL panels.
+- **NOT done (deliberate):** Option 4 (Standard/HQ user toggle) deferred to payments phase — plumbing already in place. fal balance pricing should be confirmed from the dashboard delta.
+- **Next:** Antigravity UI + speech-bubble verification (prompt sent); then a full Kaito/Mei e2e through the live app to confirm the assembled page.
+
 ### 2026-06-26 — Claude Code — Priority #3 (LLM on Groq, no local Ollama)
 - New `providers/llm/chat_client.py`: `get_chat_client()` returns an ollama-compatible client backed by Ollama or Groq per `LLM_PROVIDER`. `llm_processor` + `storyboard_director` now use it; their `_wait_for_ollama()` returns True under Groq. `GroqLLMProvider` delegates to `LLMProcessor` (was a stub). `groq>=1.5.0` installed + pinned. `.env` LLM_PROVIDER=groq (gitignored; `.env.example` updated).
 - Live-verified on Groq `llama-3.3-70b-versatile` with Ollama off: Kaito/Mei → 2 clean scenes, correct characters (no ghosts), 2 coherent panels, no merged-beat contradiction. Quality is visibly better than llama3-local. No fal.ai spend.
