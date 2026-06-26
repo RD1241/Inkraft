@@ -3618,3 +3618,180 @@ input:checked + .slider:before {
     padding: 1.5rem 1.25rem !important;
   }
 }
+
+/* ────────────────────────────────────────────────────────────
+   Inkraft Premium Visual Pass - Neo-Brutalist Polishing (Task B)
+   ──────────────────────────────────────────────────────────── */
+
+:root {
+  --bg-color: #0b0c10;
+  --text-primary: #f5f6fa;
+  --text-secondary: #a0a8c0;
+  --accent-color: #ff3f56;
+  --accent-glow: rgba(255, 63, 86, 0.35);
+  --glass-bg: #15161e;
+  --glass-border: #000000;
+  --manga-border-width: 3px;
+  
+  /* Curated Neo-brutalist accents */
+  --neo-yellow: #ffa502;
+  --neo-purple: #8c7ae6;
+  --neo-green: #2ed573;
+  --neo-blue: #00a8ff;
+}
+
+/* Consistent Buttons & Micro-Animations */
+.glow-button, 
+.hero-cta-btn, 
+.qg-generate-btn, 
+.auth-btn, 
+.action-btn, 
+.style-chip, 
+.layout-chip-sm,
+.hamburger-btn,
+.nav-link.active,
+.pricing-card button {
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+              box-shadow 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+              background-color 0.2s ease, 
+              color 0.2s ease, 
+              border-color 0.2s ease !important;
+}
+
+/* Hover: Lift and glow shadow */
+.glow-button:hover, 
+.hero-cta-btn:hover, 
+.qg-generate-btn:hover, 
+.auth-btn:hover,
+.pricing-card button:hover {
+  transform: translate(-3px, -3px) !important;
+  box-shadow: 6px 6px 0px #000 !important;
+  filter: brightness(1.1);
+}
+
+/* Active: Press down / sink */
+.glow-button:active, 
+.hero-cta-btn:active, 
+.qg-generate-btn:active, 
+.auth-btn:active, 
+.style-chip:active, 
+.layout-chip-sm:active,
+.pricing-card button:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px #000 !important;
+}
+
+/* Spacing and Rhythm on Landing Page */
+.hero-section {
+  padding: 4.5rem 2rem !important;
+}
+.hero-title {
+  text-shadow: 3px 3px 0px var(--accent-color), 6px 6px 0px #000000 !important;
+  font-size: 4.8rem !important;
+  line-height: 0.95 !important;
+}
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 3.2rem !important;
+  }
+}
+
+/* Polish showcase card style examples */
+.showcase-card {
+  border-radius: 0px !important;
+  border-width: 3px !important;
+  box-shadow: 5px 5px 0px #000 !important;
+}
+.showcase-card:hover {
+  box-shadow: 8px 8px 0px var(--accent-color) !important;
+}
+.showcase-tag {
+  border-radius: 0px !important;
+  border-width: 2px !important;
+  font-weight: bold;
+}
+
+/* Creator Wizard Polish */
+.workspace-container, .generator-workspace {
+  gap: 2.5rem !important;
+}
+.glass-panel, .manga-panel {
+  border-width: 3px !important;
+  box-shadow: 6px 6px 0px #000000 !important;
+  border-radius: 0px !important;
+}
+
+/* Card consistent border & shadow */
+.pricing-card {
+  border: 3px solid #000 !important;
+  box-shadow: 6px 6px 0px #000 !important;
+  border-radius: 0px !important;
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+              box-shadow 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+.pricing-card:hover {
+  transform: translate(-4px, -4px) !important;
+  box-shadow: 10px 10px 0px #000 !important;
+}
+.pricing-card.premium {
+  border-color: var(--accent-color) !important;
+}
+.pricing-card.premium:hover {
+  box-shadow: 10px 10px 0px var(--accent-color) !important;
+}
+
+/* Mobile responsive under 480px */
+@media (max-width: 480px) {
+  :root {
+    --manga-border-width: 2px;
+  }
+  .hero-section {
+    padding: 2.5rem 1rem !important;
+  }
+  .hero-title {
+    font-size: 2.4rem !important;
+    text-shadow: 2px 2px 0px var(--accent-color), 4px 4px 0px #000000 !important;
+  }
+  .hero-subtitle {
+    font-size: 1rem !important;
+  }
+  .hero-ctas {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.8rem;
+  }
+  .hero-cta-btn {
+    width: 100% !important;
+    font-size: 1.1rem !important;
+    padding: 0.8rem 1.5rem !important;
+  }
+  .glass-panel, .manga-panel {
+    padding: 1.25rem 1rem !important;
+    border-width: 2px !important;
+    box-shadow: 4px 4px 0px #000000 !important;
+  }
+  .showcase-grid-collage {
+    height: 380px !important;
+    gap: 8px !important;
+  }
+  .showcase-card {
+    padding: 0.5rem !important;
+    border-width: 2px !important;
+    box-shadow: 3px 3px 0px #000 !important;
+  }
+  .showcase-title {
+    font-size: 0.85rem !important;
+  }
+  .showcase-tag {
+    font-size: 0.6rem !important;
+    padding: 0.05rem 0.25rem !important;
+  }
+  .pricing-container {
+    padding: 0 !important;
+  }
+  .pricing-card {
+    border-width: 2px !important;
+    box-shadow: 4px 4px 0px #000 !important;
+    padding: 1.5rem 1rem !important;
+  }
+}

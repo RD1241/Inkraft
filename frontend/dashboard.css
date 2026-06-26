@@ -764,3 +764,121 @@
     padding: 0.3rem 0.65rem;
   }
 }
+
+/* ────────────────────────────────────────────────────────────
+   Inkraft Premium Visual Pass - Dashboard Polishing (Task B)
+   ──────────────────────────────────────────────────────────── */
+
+.stat-card {
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+              box-shadow 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.stat-card:hover {
+  transform: translate(-3px, -3px) scale(1.01) !important;
+  box-shadow: 9px 9px 0 #000 !important;
+}
+
+.stat-icon-box {
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover .stat-icon-box {
+  transform: scale(1.1) rotate(-5deg);
+}
+
+/* Quick generate chips and form controls */
+.style-chip, .layout-chip-sm {
+  border-width: 2px !important;
+  box-shadow: 2px 2px 0px #000 !important;
+}
+
+.style-chip:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3px 3px 0px #000 !important;
+}
+
+.layout-chip-sm:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3px 3px 0px #000 !important;
+}
+
+.style-chip.active {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-color: #000 !important;
+}
+
+.layout-chip-sm.active {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-color: #000 !important;
+}
+
+/* Generate button custom polish */
+.qg-generate-btn {
+  background: var(--accent-color) !important;
+  color: #fff !important;
+  border: 3px solid #000 !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  font-family: 'Bangers', cursive !important;
+  font-size: 1.4rem !important;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.75rem 1.5rem !important;
+  cursor: pointer;
+  width: 100%;
+}
+
+.qg-generate-btn:hover {
+  background: #ff526a !important;
+  transform: translate(-3px, -3px) !important;
+  box-shadow: 7px 7px 0px #000 !important;
+}
+
+.qg-generate-btn:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px #000 !important;
+}
+
+/* Recent Comics Grid items */
+.recent-grid .hist-card {
+  border: 3px solid #000 !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  border-radius: 0px !important;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+              box-shadow 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.recent-grid .hist-card:hover {
+  transform: translate(-3px, -3px) !important;
+  box-shadow: 7px 7px 0px #000 !important;
+}
+
+/* Mobile responsive under 480px on dashboard */
+@media (max-width: 480px) {
+  .dashboard-main {
+    padding: 1rem 0.6rem !important;
+    gap: 1.25rem !important;
+  }
+  .stat-card {
+    border-width: 2px !important;
+    box-shadow: 4px 4px 0px #000 !important;
+  }
+  .stat-card:hover {
+    transform: none !important;
+    box-shadow: 4px 4px 0px #000 !important;
+  }
+  .recent-grid .hist-card {
+    border-width: 2px !important;
+    box-shadow: 3px 3px 0px #000 !important;
+  }
+  .recent-grid .hist-card:hover {
+    transform: none !important;
+    box-shadow: 3px 3px 0px #000 !important;
+  }
+  .qg-generate-btn {
+    border-width: 2px !important;
+    font-size: 1.2rem !important;
+  }
+}
