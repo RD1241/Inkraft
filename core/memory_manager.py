@@ -155,7 +155,12 @@ class MemoryManager:
                         distinguishing_features=row.get("distinguishing_features") or row.get("features", ""),
                         personality_note=row.get("personality_note") or row.get("personality", "")
                     ))
-                return sheets
+                # Only treat Supabase as authoritative when it actually returned rows.
+                # An empty result must fall through to the local SQLite Vault, otherwise
+                # locally-saved design sheets never load and the Vault override no-ops.
+                if sheets:
+                    return sheets
+                print("[MemoryManager] No characters in Supabase for this user; using local SQLite Vault.")
             except Exception as e:
                 print(f"[Warning] Failed to fetch characters from Supabase: {e}. Falling back to SQLite cache.")
 
@@ -190,13 +195,39 @@ class MemoryManager:
         return sheets
         
     def process_scene_characters(self, scene_data: dict, story_text: str = None):
-        """Extracts characters from scene JSON data and saves them to memory."""
+        """Extracts characters from scene JSON data and saves them to memory.
+
+        Vault-as-single-source-of-truth: when a character has a Character Vault
+        design sheet loaded for this job, its canonical description overrides
+        whatever the extractor produced. The rule-based/LLM extractor can assign
+        a generic *positional* fallback (e.g. char #2 female = "ponytail, casual
+        outfit") that has nothing to do with the character's real Vault entry,
+        which previously made the same character get described two different ways
+        (panel prompt vs. reference portrait) in one comic. Overriding here keeps
+        the panel prompt, the consistency profile, and the saved metadata all
+        aligned with the Vault.
+        """
         scene_id = scene_data.get("scene_id", 1)
         panel_index = scene_id - 1
         for character in scene_data.get('characters', []):
             name = character.get('name')
+            if not name:
+                continue
             desc = character.get('description')
             role = character.get('character_role')
-            if name and desc:
+
+            # Vault override: prefer the canonical design-sheet description.
+            sheet = self.get_design_sheet(name)
+            if sheet:
+                try:
+                    vault_desc = sheet.to_prompt_tokens()
+                    if vault_desc and vault_desc.strip():
+                        desc = vault_desc
+                        # Reconcile the scene dict so saved metadata.json matches the Vault.
+                        character['description'] = vault_desc
+                except Exception as e:
+                    print(f"[Warning] Failed to derive Vault description for {name}: {e}")
+
+            if desc:
                 self.add_character(name, desc, role=role, panel_index=panel_index, story_text=story_text)
 
