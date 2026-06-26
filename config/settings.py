@@ -11,6 +11,20 @@ FAL_AI_ENABLED = bool(FAL_KEY) and FAL_KEY != "your_fal_api_key_here"
 IMAGE_PROVIDER = "fal_ai" if FAL_AI_ENABLED else "stable_diffusion"
 os.environ["IMAGE_PROVIDER"] = IMAGE_PROVIDER
 
+# --- IMAGE ROUTING (tiered model selection) ---
+# IMAGE_ROUTING_MODE:
+#   "nano_all"   -> every panel with a named character uses the reference-conditioned
+#                   premium model (PREMIUM_IMAGE_MODEL). Best quality + consistency; SDXL
+#                   is only the automatic fallback. (default)
+#   "hybrid"     -> only shared-frame (multi-character) panels use the premium model;
+#                   single-character panels stay on cheap SDXL.
+#   "pro_shared" -> only shared frames, forced onto nano-banana-pro (max quality).
+IMAGE_ROUTING_MODE = os.environ.get("IMAGE_ROUTING_MODE", "nano_all")
+PREMIUM_IMAGE_MODEL = os.environ.get("PREMIUM_IMAGE_MODEL", "fal-ai/nano-banana/edit")
+# Soft per-job spend guardrail: once a job's estimated fal.ai cost reaches this,
+# remaining panels fall back to cheap SDXL so one comic can't runaway-spend.
+MAX_COST_PER_JOB = float(os.environ.get("MAX_COST_PER_JOB", "0.60"))
+
 # --- BASE DIRECTORIES ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUTPUTS_DIR = os.path.join(BASE_DIR, "outputs")

@@ -408,14 +408,39 @@ class FalAIImageProvider(ImageProvider):
             # Set up parameters
             is_shared_frame = is_shared_frame_panel(focus_character, secondary_character, action)
             image_urls = []
-            
-            if is_shared_frame:
-                print(f"[FalAI] Shared-frame panel detected. Setting up tiered routing to fal-ai/nano-banana-pro/edit.")
-                # We need a VALIDATED reference portrait for both characters.
+
+            # --- Tiered routing decision (config-driven) --------------------------
+            routing_mode = getattr(settings, "IMAGE_ROUTING_MODE", "nano_all")
+            premium_model = getattr(settings, "PREMIUM_IMAGE_MODEL", "fal-ai/nano-banana/edit")
+            if routing_mode == "pro_shared":
+                premium_model = "fal-ai/nano-banana-pro/edit"
+
+            if routing_mode in ("hybrid", "pro_shared"):
+                # Premium only for shared (multi-character) frames.
+                use_premium = is_shared_frame
+            else:  # "nano_all" — any panel with a named character is reference-conditioned.
+                use_premium = bool(focus_character or secondary_character)
+            premium_chars = [focus_character, secondary_character]
+
+            # Soft per-job cost guardrail: stop using the premium model once this job's
+            # estimated spend reaches the cap, so one comic can't runaway-spend.
+            if use_premium and job_id:
+                cap = getattr(settings, "MAX_COST_PER_JOB", 0.60)
+                with self.metrics_lock:
+                    spent_so_far = sum(m.get("estimated_request_cost", 0.0)
+                                       for m in self.job_metrics.get(job_id, []))
+                if spent_so_far >= cap:
+                    print(f"[FalAI] Job cost cap (${cap:.2f}) reached (${spent_so_far:.3f}) — "
+                          f"using cheap SDXL for this panel.")
+                    use_premium = False
+
+            if use_premium:
+                print(f"[FalAI] Routing to reference-conditioned model {premium_model} (mode={routing_mode}).")
+                # We need a VALIDATED reference portrait for each character in frame.
                 ref_dir = os.path.join(os.path.dirname(output_path), "references")
                 os.makedirs(ref_dir, exist_ok=True)
 
-                for char_name in [focus_character, secondary_character]:
+                for char_name in premium_chars:
                     if not char_name:
                         continue
                     ref_img_path = os.path.join(ref_dir, f"{char_name.lower()}_ref.png")
@@ -515,16 +540,16 @@ class FalAIImageProvider(ImageProvider):
 
                     if not valid_ref:
                         # 3) Graceful fallback: do NOT anchor a premium edit on a broken
-                        #    reference. Downgrade this panel to a standard SDXL multi-character
-                        #    render (cheaper, and avoids the two-different-people failure).
+                        #    reference. Downgrade this panel to a standard SDXL render
+                        #    (cheaper, and avoids the two-different-people failure).
                         print(f"[FalAI Warning] No valid reference for {char_name} after 2 attempts — "
-                              f"falling back to SDXL multi-character render (skipping premium nano-banana routing).")
+                              f"falling back to SDXL render (skipping premium reference routing).")
                         try:
                             if os.path.exists(ref_img_path):
                                 os.remove(ref_img_path)
                         except OSError:
                             pass
-                        is_shared_frame = False
+                        use_premium = False
                         image_urls = []
                         break
 
@@ -537,15 +562,14 @@ class FalAIImageProvider(ImageProvider):
                     print(f"[FalAI] Generated and uploaded VALID reference portrait for {char_name}: {cdn_url}")
 
             # Configure routing AFTER reference acquisition: only use the premium edit
-            # endpoint if we still hold valid shared-frame references (the loop above may
-            # have downgraded is_shared_frame to False on a failed reference).
-            if is_shared_frame:
-                current_endpoint = "fal-ai/nano-banana-pro/edit"
-                current_model_log_name = "fal-ai/nano-banana-pro/edit"
-                current_model_config = {
-                    "endpoint": "fal-ai/nano-banana-pro/edit"
-                }
+            # endpoint if we still hold valid references (the loop above may have
+            # downgraded use_premium to False on a failed reference).
+            if use_premium and image_urls:
+                current_endpoint = premium_model
+                current_model_log_name = premium_model
+                current_model_config = {"endpoint": premium_model}
             else:
+                use_premium = False
                 # Handle character consistency / reference image for single character panels
                 if reference_image_path and os.path.exists(reference_image_path):
                     # Upload the local reference image to fal.ai CDN to get public URL
@@ -557,7 +581,7 @@ class FalAIImageProvider(ImageProvider):
             network_exceptions = (httpx.HTTPError, httpx.TimeoutException, httpx.NetworkError, SSLError, TimeoutError, ConnectionError)
 
             current_prompt = positive_prompt
-            current_model_config = model_config if not is_shared_frame else current_model_config
+            current_model_config = model_config if not use_premium else current_model_config
 
             # Amendment 2: Prompt Risk Scoring
             score, should_sanitize = self.risk_analyzer.analyze(current_prompt)
@@ -567,11 +591,11 @@ class FalAIImageProvider(ImageProvider):
 
             for safety_attempt in range(3):
                 # Setup parameters dynamically depending on endpoint
-                if current_endpoint == "fal-ai/nano-banana-pro/edit":
+                if current_endpoint.startswith("fal-ai/nano-banana"):
+                    # Reference-conditioned edit endpoints (nano-banana / nano-banana-pro).
                     arguments = {
                         "prompt": current_prompt,
                         "image_urls": image_urls,
-                        "guidance_scale": 5.0,
                         "num_images": 1
                     }
                 else:
@@ -589,7 +613,7 @@ class FalAIImageProvider(ImageProvider):
                     if "model_name" in current_model_config:
                         arguments["model_name"] = current_model_config["model_name"]
                     
-                    if not is_shared_frame and reference_image_path and os.path.exists(reference_image_path):
+                    if not use_premium and reference_image_path and os.path.exists(reference_image_path):
                         if 'image_url' in locals():
                             if style_key == "realistic":
                                 arguments["control_image_url"] = image_url
@@ -614,6 +638,8 @@ class FalAIImageProvider(ImageProvider):
                         # Add cost based on the endpoint we submitted to
                         if current_endpoint == "fal-ai/nano-banana-pro/edit":
                             cost_rate = 0.15
+                        elif current_endpoint == "fal-ai/nano-banana/edit":
+                            cost_rate = 0.039
                         elif current_endpoint == "fal-ai/realistic-vision":
                             cost_rate = 0.039
                         else:
@@ -767,8 +793,9 @@ class FalAIImageProvider(ImageProvider):
                 break
 
             # If style is manga, convert the image to greyscale/monochrome to override any model/IP-Adapter color bias.
-            # Skip PIL grayscale post-processing (stopgap) for nano-banana-pro/edit panels.
-            if style and style.lower() == "manga" and current_endpoint != "fal-ai/nano-banana-pro/edit":
+            # Skip PIL grayscale post-processing (stopgap) for nano-banana edit panels
+            # (they produce native monochrome).
+            if style and style.lower() == "manga" and not current_endpoint.startswith("fal-ai/nano-banana"):
                 try:
                     with Image.open(output_path) as img:
                         grayscale_img = img.convert("L").convert("RGB")
