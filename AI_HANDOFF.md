@@ -45,10 +45,11 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 5. Open bugs (verified against real images/DB)
 
-- **[CRITICAL] Unvalidated reference portraits.** `fal_ai.py:457-471` caches/uses the SDXL reference portrait with no blank/black check (main panel path has one at :652). Confirmed: `outputs/20260626_160537/references/kaito_ref.png` = pure black, still used → Kaito looked like two different people. Cache (`<job>/references/`) is never invalidated, so a bad ref poisons future jobs.
-- **[CRITICAL] Vault is not the single source of truth.** Scene character descriptions can come from positional generic fallbacks (`llm_processor.py:639-655`, e.g. char#2 female = "ponytail, casual outfit") instead of the Vault sheet (Mei's real entry: school uniform, long straight hair, red clip). Reference path uses Vault; panel prompt can use the fallback → same character described two ways in one comic.
+- **[FIXED 2026-06-26 · 367ddd7] Unvalidated reference portraits.** Added `is_valid_portrait()` in `fal_ai.py`; generated + cached refs are now validated (rejects black/blank/low-variance), retried once with a fresh seed, and the panel gracefully downgrades to SDXL multi-char if no valid ref is producible. Stale blank cached refs are discarded. Verified against the real black `kaito_ref.png`.
+- **[FIXED 2026-06-26 · b872980] Vault is not the single source of truth.** `memory_manager.process_scene_characters` now overrides the extractor description with the Vault sheet's `to_prompt_tokens()` and reconciles the scene dict (metadata). Also fixed Vault loading: empty Supabase result now falls through to the SQLite Vault. Verified: Mei "ponytail, casual outfit" → "school uniform, red hair clip".
 - **[HIGH] Merged/contradictory action text.** A single panel action contained two mutually exclusive placements ("together at the desk" + "alone by the window"). LLM extraction emits fused beats; `storyboard_director.py:362-369` env-lock prepend compounds it. Needs a split/disambiguation step.
 - **[MED] Ghost characters not fully fixed.** 2+ occurrence rule helps but single-occurrence fallback (`llm_processor.py:632`) re-opens it; recent outputs still show `you_ref.png`, `two_ref.png`, `everything_ref.png`.
+- **[MED] Supabase character fetch is broken.** `memory_manager._fetch_design_sheets_for_user` queries a Supabase `characters` table that has no `user_id` column (`42703` error every call) — so the Vault has only ever loaded from local SQLite. Fine locally (SQLite fallback now reliable), but a Supabase-only prod box would have NO Vault. Fix the Supabase table/schema (or point at `character_design_sheets`) before deploy.
 - **[LOW] Residual daily-limit scaffolding.** `check_daily_limit` bypassed but `get_daily_usage` still returns `daily_limit:3` and frontend still tracks `ntc_daily_limit`.
 
 ## 6. Launch blockers / risks beyond bugs
@@ -75,6 +76,13 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 - **NEEDED for deploy:** Groq API key (free tier), Render/Railway account, Vercel account. Set secrets as host env vars — never commit them.
 
 ## 9. Task Log (append newest at top)
+
+### 2026-06-26 — Claude Code — Priority #1 + #2 (reference validation + Vault source of truth)
+- **#1 (367ddd7):** Added `is_valid_portrait()` to `providers/image/fal_ai.py`; validate generated AND cached reference portraits (reject black/blank/low-variance), retry once with a fresh seed, discard stale blank cached refs, and gracefully downgrade a shared-frame panel to SDXL multi-char if no valid ref is producible. Unit-verified against the real black `kaito_ref.png` (stddev 0.0 → rejected; valid images 63–105 → accepted).
+- **#2 (b872980):** `core/memory_manager.py` — `process_scene_characters` now overrides the extractor's (possibly generic/positional) description with the Vault sheet's canonical `to_prompt_tokens()`, and reconciles the scene dict so metadata matches. Fixed Vault loading: empty Supabase result now falls through to SQLite. Verified end-to-end against `character_memory.db`.
+- **Found:** Supabase `characters` fetch errors on a missing `user_id` column (logged as [MED] in §5). SQLite fallback covers it locally.
+- No fal.ai spend (all offline verification). Both fixes are happy-path-neutral.
+- **Next:** Priority #3 (switch LLM to Groq + verify without Ollama), then a single paid Kaito/Mei e2e (needs founder OK) to confirm both panel types render consistently.
 
 ### 2026-06-26 — Claude Code — Repo cleanup & reorganization
 - Moved 11 loose root scripts into `tools/` (via `git mv`); added a `sys.path` bootstrap to the 5 that import app packages (`check_env, check_models, run_benchmarks, run_retests, test_prompt_builder`). Verified `config`+`core` still import. Updated `start_server.ps1` → `tools/check_models.py`.
