@@ -50,7 +50,7 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 - **[HIGH] Merged/contradictory action text.** A single panel action contained two mutually exclusive placements ("together at the desk" + "alone by the window"). LLM extraction emits fused beats; `storyboard_director.py:362-369` env-lock prepend compounds it. Needs a split/disambiguation step.
 - **[MED] Ghost characters not fully fixed.** 2+ occurrence rule helps but single-occurrence fallback (`llm_processor.py:632`) re-opens it; recent outputs still show `you_ref.png`, `two_ref.png`, `everything_ref.png`.
 - **[MED] Supabase character fetch is broken.** `memory_manager._fetch_design_sheets_for_user` queries a Supabase `characters` table that has no `user_id` column (`42703` error every call) — so the Vault has only ever loaded from local SQLite. Fine locally (SQLite fallback now reliable), but a Supabase-only prod box would have NO Vault. Fix the Supabase table/schema (or point at `character_design_sheets`) before deploy.
-- **[LOW] Residual daily-limit scaffolding.** `check_daily_limit` bypassed but `get_daily_usage` still returns `daily_limit:3` and frontend still tracks `ntc_daily_limit`.
+- **[FIXED 2026-06-26 · 0555d53] Residual daily-limit scaffolding.** Stripped residual daily-limit scaffolding from `get_daily_usage` and API balance responses (frontend already cleaned up). Matches credits-only billing model.
 
 ## 6. Launch blockers / risks beyond bugs
 
@@ -76,6 +76,12 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 - **NEEDED for deploy:** Groq API key (free tier), Render/Railway account, Vercel account. Set secrets as host env vars — never commit them.
 
 ## 9. Task Log (append newest at top)
+
+### 2026-06-26 — Antigravity — Tasks A, B, C: Bubble polish, UI pass, daily-limit removal (3a460f6, 129df45, 0555d53)
+- **Task A (3a460f6):** Speech-bubble overlapping resolution, narration ordering, and font size scaling in `core/comic_renderer.py`. Sorted narration boxes to stay at the top and stacked bottom speech bubbles upwards. Scaled font sizes dynamically for long texts (down to 60-75%) to fit perfectly. Checked rendering color and monochrome results.
+- **Task B (129df45):** Premium neo-brutalist styling pass in `frontend/style.css` and `frontend/dashboard.css`. Standardized buttons, chips, and card borders/shadows with transition micro-animations. Refined spacing on hero section and wizard layouts. Polished responsive mobile layout under 480px.
+- **Task C (0555d53):** Removed residual daily-limit fields (`daily_limit`, `remaining_generations`) from `services/credits_service.py` (`get_daily_usage`) and `api/routes/credits.py` (`get_balance`) to align with the credits-only billing model.
+- **Verification:** Ran test script `tools/test_bubbles.py` to verify bubble layouts (results saved in `test_outputs/bubble_verification/`). Ran browser regression test `scratch/screenshot_tool/regression_run.js` before and after to verify the UI layouts (saved in `test_outputs/ui_before/` and `test_outputs/ui_after/`).
 
 ### 2026-06-26 — Claude Code — Option 1 routing + cost work (19b9fef, ad49fd9)
 - **Routing (19b9fef):** Config-driven tiered routing in `config/settings.py` (`IMAGE_ROUTING_MODE`=nano_all|hybrid|pro_shared, `PREMIUM_IMAGE_MODEL`=fal-ai/nano-banana/edit, `MAX_COST_PER_JOB`=0.60). `fal_ai.py` now routes EVERY panel with a named character through the cheap reference-conditioned Nano Banana (1 ref single-char, 2 refs shared); SDXL is fallback only. Soft per-job cost cap. Architected so a Standard/HQ toggle later = just changing PREMIUM_IMAGE_MODEL.
