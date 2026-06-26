@@ -35,6 +35,9 @@ Paste a story scene → system extracts characters & scenes (LLM) → plans a st
 - Character API: `api/routes/characters.py`; generation: `api/routes/generate.py`
 - Frontend: `frontend/*.html` + vanilla JS, auth store in `frontend/auth.js`
 - Run locally: `start_server.ps1` (kills/starts Ollama, then uvicorn on :8000)
+- Dev/utility & test scripts: `tools/` (moved out of root). Scripts that import app packages have a 1-line `sys.path` bootstrap at the top so they run from anywhere. `start_server.ps1` calls `tools/check_models.py`.
+- Background docs: `docs/` (e.g. `docs/PROJECT_HANDOVER.md`). Entry-point docs stay at root: `README.md`, `AI_HANDOFF.md`.
+- Importable packages live at root and were NOT moved: `api/ core/ services/ providers/ config/ frontend/`. Do not relocate these — it breaks imports.
 
 ## 4. Current state (verified 2026-06-26)
 
@@ -72,6 +75,13 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 - **NEEDED for deploy:** Groq API key (free tier), Render/Railway account, Vercel account. Set secrets as host env vars — never commit them.
 
 ## 9. Task Log (append newest at top)
+
+### 2026-06-26 — Claude Code — Repo cleanup & reorganization
+- Moved 11 loose root scripts into `tools/` (via `git mv`); added a `sys.path` bootstrap to the 5 that import app packages (`check_env, check_models, run_benchmarks, run_retests, test_prompt_builder`). Verified `config`+`core` still import. Updated `start_server.ps1` → `tools/check_models.py`.
+- Moved `PROJECT_HANDOVER.md` → `docs/`. Root now holds only entry-point docs + configs + importable packages.
+- Deleted regenerable junk: all in-project `__pycache__/` + `*.pyc`. Cleared 125 stale `outputs/` runs (kept the 14 recent Kaito/Mei runs incl. the black-ref repro `20260626_160537`). `outputs/` 332M→37M; project 1.8G→1.5G (rest is `venv/`). Kept `test_outputs/` (cited evidence).
+- Did NOT touch importable packages or any pipeline logic. No functional code changed.
+- **Next:** Priorities #1 (reference validation) + #2 (Vault source of truth) — still pending founder go-ahead, no fal spend.
 
 ### 2026-06-26 — Antigravity — Daily limit removal, UI regression, & output look polish
 - **Daily Limit Removal:** Stripped all residual daily-limit scaffolding from frontend (`auth.js`, `index.html`, `dashboard.html`, `history.html`, `characters.html`). Matches pure credits-only billing model.

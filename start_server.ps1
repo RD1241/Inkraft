@@ -97,7 +97,7 @@ Write-Host "  llama3 OK" -ForegroundColor Green
 # -----------------------------------------------------------------------
 Write-Host ""
 Write-Host "[4/5] Checking HuggingFace models on D drive..." -ForegroundColor Yellow
-& $VENV_PYTHON check_models.py
+& $VENV_PYTHON tools\check_models.py
 
 # -----------------------------------------------------------------------
 # Step 5: Free port 8000 if a stale process is holding it

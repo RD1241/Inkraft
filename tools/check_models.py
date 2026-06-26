@@ -1,3 +1,4 @@
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))  # path bootstrap: allow app imports after move into tools/
 import os, sys
 os.environ['HF_HOME']      = 'D:\\AI_Models\\HuggingFace'
 os.environ['HF_HUB_CACHE'] = 'D:\\AI_Models\\HuggingFace'
