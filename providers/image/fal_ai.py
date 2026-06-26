@@ -93,6 +93,30 @@ def build_portrait_prompt(name: str, sheet: dict) -> str:
     prompt = "masterpiece, best quality, anime style, " + ", ".join(cleaned)
     return prompt
 
+def is_valid_portrait(image_path: str, min_stddev: float = 6.0) -> bool:
+    """
+    Validate that a generated reference portrait actually contains an image —
+    not a blank/solid/black safety-block frame or a corrupt file.
+
+    Returns False for: unreadable files, near-black frames (max < 10),
+    near-solid single colors (max-min < 12), or images whose grayscale
+    pixel variance is below a sane threshold (almost no detail).
+    """
+    try:
+        from PIL import ImageStat
+        with Image.open(image_path) as img:
+            gray = img.convert("L")
+            lo, hi = gray.getextrema()
+            if hi < 10:            # pure black — classic safety block
+                return False
+            if hi - lo < 12:       # near-solid single color
+                return False
+            if ImageStat.Stat(gray).stddev[0] < min_stddev:  # almost no detail
+                return False
+        return True
+    except Exception:
+        return False
+
 STYLE_MODEL_MAP = {
     "manga": {
         "endpoint": "fal-ai/fast-sdxl",
@@ -384,93 +408,135 @@ class FalAIImageProvider(ImageProvider):
             
             if is_shared_frame:
                 print(f"[FalAI] Shared-frame panel detected. Setting up tiered routing to fal-ai/nano-banana-pro/edit.")
-                # We need reference portraits for both characters.
+                # We need a VALIDATED reference portrait for both characters.
                 ref_dir = os.path.join(os.path.dirname(output_path), "references")
                 os.makedirs(ref_dir, exist_ok=True)
-                
+
                 for char_name in [focus_character, secondary_character]:
                     if not char_name:
                         continue
                     ref_img_path = os.path.join(ref_dir, f"{char_name.lower()}_ref.png")
                     ref_url_path = os.path.join(ref_dir, f"{char_name.lower()}_ref.url")
-                    
+
+                    # 1) Reuse a cached reference ONLY if the cached image is still valid.
+                    #    A previously cached blank/black portrait must not poison this job.
                     char_url = None
                     if os.path.exists(ref_img_path) and os.path.exists(ref_url_path):
-                        try:
-                            with open(ref_url_path, "r", encoding="utf-8") as url_f:
-                                char_url = url_f.read().strip()
-                        except Exception as url_err:
-                            print(f"[FalAI Warning] Failed to read cached URL for {char_name}: {url_err}")
-                            
+                        if is_valid_portrait(ref_img_path):
+                            try:
+                                with open(ref_url_path, "r", encoding="utf-8") as url_f:
+                                    char_url = url_f.read().strip()
+                            except Exception as url_err:
+                                print(f"[FalAI Warning] Failed to read cached URL for {char_name}: {url_err}")
+                        else:
+                            print(f"[FalAI Warning] Cached reference for {char_name} is blank/invalid — discarding and regenerating.")
+                            for stale in (ref_img_path, ref_url_path):
+                                try:
+                                    os.remove(stale)
+                                except OSError:
+                                    pass
+
                     if char_url:
                         image_urls.append(char_url)
-                        print(f"[FalAI] Found cached reference image URL for {char_name}: {char_url}")
+                        print(f"[FalAI] Found valid cached reference image URL for {char_name}: {char_url}")
                         continue
-                    
-                    # Generate reference portrait via fast-sdxl
+
+                    # 2) Generate the reference portrait, validating the result.
+                    #    Up to 2 attempts: original + one fresh-seed retry on a blank/invalid frame.
                     print(f"[FalAI] Reference portrait not cached. Generating for {char_name}...")
                     sheet = get_character_sheet(char_name, job_id)
                     portrait_prompt = build_portrait_prompt(char_name, sheet)
-                    
-                    portrait_args = {
-                        "prompt": portrait_prompt,
-                        "negative_prompt": negative_prompt,
-                        "image_size": {
-                            "width": 1024,
-                            "height": 1024,
-                        },
-                        "num_inference_steps": 25,
-                        "model_name": "cagliostrolab/animagine-xl-3.1"
-                    }
-                    
-                    portrait_req_id = None
-                    for attempt in range(3):
-                        try:
-                            handler = fal_client.submit("fal-ai/fast-sdxl", portrait_args)
-                            portrait_req_id = handler.request_id
-                            actual_submissions += 1
-                            actual_request_ids.append(portrait_req_id)
-                            estimated_request_cost += 0.0025
-                            break
-                        except Exception as e:
-                            print(f"[FalAI Warning] Portrait submit attempt {attempt + 1} failed: {e}")
-                            if attempt == 2:
-                                raise e
+                    valid_ref = False
+                    for gen_attempt in range(2):
+                        portrait_args = {
+                            "prompt": portrait_prompt,
+                            "negative_prompt": negative_prompt,
+                            "image_size": {
+                                "width": 1024,
+                                "height": 1024,
+                            },
+                            "num_inference_steps": 25,
+                            "model_name": "cagliostrolab/animagine-xl-3.1"
+                        }
+                        if gen_attempt > 0:
+                            # Fresh random seed to escape a deterministic safety block.
+                            import random
+                            portrait_args["seed"] = random.randint(1, 2_000_000_000)
+                            print(f"[FalAI] Retrying reference portrait for {char_name} with a fresh seed...")
+
+                        portrait_req_id = None
+                        for attempt in range(3):
+                            try:
+                                handler = fal_client.submit("fal-ai/fast-sdxl", portrait_args)
+                                portrait_req_id = handler.request_id
+                                actual_submissions += 1
+                                actual_request_ids.append(portrait_req_id)
+                                estimated_request_cost += 0.0025
+                                break
+                            except Exception as e:
+                                print(f"[FalAI Warning] Portrait submit attempt {attempt + 1} failed: {e}")
+                                if attempt == 2:
+                                    raise e
+                                time.sleep(2)
+
+                        if not portrait_req_id:
+                            raise ValueError(f"Failed to submit reference portrait for {char_name}")
+
+                        # Poll portrait
+                        poll_start = time.time()
+                        p_result = None
+                        while time.time() - poll_start < 180:
+                            status_info = fal_client.status("fal-ai/fast-sdxl", portrait_req_id)
+                            if isinstance(status_info, fal_client.Completed):
+                                p_result = fal_client.result("fal-ai/fast-sdxl", portrait_req_id)
+                                break
                             time.sleep(2)
-                            
-                    if not portrait_req_id:
-                        raise ValueError(f"Failed to submit reference portrait for {char_name}")
-                        
-                    # Poll portrait
-                    poll_start = time.time()
-                    p_result = None
-                    while time.time() - poll_start < 180:
-                        status_info = fal_client.status("fal-ai/fast-sdxl", portrait_req_id)
-                        if isinstance(status_info, fal_client.Completed):
-                            p_result = fal_client.result("fal-ai/fast-sdxl", portrait_req_id)
+
+                        if not p_result or "images" not in p_result or len(p_result["images"]) == 0:
+                            raise ValueError(f"Failed to generate reference portrait for {char_name}")
+
+                        portrait_url = p_result["images"][0]["url"]
+
+                        # Download portrait
+                        resp = httpx.get(portrait_url, timeout=45)
+                        resp.raise_for_status()
+                        with open(ref_img_path, "wb") as f:
+                            f.write(resp.content)
+
+                        # 2a) VALIDATE before caching/using. A blank/black frame is a
+                        #     silent safety block — never anchor a premium edit on it.
+                        if is_valid_portrait(ref_img_path):
+                            valid_ref = True
                             break
-                        time.sleep(2)
-                        
-                    if not p_result or "images" not in p_result or len(p_result["images"]) == 0:
-                        raise ValueError(f"Failed to generate reference portrait for {char_name}")
-                        
-                    portrait_url = p_result["images"][0]["url"]
-                    
-                    # Download portrait
-                    resp = httpx.get(portrait_url, timeout=45)
-                    resp.raise_for_status()
-                    with open(ref_img_path, "wb") as f:
-                        f.write(resp.content)
-                        
-                    # Upload to fal CDN
+                        print(f"[FalAI Warning] Reference portrait for {char_name} came back blank/invalid (attempt {gen_attempt + 1}).")
+
+                    if not valid_ref:
+                        # 3) Graceful fallback: do NOT anchor a premium edit on a broken
+                        #    reference. Downgrade this panel to a standard SDXL multi-character
+                        #    render (cheaper, and avoids the two-different-people failure).
+                        print(f"[FalAI Warning] No valid reference for {char_name} after 2 attempts — "
+                              f"falling back to SDXL multi-character render (skipping premium nano-banana routing).")
+                        try:
+                            if os.path.exists(ref_img_path):
+                                os.remove(ref_img_path)
+                        except OSError:
+                            pass
+                        is_shared_frame = False
+                        image_urls = []
+                        break
+
+                    # 4) Cache the validated reference and upload to fal CDN.
                     cdn_url = fal_client.upload_file(ref_img_path)
                     with open(ref_url_path, "w", encoding="utf-8") as url_f:
                         url_f.write(cdn_url)
-                        
-                    image_urls.append(cdn_url)
-                    print(f"[FalAI] Generated and uploaded reference portrait for {char_name}: {cdn_url}")
 
-                # Configure model endpoint
+                    image_urls.append(cdn_url)
+                    print(f"[FalAI] Generated and uploaded VALID reference portrait for {char_name}: {cdn_url}")
+
+            # Configure routing AFTER reference acquisition: only use the premium edit
+            # endpoint if we still hold valid shared-frame references (the loop above may
+            # have downgraded is_shared_frame to False on a failed reference).
+            if is_shared_frame:
                 current_endpoint = "fal-ai/nano-banana-pro/edit"
                 current_model_log_name = "fal-ai/nano-banana-pro/edit"
                 current_model_config = {
