@@ -29,6 +29,11 @@ class StableDiffusionImageProvider(ImageProvider):
         action: str = "",
         panel_count: int = None,
         layout_type: str = None,
+        panel_width: int = 768,
+        panel_height: int = 1024,
+        focus_character: str = "",
+        secondary_character: str = "",
+        job_id: str = "",
     ) -> str:
         """
         Delegates image generation to SDGenerator.
@@ -47,6 +52,10 @@ class StableDiffusionImageProvider(ImageProvider):
             action=action,
             panel_count=panel_count,
             layout_type=layout_type,
+            panel_width=panel_width,
+            panel_height=panel_height,
+            focus_character=focus_character,
+            job_id=job_id,
         )
 
     def extract_character_anchor(self, image_path: str, output_path: str) -> str:

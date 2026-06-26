@@ -8,6 +8,9 @@ from core.prompt_builder import PromptBuilder, STYLE_TEMPLATES
 from core.memory_manager import MemoryManager
 from config import settings
 
+# Force IMAGE_PROVIDER to stable_diffusion to validate STYLE_TEMPLATES assertions
+settings.IMAGE_PROVIDER = "stable_diffusion"
+
 def test_prompt_builder():
     print("Initializing PromptBuilder and MemoryManager...")
     pb = PromptBuilder(style="anime")

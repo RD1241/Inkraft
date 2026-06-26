@@ -6,6 +6,9 @@ class ComicRenderer:
     def __init__(self):
         # We try to use a standard font, fallback to default if not found
         self.font_path = self._get_default_font()
+        import threading
+        self._rendered_lock = threading.Lock()
+        self._rendered_dialogues = {}
         
     def _get_default_font(self):
         # Try to find a standard Windows font (Arial)
@@ -34,151 +37,416 @@ class ComicRenderer:
                 lines.append(" ".join(current_line))
         return lines
 
-    def draw_speech_bubble(self, image_path: str, dialogues: list, output_path: str):
-        """Draws professional manga-style speech bubbles and narration boxes."""
-        if not dialogues:
-            return image_path
-            
+    def draw_speech_bubble(
+        self,
+        image_path: str,
+        dialogues: list,
+        output_path: str,
+        panel_index: int = 0,
+        style: str = "anime",
+        layout_type: str = "standard",
+        tension_level: int = 5,
+        action_description: str = "",
+        total_panels: int = 0
+    ):
+        """Draws professional manga-style speech bubbles, narration boxes, and sound effects."""
+        import re
+        import math
+        index = panel_index
+        if not index and image_path:
+            match = re.search(r'scene_(\d+)', os.path.basename(image_path))
+            if match:
+                index = int(match.group(1))
+            else:
+                index = 1
+
+        dialogues_list = dialogues if dialogues else []
+        print(f"[Renderer] Panel {index}: {len(dialogues_list)} dialogue bubbles to render")
+
+        if (index == 0 or index == 1) and total_panels >= 3 and dialogues_list:
+            print(f"[Renderer] WARNING: Dialogue on Panel 1 of {total_panels} — consider moving")
+
         try:
             img = Image.open(image_path).convert("RGBA")
             overlay = Image.new("RGBA", img.size, (255, 255, 255, 0))
             draw = ImageDraw.Draw(overlay)
             
+            # Recalculate speech bubble parameters relative to actual panel dimensions
+            font_size = 16
+            
+            # Bubble Style configuration
+            style_name = style.lower() if style else "anime"
+            if style_name == "manga":
+                bg_color = (255, 255, 255, 255)
+                border_color = (0, 0, 0, 255)
+                border_width = 3
+                text_fill_color = (0, 0, 0, 255)
+                shadow_fill_color = None
+                tail_style = "manga"
+                text_case = "uppercase"
+            elif style_name == "manhwa":
+                bg_color = (255, 255, 255, 255)
+                border_color = (34, 34, 34, 255) # #222222
+                border_width = 2
+                text_fill_color = (0, 0, 0, 255)
+                shadow_fill_color = (0, 0, 0, 60) # soft shadow
+                tail_style = "manhwa"
+                text_case = "normal"
+            elif style_name == "cinematic":
+                bg_color = (255, 255, 255, 255)
+                border_color = (0, 0, 0, 255)
+                border_width = 2
+                text_fill_color = (0, 0, 0, 255)
+                shadow_fill_color = None
+                tail_style = "cinematic"
+                text_case = "normal"
+            else:
+                bg_color = (255, 255, 255, 255)
+                border_color = (0, 0, 0, 255)
+                border_width = 2
+                text_fill_color = (0, 0, 0, 255)
+                shadow_fill_color = (0, 0, 0, 80)
+                tail_style = "manga"
+                text_case = "normal"
+
+            # Setup fonts
+            speech_font = None
+            narration_font = None
             if self.font_path:
                 try:
-                    font = ImageFont.truetype(self.font_path, 16)
+                    speech_font = ImageFont.truetype(self.font_path, font_size)
+                    # For narration, use non-bold Arial if available
+                    regular_font_path = self.font_path.replace("arialbd.ttf", "arial.ttf")
+                    if os.path.exists(regular_font_path):
+                        narration_font = ImageFont.truetype(regular_font_path, font_size)
+                    else:
+                        narration_font = speech_font
                 except IOError:
-                    font = ImageFont.load_default()
+                    speech_font = ImageFont.load_default()
+                    narration_font = speech_font
             else:
-                font = ImageFont.load_default()
-                
-            y_offset = 20
-            # Alternate positions to simulate comic flow
+                speech_font = ImageFont.load_default()
+                narration_font = speech_font
+
+            # Positioning logic
             positions = ['top-left', 'bottom-right', 'top-right', 'bottom-left']
+            # Alternate start corner based on panel_index
+            start_pos_idx = (index - 1) % 4
             
-            for i, dialogue in enumerate(dialogues):
-                pos = positions[i % len(positions)]
-                
+            y_offset = 20
+            used_corners = []
+
+            active_dialogues_count = 0
+            for i, dialogue in enumerate(dialogues_list):
                 speaker = str(dialogue.get("speaker", "Unknown")).strip()
                 dlg_type = str(dialogue.get("type", "speech")).lower()
                 
                 # Format and clean text
                 raw_text = dialogue.get('text', '').strip()
                 
-                # Strip character name prefixes (e.g., "new apprentice / Yes", "old mage: Can you...")
+                # Strip character name prefixes
                 if speaker:
                     spk_clean = speaker.lower()
                     for sep in ["/", ":", "-", "—"]:
                         for pattern in [f"{spk_clean}{sep}", f"{spk_clean} {sep}"]:
                             if raw_text.lower().startswith(pattern):
                                 raw_text = raw_text[len(pattern):].strip()
-                        # Also strip general matches
                         if sep in raw_text:
                             parts = raw_text.split(sep, 1)
                             if parts[0].strip().lower() == spk_clean:
                                 raw_text = parts[1].strip()
                                 
-                # General clean up of leading/trailing punctuation and quotes
                 while raw_text.startswith(':') or raw_text.startswith('/') or raw_text.startswith('-') or raw_text.startswith('"') or raw_text.startswith("'"):
                     raw_text = raw_text[1:].strip()
                 while raw_text.endswith('"') or raw_text.endswith("'"):
                     raw_text = raw_text[:-1].strip()
                 
-                # Join fragmented lines (replace newlines or multiple spaces with a single space)
                 raw_text = " ".join(raw_text.split())
+                if not raw_text:
+                    continue
 
-                if dlg_type == "narration" or speaker.lower() == "narrator":
-                    text = raw_text
-                    is_narration = True
+                # Check for duplicate dialogue string across panels in this comic (Fix 1)
+                job_dir = os.path.dirname(image_path) if image_path else "default_job"
+                with self._rendered_lock:
+                    if job_dir not in self._rendered_dialogues:
+                        self._rendered_dialogues[job_dir] = set()
+                    dialogue_key = raw_text.lower()
+                    if dialogue_key in self._rendered_dialogues[job_dir]:
+                        print(f"[Renderer] Skipping duplicate dialogue bubble in panel {index}: '{raw_text}'")
+                        continue
+                    self._rendered_dialogues[job_dir].add(dialogue_key)
+
+                # Now determine position since we are definitely rendering this bubble
+                pos = positions[(start_pos_idx + active_dialogues_count) % len(positions)]
+                used_corners.append(pos)
+                active_dialogues_count += 1
+
+                is_narration = (dlg_type == "narration" or speaker.lower() == "narrator")
+                text = raw_text
+
+                # Text Case transformation
+                if not is_narration and text_case == "uppercase" and dlg_type != "thought":
+                    text = text.upper()
+
+                # Padding based on text length
+                text_len = len(text)
+                if text_len < 20:
+                    padding_x = 12
+                    padding_y = 8
+                elif text_len <= 60:
+                    padding_x = 18
+                    padding_y = 12
                 else:
-                    # Strip any lingering "speaker / " prefixes inside the bubble text
-                    text = raw_text
-                    is_narration = False
-                
-                # Wrap Text
-                max_width = 220 if is_narration else 180
-                lines = self._wrap_text(text, font, max_width, draw)
-                
+                    padding_x = 24
+                    padding_y = 18
+
+                # Maximum width limit (45% of panel width)
+                max_width = int(img.width * 0.45)
+                active_font = narration_font if is_narration else speech_font
+
+                lines = self._wrap_text(text, active_font, max_width, draw)
                 if not lines:
                     continue
                     
-                line_height = draw.textbbox((0, 0), lines[0], font=font)[3] - draw.textbbox((0, 0), lines[0], font=font)[1]
-                text_width = max([draw.textbbox((0, 0), line, font=font)[2] - draw.textbbox((0, 0), line, font=font)[0] for line in lines])
+                line_height = draw.textbbox((0, 0), lines[0], font=active_font)[3] - draw.textbbox((0, 0), lines[0], font=active_font)[1]
+                text_width = max([draw.textbbox((0, 0), line, font=active_font)[2] - draw.textbbox((0, 0), line, font=active_font)[0] for line in lines])
                 
-                padding_x = 25
-                padding_y = 20
                 bubble_width = text_width + (padding_x * 2)
                 bubble_height = (line_height * len(lines)) + (padding_y * 2) + (len(lines) * 4)
-                
-                # Calculate Coordinates based on position
-                if pos.startswith('top'):
+
+                # Calculate Coordinates
+                if is_narration:
+                    # Narration boxes always at top
                     y = y_offset
-                    y_offset += bubble_height + 40
+                    y_offset += bubble_height + 15
                 else:
-                    y = img.height - bubble_height - 30
-                    
+                    if pos.startswith('top'):
+                        y = y_offset
+                        y_offset += bubble_height + 25
+                    else:
+                        y = img.height - bubble_height - 30
+
                 if pos.endswith('left'):
                     x = 20
                 else:
                     x = img.width - bubble_width - 20
                 
-                # Ensure it doesn't go out of bounds
+                # Bounds clamping
                 x = max(10, min(x, img.width - bubble_width - 10))
                 y = max(10, min(y, img.height - bubble_height - 10))
-                
+
                 if is_narration:
-                    # NARRATION BOX (Rectangular, black/dark background, white text)
+                    # Narration Box
                     box_fill = (20, 20, 20, 230)
                     text_fill = (255, 255, 255, 255)
                     outline_fill = (255, 255, 255, 200)
-                    
-                    # Draw Box
                     draw.rectangle([x, y, x + bubble_width, y + bubble_height], fill=box_fill, outline=outline_fill, width=2)
-                    
                 else:
-                    # SPEECH BUBBLE (Rounded, white background, black text, with tail)
-                    box_fill = (255, 255, 255, 245)
-                    text_fill = (0, 0, 0, 255)
-                    outline_fill = (0, 0, 0, 255)
-                    shadow_fill = (0, 0, 0, 100)
+                    # Speech Bubble outline & shadow
+                    if shadow_fill_color:
+                        draw.rounded_rectangle([x + 4, y + 4, x + bubble_width + 4, y + bubble_height + 4], radius=15, fill=shadow_fill_color)
                     
-                    # Draw drop shadow
-                    draw.rounded_rectangle([x + 4, y + 4, x + bubble_width + 4, y + bubble_height + 4], radius=15, fill=shadow_fill)
+                    draw.rounded_rectangle([x, y, x + bubble_width, y + bubble_height], radius=15, fill=bg_color, outline=border_color, width=border_width)
                     
-                    # Draw Bubble
-                    draw.rounded_rectangle([x, y, x + bubble_width, y + bubble_height], radius=15, fill=box_fill, outline=outline_fill, width=3)
-                    
-                    # Draw Tail (Dynamic based on position)
+                    # Tail drawing based on style
                     tail_base_x = x + (bubble_width // 2)
-                    if pos.startswith('top'):
-                        # Tail points down
-                        tail_tip_y = y + bubble_height + 30
-                        tail_polygon = [(tail_base_x - 10, y + bubble_height - 3), (tail_base_x + 10, y + bubble_height - 3), (tail_base_x - 15, tail_tip_y)]
-                        draw.polygon(tail_polygon, fill=box_fill, outline=outline_fill)
-                        draw.line([(tail_base_x - 9, y + bubble_height - 3), (tail_base_x + 9, y + bubble_height - 3)], fill=box_fill, width=4)
+                    if tail_style == "cinematic":
+                        # Rectangular tail
+                        if pos.startswith('top'):
+                            tail_rect = [tail_base_x - 6, y + bubble_height - 3, tail_base_x + 6, y + bubble_height + 15]
+                        else:
+                            tail_rect = [tail_base_x - 6, y - 15, tail_base_x + 6, y + 3]
+                        draw.rectangle(tail_rect, fill=bg_color, outline=border_color, width=border_width)
+                    elif tail_style == "manhwa":
+                        # Smooth curved tail
+                        if pos.startswith('top'):
+                            tail_poly = [
+                                (tail_base_x - 10, y + bubble_height - 3),
+                                (tail_base_x + 10, y + bubble_height - 3),
+                                (tail_base_x + 5, y + bubble_height + 12),
+                                (tail_base_x - 12, y + bubble_height + 18),
+                                (tail_base_x - 5, y + bubble_height + 8)
+                            ]
+                        else:
+                            tail_poly = [
+                                (tail_base_x - 10, y + 3),
+                                (tail_base_x + 10, y + 3),
+                                (tail_base_x + 12, y - 8),
+                                (tail_base_x + 5, y - 18),
+                                (tail_base_x - 5, y - 10)
+                            ]
+                        draw.polygon(tail_poly, fill=bg_color, outline=border_color)
+                        if pos.startswith('top'):
+                            draw.line([(tail_base_x - 8, y + bubble_height - 3), (tail_base_x + 8, y + bubble_height - 3)], fill=bg_color, width=4)
+                        else:
+                            draw.line([(tail_base_x - 8, y + 3), (tail_base_x + 8, y + 3)], fill=bg_color, width=4)
                     else:
-                        # Tail points up
-                        tail_tip_y = y - 30
-                        tail_polygon = [(tail_base_x - 10, y + 3), (tail_base_x + 10, y + 3), (tail_base_x + 15, tail_tip_y)]
-                        draw.polygon(tail_polygon, fill=box_fill, outline=outline_fill)
-                        draw.line([(tail_base_x - 9, y + 3), (tail_base_x + 9, y + 3)], fill=box_fill, width=4)
-                
+                        # Manga style: sharp angular tail
+                        if pos.startswith('top'):
+                            tail_len = max(5, min(25, img.height - (y + bubble_height) - 5))
+                            tail_tip_y = y + bubble_height + tail_len
+                            tail_polygon = [(tail_base_x - 10, y + bubble_height - 3), (tail_base_x + 10, y + bubble_height - 3), (tail_base_x - 15, tail_tip_y)]
+                            draw.polygon(tail_polygon, fill=bg_color, outline=border_color)
+                            draw.line([(tail_base_x - 9, y + bubble_height - 3), (tail_base_x + 9, y + bubble_height - 3)], fill=bg_color, width=4)
+                        else:
+                            tail_len = max(5, min(25, y - 5))
+                            tail_tip_y = y - tail_len
+                            tail_polygon = [(tail_base_x - 10, y + 3), (tail_base_x + 10, y + 3), (tail_base_x + 15, tail_tip_y)]
+                            draw.polygon(tail_polygon, fill=bg_color, outline=border_color)
+                            draw.line([(tail_base_x - 9, y + 3), (tail_base_x + 9, y + 3)], fill=bg_color, width=4)
+
                 # Draw Text
                 text_y = y + padding_y
                 for line in lines:
-                    line_w = draw.textbbox((0, 0), line, font=font)[2] - draw.textbbox((0, 0), line, font=font)[0]
-                    # Center text
+                    line_w = draw.textbbox((0, 0), line, font=active_font)[2] - draw.textbbox((0, 0), line, font=active_font)[0]
                     line_x = x + (bubble_width - line_w) // 2
-                    draw.text((line_x, text_y), line, font=font, fill=text_fill)
+                    draw.text((line_x, text_y), line, font=active_font, fill=text_fill_color)
                     text_y += line_height + 2
+
+            # 5. Emotion sound effects for action panels (Manga Sound Effects)
+            action_desc_lower = action_description.lower() if action_description else ""
+            sound_effect = None
+            
+            # Action keywords mapping
+            is_sword = any(w in action_desc_lower for w in ["sword", "blade", "slash", "steel", "clash", "clang"])
+            is_strike = any(w in action_desc_lower for w in ["strike", "punch", "kick", "hit", "slam", "smash", "thud", "crack", "clashed"])
+            is_explosion = any(w in action_desc_lower for w in ["explosion", "burst", "boom", "blast", "crash"])
+            is_movement = any(w in action_desc_lower for w in ["footstep", "run", "stomp", "dash", "chase"])
+            
+            has_trigger_keyword = is_sword or is_strike or is_explosion or is_movement
+            is_action_layout = (layout_type.lower() == "action" and tension_level >= 7)
+            
+            # Enable sound effects if the condition is met and style is not manhwa/manhua
+            should_trigger = (is_action_layout or has_trigger_keyword) and (style_name not in ["manhwa", "manhua"])
+            
+            if should_trigger:
+                import random
+                # Choose the style variant and SFX text
+                if is_sword:
+                    # Sword/blade actions
+                    sound_effect = "SLASH!" if "slash" in action_desc_lower else ("CLANG!" if "clang" in action_desc_lower else "CLASH!")
+                    angle = random.uniform(-10, 10)
+                    sfx_pos_type = "center-right"
+                elif is_strike:
+                    # Punch/strike actions
+                    sound_effect = "CRACK!" if "crack" in action_desc_lower else ("THUD!" if "thud" in action_desc_lower else "SMASH!")
+                    angle = random.uniform(-15, 5)
+                    sfx_pos_type = "center"
+                elif is_explosion:
+                    # Explosion/burst actions
+                    sound_effect = "BOOM!" if "boom" in action_desc_lower else ("BLAST!" if "blast" in action_desc_lower else "KA-BOOM!")
+                    angle = random.uniform(-5, 15)
+                    sfx_pos_type = "upper-center"
+                elif is_movement:
+                    # Footstep/movement actions
+                    sound_effect = "STOMP!" if "stomp" in action_desc_lower else "DASH!"
+                    angle = random.uniform(0, 10)
+                    sfx_pos_type = "lower-center"
+                else:
+                    # Fallback / other
+                    sound_effect = "CLASH!"
+                    angle = random.uniform(-15, 15)
+                    sfx_pos_type = "center-right"
+
+                # Log sound effect state (Fix 3)
+                print(f"[Renderer] Panel {index}: tension={tension_level}, layout={layout_type}, SFX={sound_effect}")
+                print(f"[Renderer] Panel {index}: SFX={sound_effect}")
+
+                sfx_font_size = 48
+                sfx_font = None
+                sfx_font_path_used = "PIL default"
+                font_paths = [
+                    "C:/Windows/Fonts/arialbd.ttf",     # Windows Arial Bold
+                    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",  # Linux
+                    "/System/Library/Fonts/Helvetica.ttc",  # Mac
+                ]
+                for path in font_paths:
+                    if os.path.exists(path):
+                        try:
+                            sfx_font = ImageFont.truetype(path, sfx_font_size)
+                            sfx_font_path_used = path
+                            break
+                        except Exception:
+                            pass
+                if sfx_font is None:
+                    # Try using self.font_path if available
+                    if self.font_path and os.path.exists(self.font_path):
+                        try:
+                            sfx_font = ImageFont.truetype(self.font_path, sfx_font_size)
+                            sfx_font_path_used = self.font_path
+                        except Exception:
+                            pass
+                if sfx_font is None:
+                    try:
+                        sfx_font = ImageFont.load_default(size=sfx_font_size)
+                    except Exception:
+                        sfx_font = ImageFont.load_default()
+                    sfx_font_path_used = "PIL default"
+                print(f"[Renderer] SFX font: {sfx_font_path_used}")
+
+                sfx_bbox = draw.textbbox((0, 0), sound_effect, font=sfx_font)
+                sfx_w = sfx_bbox[2] - sfx_bbox[0]
+                sfx_h = sfx_bbox[3] - sfx_bbox[1]
+
+                # Position selection based on whether speech bubbles exist (preventing collision)
+                if used_corners:
+                    first_bubble = used_corners[0]
+                    if first_bubble == "top-left":
+                        sfx_x = int(img.width * 0.75) - sfx_w // 2
+                        sfx_y = int(img.height * 0.75) - sfx_h // 2
+                        sfx_pos_type = "bottom-right"
+                    elif first_bubble == "top-right":
+                        sfx_x = int(img.width * 0.25) - sfx_w // 2
+                        sfx_y = int(img.height * 0.75) - sfx_h // 2
+                        sfx_pos_type = "bottom-left"
+                    elif first_bubble == "bottom-left":
+                        sfx_x = int(img.width * 0.75) - sfx_w // 2
+                        sfx_y = int(img.height * 0.25) - sfx_h // 2
+                        sfx_pos_type = "top-right"
+                    elif first_bubble == "bottom-right":
+                        sfx_x = int(img.width * 0.25) - sfx_w // 2
+                        sfx_y = int(img.height * 0.25) - sfx_h // 2
+                        sfx_pos_type = "top-left"
+                    else:
+                        sfx_x = int(img.width * 0.5) - sfx_w // 2
+                        sfx_y = int(img.height * 0.5) - sfx_h // 2
+                        sfx_pos_type = "center"
+                else:
+                    # If no speech bubble exists, position near the center-right of the panel
+                    sfx_x = int(img.width * 0.70) - sfx_w // 2
+                    sfx_y = int(img.height * 0.50) - sfx_h // 2
+                    sfx_pos_type = "center-right"
+
+                sfx_x = max(15, min(sfx_x, img.width - sfx_w - 15))
+                sfx_y = max(15, min(sfx_y, img.height - sfx_h - 15))
+
+                pad = 40
+                temp_w = sfx_w + pad * 2
+                temp_h = sfx_h + pad * 2
+                text_img = Image.new("RGBA", (temp_w, temp_h), (0, 0, 0, 0))
+                t_draw = ImageDraw.Draw(text_img)
                 
-            # Combine the overlay with the original image
+                # Draw white outline 4 times with 3px offset in each direction
+                offsets = [(-3, -3), (-3, 3), (3, -3), (3, 3)]
+                for ox, oy in offsets:
+                    t_draw.text((pad + ox, pad + oy), sound_effect, font=sfx_font, fill=(255, 255, 255, 255))
+                # Draw black text in center
+                t_draw.text((pad, pad), sound_effect, font=sfx_font, fill=(0, 0, 0, 255))
+
+                rotated_img = text_img.rotate(angle, expand=True, resample=Image.Resampling.BICUBIC)
+                
+                paste_x = sfx_x - pad
+                paste_y = sfx_y - pad
+                overlay.paste(rotated_img, (paste_x, paste_y), rotated_img)
+                print(f"[Renderer] Sound effect '{sound_effect}' rendered at corner '{sfx_pos_type}' with angle {angle:.1f}°")
+
+            # Combine overlay with image
             final_img = Image.alpha_composite(img, overlay).convert("RGB")
             final_img.save(output_path)
             return output_path
             
         except Exception as e:
-            print(f"Error drawing speech bubble: {e}")
+            print(f"Error drawing speech bubble/SFX: {e}")
             return image_path
 
     def _add_watermark_to_pillow_image(self, img: Image.Image) -> Image.Image:
@@ -426,8 +694,11 @@ class ComicRenderer:
                     
                 img = Image.open(image_paths[i])
                 
-                # Resize image to panel dimensions
-                resized_img = img.resize((panel.width, panel.height), Image.Resampling.LANCZOS)
+                # Resize image to panel dimensions but only if dimensions don't already match
+                if img.size == (panel.width, panel.height):
+                    resized_img = img
+                else:
+                    resized_img = img.resize((panel.width, panel.height), Image.Resampling.LANCZOS)
                 
                 # White border (3px on each side = +6px total)
                 bordered_img = Image.new("RGB", (panel.width + 6, panel.height + 6), "white")
@@ -444,3 +715,176 @@ class ComicRenderer:
             
         except Exception as e:
             raise RuntimeError(f"Error in create_custom_layout_page: {e}")
+
+    def create_single_page(
+        self,
+        image,
+        dialogue: str,
+        narration: str,
+        style: str,
+        watermark: bool
+    ) -> Image.Image:
+        """
+        Renders a single-page webtoon-style comic page.
+        Resizes and crops image to 1024x1450, overlays narration at top, dialogue above the bottom 150px,
+        and optionally adds the Inkraft watermark.
+        """
+        target_w, target_h = 1024, 1450
+        w, h = image.size
+        
+        # 1. Resize and crop from center if aspect ratio differs
+        if w != target_w or h != target_h:
+            target_ratio = target_w / target_h
+            current_ratio = w / h
+            if current_ratio > target_ratio:
+                new_w = int(h * target_ratio)
+                left = (w - new_w) // 2
+                image = image.crop((left, 0, left + new_w, h))
+            else:
+                new_h = int(w / target_ratio)
+                top = (h - new_h) // 2
+                image = image.crop((0, top, w, top + new_h))
+            image = image.resize((target_w, target_h), Image.Resampling.LANCZOS)
+
+        img_rgba = image.convert("RGBA")
+        overlay = Image.new("RGBA", img_rgba.size, (255, 255, 255, 0))
+        draw = ImageDraw.Draw(overlay)
+
+        # 2. Add dark semi-transparent narration box at TOP of image
+        if narration and narration.strip():
+            box_fill = (20, 20, 20, 180)
+            draw.rectangle([0, 0, target_w, 80], fill=box_fill)
+            
+            font_size = 18
+            try:
+                italic_font_path = self.font_path.replace("arialbd.ttf", "ariali.ttf").replace("arial.ttf", "ariali.ttf")
+                if not os.path.exists(italic_font_path):
+                    italic_font_path = "C:\\Windows\\Fonts\\ariali.ttf"
+                if os.path.exists(italic_font_path):
+                    n_font = ImageFont.truetype(italic_font_path, font_size)
+                elif self.font_path:
+                    n_font = ImageFont.truetype(self.font_path, font_size)
+                else:
+                    n_font = ImageFont.load_default()
+            except Exception:
+                n_font = ImageFont.load_default()
+
+            lines = self._wrap_text(narration, n_font, target_w - 60, draw)
+            line_height = draw.textbbox((0, 0), lines[0], font=n_font)[3] - draw.textbbox((0, 0), lines[0], font=n_font)[1] if lines else 20
+            
+            total_h = len(lines) * (line_height + 4)
+            text_y = (80 - total_h) // 2
+            
+            for line in lines:
+                line_w = draw.textbbox((0, 0), line, font=n_font)[2] - draw.textbbox((0, 0), line, font=n_font)[0]
+                line_x = (target_w - line_w) // 2
+                draw.text((line_x, text_y), line, font=n_font, fill=(255, 255, 255, 255))
+                text_y += line_height + 4
+
+        final_img = Image.alpha_composite(img_rgba, overlay)
+
+        # 3. Add speech bubble above the lower 150px
+        if dialogue:
+            rgb_img = final_img.convert("RGB")
+            overlay_dlg = Image.new("RGBA", rgb_img.size, (255, 255, 255, 0))
+            draw_dlg = ImageDraw.Draw(overlay_dlg)
+
+            # Style configuration (matching draw_speech_bubble)
+            style_name = style.lower() if style else "anime"
+            if style_name == "manga":
+                bg_color = (255, 255, 255, 255)
+                border_color = (0, 0, 0, 255)
+                border_width = 3
+                text_fill_color = (0, 0, 0, 255)
+                shadow_fill_color = None
+                tail_style = "manga"
+                text_case = "uppercase"
+            elif style_name == "manhwa":
+                bg_color = (255, 255, 255, 255)
+                border_color = (34, 34, 34, 255)
+                border_width = 2
+                text_fill_color = (0, 0, 0, 255)
+                shadow_fill_color = (0, 0, 0, 60)
+                tail_style = "manhwa"
+                text_case = "normal"
+            elif style_name == "cinematic":
+                bg_color = (255, 255, 255, 255)
+                border_color = (0, 0, 0, 255)
+                border_width = 2
+                text_fill_color = (0, 0, 0, 255)
+                shadow_fill_color = None
+                tail_style = "cinematic"
+                text_case = "normal"
+            else:
+                bg_color = (255, 255, 255, 255)
+                border_color = (0, 0, 0, 255)
+                border_width = 2
+                text_fill_color = (0, 0, 0, 255)
+                shadow_fill_color = (0, 0, 0, 80)
+                tail_style = "manga"
+                text_case = "normal"
+
+            font_size = 18
+            try:
+                speech_font = ImageFont.truetype(self.font_path, font_size) if self.font_path else ImageFont.load_default()
+            except Exception:
+                speech_font = ImageFont.load_default()
+
+            text = dialogue
+            if text_case == "uppercase":
+                text = text.upper()
+
+            lines = self._wrap_text(text, speech_font, int(target_w * 0.5), draw_dlg)
+            if lines:
+                line_height = draw_dlg.textbbox((0, 0), lines[0], font=speech_font)[3] - draw_dlg.textbbox((0, 0), lines[0], font=speech_font)[1]
+                text_width = max([draw_dlg.textbbox((0, 0), line, font=speech_font)[2] - draw_dlg.textbbox((0, 0), line, font=speech_font)[0] for line in lines])
+                
+                padding_x = 20
+                padding_y = 14
+                bubble_width = text_width + (padding_x * 2)
+                bubble_height = (line_height * len(lines)) + (padding_y * 2) + (len(lines) * 4)
+
+                x = (target_w - bubble_width) // 2
+                y = target_h - 150 - bubble_height
+
+                if shadow_fill_color:
+                    draw_dlg.rounded_rectangle([x + 4, y + 4, x + bubble_width + 4, y + bubble_height + 4], radius=15, fill=shadow_fill_color)
+                draw_dlg.rounded_rectangle([x, y, x + bubble_width, y + bubble_height], radius=15, fill=bg_color, outline=border_color, width=border_width)
+
+                tail_base_x = target_w // 2
+                if tail_style == "cinematic":
+                    tail_rect = [tail_base_x - 6, y + bubble_height - 3, tail_base_x + 6, y + bubble_height + 15]
+                    draw_dlg.rectangle(tail_rect, fill=bg_color, outline=border_color, width=border_width)
+                elif tail_style == "manhwa":
+                    tail_poly = [
+                        (tail_base_x - 10, y + bubble_height - 3),
+                        (tail_base_x + 10, y + bubble_height - 3),
+                        (tail_base_x + 5, y + bubble_height + 12),
+                        (tail_base_x - 12, y + bubble_height + 18),
+                        (tail_base_x - 5, y + bubble_height + 8)
+                    ]
+                    draw_dlg.polygon(tail_poly, fill=bg_color, outline=border_color)
+                    draw_dlg.line([(tail_base_x - 8, y + bubble_height - 3), (tail_base_x + 8, y + bubble_height - 3)], fill=bg_color, width=4)
+                else:
+                    tail_polygon = [
+                        (tail_base_x - 10, y + bubble_height - 3), 
+                        (tail_base_x + 10, y + bubble_height - 3), 
+                        (tail_base_x - 15, y + bubble_height + 20)
+                    ]
+                    draw_dlg.polygon(tail_polygon, fill=bg_color, outline=border_color)
+                    draw_dlg.line([(tail_base_x - 9, y + bubble_height - 3), (tail_base_x + 9, y + bubble_height - 3)], fill=bg_color, width=4)
+
+                text_y = y + padding_y
+                for line in lines:
+                    line_w = draw_dlg.textbbox((0, 0), line, font=speech_font)[2] - draw_dlg.textbbox((0, 0), line, font=speech_font)[0]
+                    line_x = x + (bubble_width - line_w) // 2
+                    draw_dlg.text((line_x, text_y), line, font=speech_font, fill=text_fill_color)
+                    text_y += line_height + 2
+
+            final_img = Image.alpha_composite(final_img, overlay_dlg)
+
+        # 4. Add watermark if enabled
+        if watermark:
+            final_img = self._add_watermark_to_pillow_image(final_img)
+
+        return final_img

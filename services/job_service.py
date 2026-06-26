@@ -75,6 +75,7 @@ class JobService:
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS jobs (
                 job_id TEXT PRIMARY KEY,
+                user_id TEXT,
                 status TEXT,
                 progress TEXT,
                 created_at TEXT,
@@ -83,11 +84,12 @@ class JobService:
                 error TEXT,
                 panel_count INTEGER,
                 layout_type TEXT,
-                panel_count_mode TEXT
+                panel_count_mode TEXT,
+                generation_format TEXT
             )
         ''')
         # Add columns if upgrading from an old schema
-        for col_name, col_type in [("progress", "TEXT"), ("panel_count", "INTEGER"), ("layout_type", "TEXT"), ("panel_count_mode", "TEXT")]:
+        for col_name, col_type in [("user_id", "TEXT"), ("progress", "TEXT"), ("panel_count", "INTEGER"), ("layout_type", "TEXT"), ("panel_count_mode", "TEXT"), ("generation_format", "TEXT")]:
             try:
                 cursor.execute(f"ALTER TABLE jobs ADD COLUMN {col_name} {col_type}")
             except Exception:
@@ -95,7 +97,7 @@ class JobService:
         conn.commit()
         conn.close()
 
-    def create_job(self, panel_count: int = None, layout_type: str = None, panel_count_mode: str = None) -> str:
+    def create_job(self, panel_count: int = None, layout_type: str = None, panel_count_mode: str = None, generation_format: str = None, user_id: str = None) -> str:
         job_id = str(uuid.uuid4())
         now = datetime.now().isoformat()
         status = "queued"
@@ -105,19 +107,19 @@ class JobService:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO jobs (job_id, status, progress, created_at, updated_at, panel_count, layout_type, panel_count_mode)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (job_id, status, progress, now, now, panel_count, layout_type, panel_count_mode))
+            INSERT INTO jobs (job_id, user_id, status, progress, created_at, updated_at, panel_count, layout_type, panel_count_mode, generation_format)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (job_id, user_id, status, progress, now, now, panel_count, layout_type, panel_count_mode, generation_format))
         conn.commit()
         conn.close()
 
         # 2. Write to Supabase if enabled
         if self.supabase_enabled:
-            self._supabase_create_job(job_id, status, progress, now, panel_count, layout_type, panel_count_mode)
+            self._supabase_create_job(job_id, status, progress, now, panel_count, layout_type, panel_count_mode, generation_format, user_id)
 
         return job_id
 
-    def _supabase_create_job(self, job_id: str, status: str, progress: str, created_at: str, panel_count: int = None, layout_type: str = None, panel_count_mode: str = None):
+    def _supabase_create_job(self, job_id: str, status: str, progress: str, created_at: str, panel_count: int = None, layout_type: str = None, panel_count_mode: str = None, generation_format: str = None, user_id: str = None):
         url = f"{self.supabase_url.rstrip('/')}/rest/v1/jobs"
         headers = {
             "apikey": self.supabase_key,
@@ -135,8 +137,11 @@ class JobService:
             "error": None,
             "panel_count": panel_count,
             "layout_type": layout_type,
-            "panel_count_mode": panel_count_mode
+            "panel_count_mode": panel_count_mode,
+            "generation_format": generation_format
         }
+        if user_id:
+            payload["user_id"] = user_id
         try:
             r = httpx.post(url, headers=headers, json=payload, timeout=10.0)
             r.raise_for_status()
@@ -173,6 +178,8 @@ class JobService:
          - Rendering and assembly complete: 100%
         """
         if status == "completed":
+            if progress_str and "Your page is ready!" in progress_str:
+                return [progress_str]
             return ["100% - Rendering and assembly complete"]
         if status == "failed":
             return [f"Failed - {error or 'Unknown error'}"]
@@ -181,6 +188,10 @@ class JobService:
 
         if not progress_str:
             return []
+
+        # If progress_str already has a percentage prefix, bypass parsing and return it directly
+        if re.match(r"^\d+%", progress_str.strip()):
+            return [progress_str]
 
         # Parse panel number and total panels if available (e.g. "Drawing panel 1/4...")
         panel_match = re.search(r"Drawing panel\s+(\d+)\s*/\s*(\d+)", progress_str, re.IGNORECASE)
@@ -280,7 +291,7 @@ class JobService:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT job_id, status, progress, created_at, updated_at, result, error, panel_count, layout_type, panel_count_mode
+            SELECT job_id, user_id, status, progress, created_at, updated_at, result, error, panel_count, layout_type, panel_count_mode, generation_format
             FROM jobs WHERE job_id = ?
         ''', (job_id,))
         row = cursor.fetchone()
@@ -289,15 +300,17 @@ class JobService:
         if row:
             return {
                 "job_id": row[0],
-                "status": row[1],
-                "progress": row[2],
-                "created_at": row[3],
-                "updated_at": row[4],
-                "result": json.loads(row[5]) if row[5] else None,
-                "error": row[6],
-                "panel_count": row[7],
-                "layout_type": row[8],
-                "panel_count_mode": row[9],
+                "user_id": row[1],
+                "status": row[2],
+                "progress": row[3],
+                "created_at": row[4],
+                "updated_at": row[5],
+                "result": json.loads(row[6]) if row[6] else None,
+                "error": row[7],
+                "panel_count": row[8],
+                "layout_type": row[9],
+                "panel_count_mode": row[10],
+                "generation_format": row[11],
             }
 
         # Query Supabase if enabled as a fallback
@@ -317,10 +330,11 @@ class JobService:
                     conn = sqlite3.connect(self.db_path)
                     cursor = conn.cursor()
                     cursor.execute('''
-                        INSERT OR REPLACE INTO jobs (job_id, status, progress, created_at, updated_at, result, error, panel_count, layout_type, panel_count_mode)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        INSERT OR REPLACE INTO jobs (job_id, user_id, status, progress, created_at, updated_at, result, error, panel_count, layout_type, panel_count_mode, generation_format)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ''', (
                         job_data.get("id"),
+                        job_data.get("user_id"),
                         job_data.get("status"),
                         job_data.get("progress"),
                         job_data.get("created_at"),
@@ -329,13 +343,15 @@ class JobService:
                         job_data.get("error"),
                         job_data.get("panel_count"),
                         job_data.get("layout_type"),
-                        job_data.get("panel_count_mode")
+                        job_data.get("panel_count_mode"),
+                        job_data.get("generation_format")
                     ))
                     conn.commit()
                     conn.close()
 
                     return {
                         "job_id": job_data.get("id"),
+                        "user_id": job_data.get("user_id"),
                         "status": job_data.get("status"),
                         "progress": job_data.get("progress"),
                         "created_at": job_data.get("created_at"),
@@ -345,6 +361,7 @@ class JobService:
                         "panel_count": job_data.get("panel_count"),
                         "layout_type": job_data.get("layout_type"),
                         "panel_count_mode": job_data.get("panel_count_mode"),
+                        "generation_format": job_data.get("generation_format"),
                     }
             except Exception as e:
                 print(f"[Warning] Failed to fetch job from Supabase: {e}")

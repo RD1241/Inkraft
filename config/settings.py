@@ -68,10 +68,7 @@ SD_CONTROLNET_CONDITIONING_SCALE = 0.70
 # --- PROMPT SETTINGS ---
 MASTER_STYLE_TAG = "masterpiece, highly detailed, dramatic cinematic lighting, vibrant colors, anime style, comic book panel"
 PROMPT_NEGATIVE = (
-    "1girl, girl, woman, female, breasts, cleavage, feminine face, "
-    "robe, cloak, cape, dress, kimono, toga, gown, beard, facial hair, face mask, helmet, robotic arm, "
-    "red clothing, red pants, ninja, modern clothing, "
-    "sliding door, modern window, glass door, contemporary architecture, "
+    "nsfw, naked, nude, nipples, breasts, cleavage, suggestive, explicit, "
     "duplicate character, two people, extra limbs, deformed hands, "
     "bad anatomy, extra fingers, fused fingers, blurry, "
     "low quality, worst quality, watermark, text, signature, "

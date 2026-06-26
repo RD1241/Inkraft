@@ -24,6 +24,11 @@ class ImageProvider(ABC):
         action: str = "",
         panel_count: int = None,
         layout_type: str = None,
+        panel_width: int = 768,
+        panel_height: int = 1024,
+        focus_character: str = "",
+        secondary_character: str = "",
+        job_id: str = "",
     ) -> str:
         """
         Generate an image based on style/prompts and save it to output_path.

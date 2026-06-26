@@ -6,6 +6,14 @@ Prompt structure: camera, emotion, lighting, character, action/environment, styl
 """
 import difflib
 from config import settings
+from core.action_library import ActionLibrary
+from core.interaction_composer import InteractionComposer
+
+_action_library = ActionLibrary()
+_interaction_composer = InteractionComposer()
+
+CHARACTER_SEPARATOR_LABELS = ["CHARACTER_A", "CHARACTER_B", "CHARACTER_C"]
+BACKGROUND_LABEL = "BACKGROUND_SUPPORTING_CHARACTERS"
 
 # Detailed style templates mapping prefix and lighting_override
 STYLE_TEMPLATES = {
@@ -14,7 +22,7 @@ STYLE_TEMPLATES = {
         "lighting_override": "vibrant lighting, colorful shadows"
     },
     "manga": {
-        "prefix": "manga illustration, black and white, high contrast ink lines, screentone",
+        "prefix": "manga illustration, monochrome, greyscale, black and white, ink wash, screentone, manga panel, high contrast ink lines",
         "lighting_override": "stark shadows, high-contrast lighting"
     },
     "manhwa": {
@@ -33,6 +41,87 @@ STYLE_TEMPLATES = {
         "prefix": "realistic photograph, highly detailed, photorealistic, 8k resolution",
         "lighting_override": "natural sunlight, photorealistic reflections"
     }
+}
+
+SDXL_STYLE_TEMPLATES = {
+    "manga": {
+        "prefix": "masterpiece, best quality, ultra detailed, manga style, monochrome, greyscale, black and white, ink wash, screentone, manga panel, sharp linework, dramatic screentones, dynamic composition",
+        "lighting_override": "stark shadows, high-contrast lighting"
+    },
+    "manhwa": {
+        "prefix": "masterpiece, best quality, ultra detailed, manhwa style, Korean webtoon art, full color, soft cel shading, clean precise linework, professional digital art",
+        "lighting_override": "soft studio lighting, gentle ambient glow"
+    },
+    "anime": {
+        "prefix": "masterpiece, best quality, ultra detailed, anime style, vibrant colors, expressive eyes, clean cel animation art, professional anime key visual",
+        "lighting_override": "vibrant lighting, colorful shadows"
+    },
+    "cinematic": {
+        "prefix": "masterpiece, best quality, ultra detailed, cinematic lighting, graphic novel style, realistic proportions, dramatic shadows, film composition, concept art quality",
+        "lighting_override": "dramatic cinematic lighting, volumetric raytracing, chiaroscuro"
+    },
+    "realistic": {
+        "prefix": (
+            "RAW photo, photorealistic, professional photography, "
+            "realistic lighting, highly detailed skin texture, "
+            "natural skin pores, realistic shadows, natural proportions, "
+            "depth of field, realistic textures, 8k resolution, "
+            "sharp focus, professional color grading"
+        ),
+        "lighting_override": "natural soft lighting, realistic ambient occlusion, photographic shadows"
+    },
+}
+
+# V3 Phase 0: Dedicated SDXL Realistic style template for RealVisXL V4.0
+# Do NOT reuse anime/manhwa templates for realistic generation.
+SDXL_REALISTIC_STYLE_TEMPLATE = {
+    "prefix": (
+        "RAW photo, photorealistic, professional photography, "
+        "realistic lighting, highly detailed skin texture, "
+        "natural skin pores, realistic shadows, natural proportions, "
+        "depth of field, realistic textures, 8k resolution, "
+        "sharp focus, professional color grading"
+    ),
+    "lighting_override": "natural soft lighting, realistic ambient occlusion, photographic shadows",
+    "negative": (
+        "cartoon, anime, illustration, painting, drawing, sketch, "
+        "unrealistic, fake, plastic skin, doll-like, CGI render, "
+        "low quality, blurry, overexposed, bad anatomy"
+    )
+}
+
+
+ENVIRONMENT_VISUAL_ANCHORS = {
+    "library": "inside a school library background, wooden bookshelves filled with books, study tables, library aisles",
+    "dojo": "inside a traditional Japanese martial arts dojo background, tatami mats, wooden walls",
+    "classroom": "inside a school classroom background, student desks, blackboard, windows",
+    "hallway": "inside a school hallway background, lockers, classroom doors",
+    "office": "office background, office desk, computer monitor, chairs",
+    "forest": "dense forest background, trees, leaves, natural sunlight, foliage",
+    "castle": "castle interior background, stone walls, banners, arches",
+    "dungeon": "dungeon background, dark stone walls, chains, dim torchlight",
+    "city": "modern city street background, buildings, concrete pavement, urban skyline",
+    "street": "outdoor street background, buildings, lamp posts, sidewalk",
+    "alley": "dark narrow alleyway background, brick walls, trash cans",
+    "rooftop": "rooftop background, city skyline, railings, open sky",
+    "temple": "ancient temple background, pillars, stone steps, statues",
+    "cave": "dark cavern background, stone walls, stalactites",
+    "desert": "sand dunes background, barren landscape, dry desert sand, hot sun",
+    "battlefield": "battlefield background, smoke, ruins, debris, cracked ground",
+    "arena": "coliseum arena background, stone stands, spectators",
+    "village": "village street background, small wooden houses, dirt path",
+    "mountain": "mountain peaks background, rocky terrain, snowy cliffs, blue sky",
+    "river": "river bank background, flowing water, rocks, trees",
+    "bridge": "wooden bridge background, river below, scenery",
+    "throne room": "grand throne room background, red carpet, golden throne, banners",
+    "ruins": "ancient ruins background, broken stone pillars, overgrown moss, debris",
+    "tower": "stone tower interior background, spiral staircase, narrow windows",
+    "courtyard": "school courtyard background, stone pavement, benches, trees",
+    "market": "bustling outdoor market background, market stalls, food stands",
+    "lab": "scientific laboratory background, test tubes, computer screens, futuristic equipment",
+    "ship": "ship deck background, wooden planks, ocean waves, sails, masts",
+    "school": "school building background, brick walls, windows, hallways",
+    "palace": "grand palace background, marble floors, tall columns, chandeliers"
 }
 
 
@@ -55,26 +144,99 @@ class PromptBuilder:
     def _gender_negative(self, character: dict) -> str:
         return character.get("_negative_gender", "")
 
-    def _character_token(self, character: dict, is_focus: bool, memory_manager=None) -> str:
+    def build_character_identity_block(self, character: dict, memory_manager, label: str = None) -> str:
         """
-        Build a compact character token.
-        Priority: name + description + gender tag.
+        V3: Builds a structured Identity Core block with fixed field ordering.
+        Fields: label/name, sex+age, hair, eyes, features, outfit, body_type.
+        label: Optional CHARACTER_A/CHARACTER_B/CHARACTER_C prefix.
         """
-        name  = str(character.get("name", "")).strip()
-        
+        name = str(character.get("name", "")).strip()
         sheet = None
         if memory_manager and hasattr(memory_manager, "get_design_sheet"):
             sheet = memory_manager.get_design_sheet(name)
 
         if sheet:
-            desc = sheet.to_prompt_tokens()
+            gender = sheet.gender.lower() if getattr(sheet, "gender", None) else "male"
+            age = sheet.age_range.lower() if getattr(sheet, "age_range", None) else "adult"
+            style_clean = str(sheet.hair_style).lower().replace("hair", "").strip() if getattr(sheet, "hair_style", None) else ""
+            color_clean = str(sheet.hair_color).lower().replace("hair", "").strip() if getattr(sheet, "hair_color", None) else ""
+            parts = []
+            if style_clean:
+                parts.append(style_clean)
+            if color_clean:
+                parts.append(color_clean)
+            hair = f"{' '.join(parts)} hair" if parts else ""
+            eye_color = getattr(sheet, "eye_color", "") or ""
+            eye_str = f"{eye_color} eyes" if eye_color and "eye" not in eye_color.lower() else eye_color
+            outfit = getattr(sheet, "primary_outfit", "") or ""
+            features = getattr(sheet, "distinguishing_features", "") or ""
+            body_type = getattr(sheet, "body_type", "") or ""
         else:
-            desc = str(character.get("description", "")).strip()
+            profile = None
+            if memory_manager and hasattr(memory_manager, "consistency"):
+                profile = memory_manager.consistency.get_profile(name)
+            if profile:
+                gender = profile.get("gender", "male")
+                age = "adult"
+                style_clean = str(profile.get("hair_style_token", "")).lower().replace("hair", "").strip()
+                color_clean = str(profile.get("hair_color_token", "")).lower().replace("hair", "").strip()
+                parts = []
+                if style_clean:
+                    parts.append(style_clean)
+                if color_clean:
+                    parts.append(color_clean)
+                hair = f"{' '.join(parts)} hair" if parts else ""
+                eye_str = ""
+                outfit = profile.get("outfit_tokens", "")
+                features = profile.get("base_description", "")
+                body_type = ""
+            else:
+                desc = str(character.get("description", "")).strip()
+                header = f"{label}: {name}" if label else f"Character {name}"
+                return f"{header}, {desc}" if desc else header
 
-        gtag  = self._gender_tag(character)
+        header = f"{label}: {name}" if label else f"Character {name}"
+        ordered_parts = [
+            header,
+            f"{gender} {age}",
+            hair,
+            eye_str,
+            features,
+            outfit,
+            body_type,
+        ]
+        cleaned = [p.strip() for p in ordered_parts if str(p).strip()]
+        return ", ".join(cleaned)
 
-        parts = [p for p in [name, desc, gtag] if p]
-        token = ", ".join(parts)
+    def build_multi_character_identity_block(self, characters: list, memory_manager) -> str:
+        """
+        V3: Builds separated identity blocks for 1-3 characters with anti-bleed fencing.
+        Characters beyond 3 are collapsed into BACKGROUND_SUPPORTING_CHARACTERS.
+        Blocks separated by ' | ' to create clear visual separation in prompts.
+        """
+        if not characters:
+            return ""
+
+        blocks = []
+        primary_chars = characters[:3]
+        overflow_chars = characters[3:]
+
+        for i, char in enumerate(primary_chars):
+            label = CHARACTER_SEPARATOR_LABELS[i]
+            block = self.build_character_identity_block(char, memory_manager, label=label)
+            blocks.append(block)
+
+        if overflow_chars:
+            names = ", ".join([c.get("name", "character") for c in overflow_chars])
+            blocks.append(f"{BACKGROUND_LABEL}: {names}, background supporting characters")
+
+        return " | ".join(blocks)
+
+    def _character_token(self, character: dict, is_focus: bool, memory_manager=None) -> str:
+        """
+        Build a character token using dense Character Identity Block.
+        """
+        token = self.build_character_identity_block(character, memory_manager)
 
         # Consistency anchor for non-first panels
         if is_focus and character.get("_is_continuation"):
@@ -136,6 +298,36 @@ class PromptBuilder:
         
         return max(seq_ratio, jaccard)
 
+    def get_negative_hair_colors(self, hair_color: str) -> str:
+        """
+        Generates negative prompt tokens for all other hair colors to prevent drift.
+        """
+        color = hair_color.lower().replace("hair", "").strip()
+        if not color:
+            return ""
+        all_colors = ["black", "brown", "blonde", "red", "silver", "white", "grey", "gray", "pink", "blue", "green", "purple", "yellow"]
+        neg_colors = [c for c in all_colors if c != color]
+        if color == "blonde":
+            neg_colors = [c for c in neg_colors if c != "blond"]
+        elif color == "blond":
+            neg_colors = [c for c in neg_colors if c != "blonde"]
+        elif color == "grey":
+            neg_colors = [c for c in neg_colors if c != "gray"]
+        elif color == "gray":
+            neg_colors = [c for c in neg_colors if c != "grey"]
+            
+        return ", ".join([f"{c} hair" for c in neg_colors])
+
+    def build_two_character_tokens(self, char1: dict, char2: dict, memory_manager=None) -> str:
+        """
+        Builds separated prompt segment for two-character panels to prevent gender blending.
+        Injects identity blocks for both characters.
+        """
+        block1 = self.build_character_identity_block(char1, memory_manager)
+        block2 = self.build_character_identity_block(char2, memory_manager)
+        
+        return f"{block1}, {block2}, 2people, facing each other"
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
@@ -159,11 +351,14 @@ class PromptBuilder:
           Layer 6: Style prefix tokens (positions 91–110)
         """
         active_style = style or self.style
+        is_sdxl = getattr(settings, "IMAGE_PROVIDER", "stable_diffusion") == "fal_ai"
 
         # Resolve style template
         style_lower = active_style.lower() if active_style else "anime"
-        if style_lower in STYLE_TEMPLATES:
-            template = STYLE_TEMPLATES[style_lower]
+        templates_to_use = SDXL_STYLE_TEMPLATES if is_sdxl else STYLE_TEMPLATES
+
+        if style_lower in templates_to_use:
+            template = templates_to_use[style_lower]
         else:
             template = {
                 "prefix": f"{active_style} illustration",
@@ -201,32 +396,92 @@ class PromptBuilder:
         characters = scene.get("characters") or []
         focus_name = str(scene.get("focus_character", "")).lower()
 
-        for char in characters:
-            char_name = str(char.get("name", "")).lower()
-            is_focus  = focus_name and focus_name in char_name
+        # Resolve focus character gender for prepend tag and negative enforcement
+        gender_token = ""
+        neg_gender = ""
+        if focus_name:
+            profile = memory_manager.consistency.get_profile(focus_name)
+            if not profile:
+                for char in characters:
+                    cname = char.get("name", "")
+                    if cname and (focus_name in cname.lower() or cname.lower() in focus_name):
+                        profile = memory_manager.consistency.get_profile(cname)
+                        if profile:
+                            break
+            if not profile:
+                sheet = memory_manager.get_design_sheet(focus_name)
+                if sheet:
+                    gender = getattr(sheet, "gender", None)
+                else:
+                    gender = None
+            else:
+                gender = profile.get("gender")
 
-            # Pull cached description for consistency
+            if gender == "female":
+                gender_token = "1girl, female,"
+                neg_gender = "1boy, male, masculine"
+            elif gender == "male":
+                gender_token = "1boy, male,"
+                neg_gender = "1girl, female, feminine"
+
+        # V3: Use structured multi-character identity blocks
+        if len(characters) == 0:
+            pass  # No character tokens
+        elif len(characters) == 1:
+            char = characters[0]
             cached_desc = memory_manager.get_character(char.get("name", ""))
             if cached_desc:
                 char = dict(char)
                 char["description"] = cached_desc
-
             if is_continuation:
                 char = dict(char)
                 char["_is_continuation"] = True
-
-            token = self._character_token(char, is_focus=is_focus, memory_manager=memory_manager)
+            token = self.build_character_identity_block(char, memory_manager, label="CHARACTER_A")
             if token:
                 l4_character_tokens.extend(self._to_tokens(token))
+        else:
+            # V3 multi-character: structured blocks with anti-bleed fencing
+            enriched_chars = []
+            for char in characters:
+                c = dict(char)
+                cached_desc = memory_manager.get_character(c.get("name", ""))
+                if cached_desc:
+                    c["description"] = cached_desc
+                if is_continuation:
+                    c["_is_continuation"] = True
+                enriched_chars.append(c)
+            multi_block = self.build_multi_character_identity_block(enriched_chars, memory_manager)
+            if multi_block:
+                l4_character_tokens.extend(self._to_tokens(multi_block))
 
-        # ----- Layer 5: Action & environment ---------------------------
+        # ----- Layer 5: Action & environment (V3 — ActionLibrary + InteractionComposer) ----
+        env_input = scene.get("global_environment") or scene.get("environment") or ""
+        if env_input:
+            env_lower = env_input.lower().strip()
+            matched_anchors = []
+            for key, anchor in ENVIRONMENT_VISUAL_ANCHORS.items():
+                if key in env_lower:
+                    matched_anchors.append(anchor)
+            
+            if matched_anchors:
+                # Add concrete anchors to provide strong visual weight
+                for anchor in matched_anchors:
+                    l5_action_env_tokens.extend(self._to_tokens(anchor))
+            else:
+                l5_action_env_tokens.extend(self._to_tokens(env_input))
+
         action_input = scene.get("action") or ""
         if action_input:
             l5_action_env_tokens.extend(self._to_tokens(action_input))
-        
-        env_input = scene.get("global_environment") or scene.get("environment") or ""
-        if env_input:
-            l5_action_env_tokens.extend(self._to_tokens(env_input))
+            # V3: Inject structured visual action tokens
+            action_visual_tokens = _action_library.get_action_tokens(action_input)
+            if action_visual_tokens:
+                l5_action_env_tokens.extend(action_visual_tokens)
+            # V3: Inject physical interaction tokens for multi-character scenes
+            char_count = len(characters)
+            interaction_tokens = _interaction_composer.detect_and_inject(action_input, char_count)
+            if interaction_tokens:
+                l5_action_env_tokens.extend(interaction_tokens)
 
         # ----- Layer 6: Style prefix templates -------------------------
         if template.get("prefix"):
@@ -242,8 +497,24 @@ class PromptBuilder:
 
         cand_all = cand_l1 + cand_l2 + cand_l3 + cand_l4 + cand_l5 + cand_l6
         cand_all = self._deduplicate_tokens(cand_all)
-        cand_all = cand_all[:110]
-        candidate_prompt = ", ".join(cand_all)
+        
+        # Build prefix tokens
+        prefix_tokens = []
+        if gender_token:
+            prefix_tokens.extend(self._to_tokens(gender_token))
+        if is_sdxl:
+            prefix_tokens.extend(self._to_tokens("masterpiece, best quality, ultra detailed, highres"))
+            char_count = len(characters)
+            if char_count == 1:
+                prefix_tokens.extend(self._to_tokens("solo"))
+            elif char_count == 2:
+                prefix_tokens.extend(self._to_tokens("2people"))
+
+        # Prepend prefix tokens to cand_all, avoiding duplicates
+        full_tokens = prefix_tokens + [t for t in cand_all if t.lower() not in [p.lower() for p in prefix_tokens]]
+        full_tokens = self._deduplicate_tokens(full_tokens)
+        full_tokens = full_tokens[:110]
+        candidate_prompt = ", ".join(full_tokens)
 
         # Consecutive duplicate panel guard
         triggered = False
@@ -264,14 +535,100 @@ class PromptBuilder:
             cand_l1 = l1_camera_tokens[:15]
             cand_all = cand_l1 + cand_l2 + cand_l3 + cand_l4 + cand_l5 + cand_l6
             cand_all = self._deduplicate_tokens(cand_all)
-            cand_all = cand_all[:110]
-            candidate_prompt = ", ".join(cand_all)
+            
+            full_tokens = prefix_tokens + [t for t in cand_all if t.lower() not in [p.lower() for p in prefix_tokens]]
+            full_tokens = self._deduplicate_tokens(full_tokens)
+            full_tokens = full_tokens[:110]
+            candidate_prompt = ", ".join(full_tokens)
+
+        # V3 Continuation Lock: Re-inject Identity Core anchors at prompt start for panels 2+
+        if is_continuation and characters:
+            identity_anchors = []
+            for i, char in enumerate(characters[:3]):
+                char_name = char.get("name", "")
+                profile = memory_manager.consistency.get_profile(char_name)
+                if profile:
+                    gender_tok = profile.get("gender_tokens", "")
+                    parts = [p.strip() for p in [gender_tok] if p and p.strip()]
+                    if parts:
+                        identity_anchors.append(", ".join(parts))
+            if identity_anchors:
+                anchor_str = ", ".join(identity_anchors)
+                candidate_prompt = f"{anchor_str}, {candidate_prompt}"
+                final_tokens = self._to_tokens(candidate_prompt)
+                final_tokens = self._deduplicate_tokens(final_tokens)
+                candidate_prompt = ", ".join(final_tokens[:110])
 
         # Save final prompt for future comparison
         self.last_positive_prompt = candidate_prompt
 
         # ----- Negative prompt construction ----------------------------
-        neg_parts = [getattr(settings, "PROMPT_NEGATIVE", "")]
+        if is_sdxl:
+            neg_parts = ["worst quality, low quality, normal quality, lowres, bad anatomy, bad hands, error, missing fingers, extra digit, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, artist name, bad proportions, gross proportions, text, error, extra limbs, missing arms, missing legs, fused fingers, too many fingers, long neck, mutation, mutated, ugly, disgusting, poorly drawn face, extra fingers, missing fingers, poorly drawn hands, missing limb, floating limbs, disconnected limbs, malformed hands, out of focus, long body, disgusting, extra legs, clone face, gross, out of frame"]
+        else:
+            neg_parts = [getattr(settings, "PROMPT_NEGATIVE", "")]
+
+        if style_lower == "manga":
+            neg_parts.append("color, colorful, digital coloring, cel shading, multicolored, chromatic, photo, photographic")
+
+        pos_lower = candidate_prompt.lower()
+        has_female_ref = any(w in pos_lower for w in ["1girl", "female", "she", "her", "mei", "woman", "girl"])
+        has_male_ref = any(w in pos_lower for w in ["1boy", "male", "he", "him", "his", "kaito", "man", "boy"])
+
+        if neg_gender:
+            if "1girl" in neg_gender and has_female_ref:
+                pass
+            elif "1boy" in neg_gender and has_male_ref:
+                pass
+            else:
+                neg_parts.append(neg_gender)
+
+        # Add negative hair colors for focus/characters (scoped per-scene, not global)
+        if is_sdxl:
+            active_hair_colors = set()
+            for char in characters:
+                char_name = char.get("name", "")
+                if char_name:
+                    profile = memory_manager.consistency.get_profile(char_name)
+                    if profile and profile.get("hair_color_token"):
+                        color_token = profile["hair_color_token"].lower().replace("hair", "").strip()
+                        if color_token:
+                            active_hair_colors.add(color_token)
+                desc = char.get("description", "").lower()
+                for c in ["black", "brown", "blonde", "blond", "red", "silver", "white", "grey", "gray", "pink", "blue", "green", "purple", "yellow"]:
+                    if c in desc:
+                        active_hair_colors.add(c)
+            
+            # Prevent contradictory hair color negations if characters are mentioned in positive prompt
+            if "kaito" in pos_lower:
+                active_hair_colors.add("black")
+            if "mei" in pos_lower:
+                active_hair_colors.add("brown")
+
+            all_colors = ["black", "brown", "blonde", "red", "silver", "white", "grey", "gray", "pink", "blue", "green", "purple", "yellow"]
+            neg_colors = []
+            for c in all_colors:
+                is_active = False
+                for ac in active_hair_colors:
+                    if c == ac:
+                        is_active = True
+                    elif c == "blonde" and ac == "blond":
+                        is_active = True
+                    elif c == "blond" and ac == "blonde":
+                        is_active = True
+                    elif c == "grey" and ac == "gray":
+                        is_active = True
+                    elif c == "gray" and ac == "grey":
+                        is_active = True
+                if not is_active:
+                    neg_colors.append(c)
+            if neg_colors:
+                neg_parts.append(", ".join([f"{c} hair" for c in neg_colors]))
+
+        # Add crowd suppression for multi-character panels
+        if len(characters) > 1:
+            neg_parts.append("extra person, third character, background crowd, extra characters, duplicate characters")
+
         for char in characters:
             neg = self._gender_negative(char)
             if neg:

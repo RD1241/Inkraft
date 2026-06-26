@@ -51,7 +51,7 @@ class MemoryManager:
         # Also wipe character consistency profiles
         self.consistency.clear_profiles()
 
-    def add_character(self, name: str, description: str, role: str = None, panel_index: int = 0):
+    def add_character(self, name: str, description: str, role: str = None, panel_index: int = 0, story_text: str = None):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         name_lower = name.lower()
@@ -71,7 +71,7 @@ class MemoryManager:
             conn.close()
 
         # Update or add character in the CharacterConsistency profiles
-        self.consistency.add_or_update_character(name, description, role=role, panel_index=panel_index)
+        self.consistency.add_or_update_character(name, description, role=role, panel_index=panel_index, story_text=story_text, memory_manager=self)
 
     def get_character(self, name: str) -> str:
         # Check case-insensitive CharacterDesignSheet override
@@ -189,7 +189,7 @@ class MemoryManager:
             
         return sheets
         
-    def process_scene_characters(self, scene_data: dict):
+    def process_scene_characters(self, scene_data: dict, story_text: str = None):
         """Extracts characters from scene JSON data and saves them to memory."""
         scene_id = scene_data.get("scene_id", 1)
         panel_index = scene_id - 1
@@ -198,5 +198,5 @@ class MemoryManager:
             desc = character.get('description')
             role = character.get('character_role')
             if name and desc:
-                self.add_character(name, desc, role=role, panel_index=panel_index)
+                self.add_character(name, desc, role=role, panel_index=panel_index, story_text=story_text)
 

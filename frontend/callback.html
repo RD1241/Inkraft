@@ -4,73 +4,153 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Inkraft - Confirming your account</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <!-- Google Fonts: Outfits & Bangers -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Bangers&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="app-shell.css">
   <link rel="stylesheet" href="auth-pages.css">
   <style>
-    .callback-state { text-align: center; padding: 2rem; }
-    .callback-icon  { font-size: 3.5rem; margin-bottom: 1rem; display: block; }
-    .callback-title { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem; }
-    .callback-sub   { opacity: 0.65; font-size: 0.95rem; }
-    .spinner-ring   { width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.15);
-                      border-top-color: #a78bfa; border-radius: 50%;
-                      animation: spin 0.8s linear infinite; margin: 0 auto 1.5rem; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .auth-error { color: #f87171; background: rgba(239,68,68,0.12);
-                  border: 1px solid rgba(239,68,68,0.3); border-radius: 10px;
-                  padding: 0.85rem 1.2rem; font-size: 0.9rem; margin-top: 1.2rem; }
-    .glow-button { display: inline-block; margin-top: 1.5rem; padding: 0.75rem 2rem;
-                   background: linear-gradient(135deg, #7c3aed, #a78bfa);
-                   border-radius: 10px; font-weight: 600; text-decoration: none;
-                   color: #fff; transition: opacity 0.2s; }
-    .glow-button:hover { opacity: 0.85; }
+    body {
+      margin: 0;
+      background-color: #050505 !important; /* Premium pitch black background */
+      background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px) !important;
+      background-size: 24px 24px !important;
+      color: #ffffff;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Outfit', sans-serif;
+      overflow: hidden;
+    }
+    .loading-container {
+      text-align: center;
+      padding: 2rem;
+      max-width: 420px;
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    /* Logo adjustments */
+    .callback-logo {
+      font-size: 2.5rem !important;
+      margin-bottom: 2.5rem;
+      cursor: default;
+    }
+    .callback-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+    .callback-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin: 1.5rem 0 0.5rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 2px 2px 0px #000;
+    }
+    .callback-sub {
+      opacity: 0.65;
+      font-size: 0.95rem;
+      margin: 0;
+      font-weight: 500;
+      color: var(--text-secondary, #999);
+    }
+    /* Comic Loader */
+    .comic-loader-ring {
+      width: 60px;
+      height: 60px;
+      border: 4px solid #000;
+      border-top: 4px solid var(--accent-color, #e8324a);
+      border-right: 4px solid var(--accent-color, #e8324a);
+      border-radius: 50%;
+      box-shadow: 4px 4px 0 #000;
+      animation: spin 0.6s steps(8) infinite; /* Comic blocky rotation */
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .auth-error {
+      color: #ff5266;
+      background: rgba(232, 50, 74, 0.1);
+      border: 2px solid #000;
+      box-shadow: 4px 4px 0 #000;
+      padding: 1rem 1.25rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-top: 1.5rem;
+      text-transform: uppercase;
+      transform: skewX(-4deg);
+      text-align: center;
+    }
+    .glow-button {
+      display: inline-block;
+      margin-top: 2rem;
+      padding: 0.8rem 2rem;
+      font-family: 'Bangers', cursive;
+      font-size: 1.2rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, #e8324a, #ff5e97);
+      color: #fff;
+      border: 3px solid #000;
+      box-shadow: 4px 4px 0 #000;
+      text-decoration: none;
+      transition: all 0.1s ease;
+      cursor: pointer;
+    }
+    .glow-button:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 #000;
+    }
   </style>
 </head>
-<body class="auth-body">
-  <div class="auth-bg">
-    <div class="auth-orb auth-orb-1"></div>
-    <div class="auth-orb auth-orb-2"></div>
-  </div>
-
-  <nav class="auth-nav">
-    <a href="/" class="auth-nav-logo">Inkraft</a>
-  </nav>
-
-  <main class="auth-main">
-    <div class="auth-card glass-panel">
-
-      <!-- LOADING STATE -->
-      <div id="state-loading" class="callback-state">
-        <div class="spinner-ring"></div>
-        <p class="callback-title">Confirming your account…</p>
-        <p class="callback-sub">Please wait a moment.</p>
-      </div>
-
-      <!-- SUCCESS STATE -->
-      <div id="state-success" class="callback-state" style="display:none">
-        <span class="callback-icon">✅</span>
-        <p class="callback-title">Email confirmed!</p>
-        <p class="callback-sub">You're now logged in. Redirecting to your dashboard…</p>
-      </div>
-
-      <!-- NEEDS LOGIN STATE -->
-      <div id="state-login" class="callback-state" style="display:none">
-        <span class="callback-icon">🎬</span>
-        <p class="callback-title">Account confirmed!</p>
-        <p class="callback-sub">Your email has been verified. Sign in to continue.</p>
-        <a href="/login.html" class="glow-button">Sign In Now →</a>
-      </div>
-
-      <!-- ERROR STATE -->
-      <div id="state-error" class="callback-state" style="display:none">
-        <span class="callback-icon">⚠️</span>
-        <p class="callback-title">Confirmation issue</p>
-        <div id="error-msg" class="auth-error"></div>
-        <a href="/register.html" class="glow-button">Try registering again →</a>
-      </div>
-
+<body>
+  <div class="loading-container">
+    
+    <!-- Centered Premium Inkraft Logo Badge -->
+    <div class="callback-logo-wrap">
+      <div class="header-logo callback-logo">Inkraft</div>
     </div>
-  </main>
+
+    <!-- LOADING STATE -->
+    <div id="state-loading" class="callback-state">
+      <div class="comic-loader-ring"></div>
+      <p class="callback-title">Signing you in...</p>
+      <p class="callback-sub">Preparing your workspace...</p>
+    </div>
+
+    <!-- SUCCESS STATE -->
+    <div id="state-success" class="callback-state" style="display:none">
+      <div class="comic-loader-ring" style="border-top-color: #10b981; border-right-color: #10b981;"></div>
+      <p class="callback-title" style="color: #10b981;">Email confirmed!</p>
+      <p class="callback-sub">You're now logged in. Redirecting to your dashboard...</p>
+    </div>
+
+    <!-- NEEDS LOGIN STATE -->
+    <div id="state-login" class="callback-state" style="display:none">
+      <p class="callback-title">Account confirmed!</p>
+      <p class="callback-sub">Your email has been verified. Sign in to continue.</p>
+      <a href="/login.html" class="glow-button">Sign In Now →</a>
+    </div>
+
+    <!-- ERROR STATE -->
+    <div id="state-error" class="callback-state" style="display:none">
+      <p class="callback-title" style="color: #ff5266;">Confirmation issue</p>
+      <div id="error-msg" class="auth-error"></div>
+      <a href="/register.html" class="glow-button">Try registering again →</a>
+    </div>
+
+  </div>
 
   <script type="module">
     import { authStore } from './auth.js';
@@ -82,7 +162,6 @@
 
     async function handleCallback() {
       // ── 1. Try URL hash (Supabase implicit flow) ──────────────────────
-      // Supabase sends: #access_token=...&type=signup&...
       const hash   = window.location.hash.substring(1);
       const params = new URLSearchParams(hash || window.location.search);
 
@@ -100,7 +179,6 @@
       const type         = params.get('type'); // 'signup', 'recovery', 'magiclink'
 
       if (accessToken) {
-        // We have tokens from URL hash — store them directly
         const user = { email: params.get('email') || '' };
         authStore.setAuth(accessToken, user);
         show('state-success');
@@ -127,12 +205,10 @@
             }
           }
         } catch (_) {}
-        // PKCE verification done but no token returned — just show sign-in prompt
         show('state-login');
         return;
       }
 
-      // ── 3. No recognised callback params — show sign-in prompt ─────────
       show('state-login');
     }
 

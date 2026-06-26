@@ -32,11 +32,15 @@ def get_balance(
         target_user_id = user_id or x_user_id or DEFAULT_USER_ID
 
     try:
-        balance = credits_service.get_balance(target_user_id)
+        usage_info = credits_service.get_daily_usage(target_user_id)
         return {
             "status": "success",
             "user_id": target_user_id,
-            "balance": balance
+            "balance": usage_info["balance"],
+            "usage_today": usage_info["usage_today"],
+            "daily_limit": usage_info["daily_limit"],
+            "remaining_generations": usage_info["remaining_generations"],
+            "reset_countdown_seconds": usage_info["reset_countdown_seconds"]
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

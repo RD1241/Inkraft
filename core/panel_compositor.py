@@ -42,6 +42,22 @@ class PageLayout:
             "total_panels": self.total_panels
         }
 
+    def get_fal_image_size(self, panel_index: int) -> Dict[str, int]:
+        if panel_index < 0 or panel_index >= len(self.panels):
+            return {"width": 768, "height": 1024}
+        panel = self.panels[panel_index]
+        panel_width = panel.width
+        panel_height = panel.height
+
+        # Round to nearest 64 pixels (SDXL requirement)
+        width = int(round(panel_width / 64.0) * 64)
+        height = int(round(panel_height / 64.0) * 64)
+        # Minimum 512, Maximum 1536 on each dimension
+        width = max(512, min(1536, width))
+        height = max(512, min(1536, height))
+        return {"width": width, "height": height}
+
+
 # Size characteristics and relative space weights
 SIZE_DIMENSIONS = {
     "full_width": {"width": 1016, "height": 380, "weight": 5},

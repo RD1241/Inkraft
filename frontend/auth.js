@@ -7,6 +7,8 @@
 let initialToken = null;
 let initialUser = null;
 let initialCredits = null;
+let initialUsageToday = null;
+let initialDailyLimit = null;
 
 try {
   initialToken = localStorage.getItem('ntc_token') || null;
@@ -14,6 +16,10 @@ try {
   initialUser = rawUser ? JSON.parse(rawUser) : null;
   const rawCredits = localStorage.getItem('ntc_credits');
   initialCredits = rawCredits ? parseInt(rawCredits, 10) : null;
+  const rawUsage = localStorage.getItem('ntc_usage_today');
+  initialUsageToday = rawUsage ? parseInt(rawUsage, 10) : null;
+  const rawLimit = localStorage.getItem('ntc_daily_limit');
+  initialDailyLimit = rawLimit ? parseInt(rawLimit, 10) : null;
 } catch (e) {
   console.warn('[authStore] Failed to load local storage:', e);
 }
@@ -22,6 +28,8 @@ const _state = {
   token: initialToken,
   user: initialUser,
   credits: initialCredits,
+  usageToday: initialUsageToday,
+  dailyLimit: initialDailyLimit,
   listeners: [],
 };
 
@@ -65,13 +73,25 @@ export const authStore = {
     _notify();
   },
 
-  setCredits(credits) {
+  setCredits(credits, usageToday = null, dailyLimit = null) {
     _state.credits = credits;
+    if (usageToday !== null) _state.usageToday = usageToday;
+    if (dailyLimit !== null) _state.dailyLimit = dailyLimit;
     try {
       if (credits !== null && credits !== undefined) {
         localStorage.setItem('ntc_credits', credits.toString());
       } else {
         localStorage.removeItem('ntc_credits');
+      }
+      if (_state.usageToday !== null && _state.usageToday !== undefined) {
+        localStorage.setItem('ntc_usage_today', _state.usageToday.toString());
+      } else {
+        localStorage.removeItem('ntc_usage_today');
+      }
+      if (_state.dailyLimit !== null && _state.dailyLimit !== undefined) {
+        localStorage.setItem('ntc_daily_limit', _state.dailyLimit.toString());
+      } else {
+        localStorage.removeItem('ntc_daily_limit');
       }
     } catch (e) {
       console.warn('[authStore] Failed to write credits to localStorage:', e);
@@ -90,10 +110,14 @@ export const authStore = {
     _state.token = null;
     _state.user = null;
     _state.credits = null;
+    _state.usageToday = null;
+    _state.dailyLimit = null;
     try {
       localStorage.removeItem('ntc_token');
       localStorage.removeItem('ntc_user');
       localStorage.removeItem('ntc_credits');
+      localStorage.removeItem('ntc_usage_today');
+      localStorage.removeItem('ntc_daily_limit');
     } catch (e) {
       console.warn('[authStore] Failed to clear localStorage:', e);
     }
@@ -131,10 +155,6 @@ export function requireAuth(loginDest = '/login.html') {
   return true;
 }
 
-/**
- * Poll credits balance every 30s while user is logged in.
- * Stores result in _state.credits and notifies subscribers.
- */
 export function startCreditPolling(intervalMs = 30000) {
   async function fetchCredits() {
     if (!_state.token) return;
@@ -142,10 +162,61 @@ export function startCreditPolling(intervalMs = 30000) {
       const res = await apiFetch('/api/credits/balance');
       if (res.ok) {
         const data = await res.json();
-        if (data.balance !== undefined) authStore.setCredits(data.balance);
+        if (data.balance !== undefined) {
+          authStore.setCredits(data.balance, data.usage_today, data.daily_limit);
+        }
       }
     } catch (_) {}
   }
   fetchCredits();
   return setInterval(fetchCredits, intervalMs);
 }
+
+// Automatically inject and manage the hamburger menu button for mobile layout (under 768px)
+function setupHamburgerMenu() {
+  const header = document.querySelector('.app-header');
+  const nav = document.querySelector('.header-nav');
+  if (header && nav && !document.querySelector('.hamburger-btn')) {
+    const hamburger = document.createElement('button');
+    hamburger.className = 'hamburger-btn';
+    hamburger.setAttribute('aria-label', 'Toggle Navigation');
+    hamburger.innerHTML = '<span></span><span></span><span></span>';
+    
+    // Insert before header-right if it exists, otherwise append
+    const headerRight = document.querySelector('.header-right');
+    if (headerRight) {
+      header.insertBefore(hamburger, headerRight);
+    } else {
+      header.appendChild(hamburger);
+    }
+    
+    hamburger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hamburger.classList.toggle('open');
+      nav.classList.toggle('open');
+    });
+    
+    // Close mobile drawer when user clicks a nav link
+    nav.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        hamburger.classList.remove('open');
+        nav.classList.remove('open');
+      });
+    });
+    
+    // Close nav when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!nav.contains(e.target) && !hamburger.contains(e.target)) {
+        hamburger.classList.remove('open');
+        nav.classList.remove('open');
+      }
+    });
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupHamburgerMenu);
+} else {
+  setupHamburgerMenu();
+}
+

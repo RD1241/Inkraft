@@ -1,0 +1,54 @@
+{
+    "timestamp": "2026-06-16T16:02:32.423728",
+    "total_panels": 31,
+    "total_submissions": 35,
+    "total_safety_retries": 4,
+    "total_network_retries": 0,
+    "total_reroutes": 2,
+    "total_cost": 0.124,
+    "avg_cost_panel": 0.004,
+    "success_count": 13,
+    "total_tests": 13,
+    "style_stats": {
+        "manga": {
+            "panels": 9,
+            "submissions": 12,
+            "safety_retries": 2,
+            "reroutes": 2,
+            "cost": 0.03,
+            "duration": 158
+        },
+        "anime": {
+            "panels": 9,
+            "submissions": 8,
+            "safety_retries": 0,
+            "reroutes": 0,
+            "cost": 0.02,
+            "duration": 99
+        },
+        "manhwa": {
+            "panels": 9,
+            "submissions": 11,
+            "safety_retries": 2,
+            "reroutes": 0,
+            "cost": 0.0275,
+            "duration": 114
+        },
+        "cinematic": {
+            "panels": 3,
+            "submissions": 3,
+            "safety_retries": 0,
+            "reroutes": 0,
+            "cost": 0.0075,
+            "duration": 65
+        },
+        "realistic": {
+            "panels": 1,
+            "submissions": 1,
+            "safety_retries": 0,
+            "reroutes": 0,
+            "cost": 0.039,
+            "duration": 387
+        }
+    }
+}

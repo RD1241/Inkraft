@@ -1,0 +1,75 @@
+=== JOBS DATABASE SCHEMA ===
+CREATE TABLE jobs (
+                job_id TEXT PRIMARY KEY,
+                status TEXT,
+                created_at TEXT,
+                updated_at TEXT,
+                result TEXT,
+                error TEXT
+            , progress TEXT, panel_count INTEGER, layout_type TEXT, panel_count_mode TEXT, generation_format TEXT);
+
+CREATE TABLE credits (
+                user_id TEXT PRIMARY KEY,
+                balance INTEGER NOT NULL DEFAULT 10,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+
+CREATE TABLE credit_transactions (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                amount INTEGER NOT NULL,
+                reason TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+
+CREATE TABLE comics (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                job_id TEXT,
+                title TEXT NOT NULL,
+                style TEXT NOT NULL DEFAULT 'anime',
+                layout_type TEXT DEFAULT 'standard',
+                panel_count INTEGER,
+                panel_count_mode TEXT DEFAULT 'ai_decided',
+                panel_urls TEXT DEFAULT '[]',
+                final_page TEXT,
+                created_at TEXT
+            , is_public INTEGER DEFAULT 0, is_featured INTEGER DEFAULT 0);
+
+
+=== CHARACTER DATABASE SCHEMA ===
+CREATE TABLE characters (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE,
+                description TEXT
+            );
+
+CREATE TABLE sqlite_sequence(name,seq);
+
+CREATE TABLE character_profiles (
+                name TEXT PRIMARY KEY,
+                base_description TEXT,
+                hairstyle_tokens TEXT,
+                outfit_tokens TEXT,
+                gender_tokens TEXT,
+                role TEXT,
+                reference_image_path TEXT,
+                reference_image_locked INTEGER DEFAULT 0
+            , gender TEXT, gender_locked INTEGER DEFAULT 0, hair_color_token TEXT, hair_style_token TEXT);
+
+CREATE TABLE character_design_sheets (
+                user_id TEXT,
+                name TEXT,
+                gender TEXT,
+                age_range TEXT,
+                hair_style TEXT,
+                hair_color TEXT,
+                eye_color TEXT,
+                body_type TEXT,
+                primary_outfit TEXT,
+                distinguishing_features TEXT,
+                personality_note TEXT,
+                PRIMARY KEY (user_id, name)
+            );
+

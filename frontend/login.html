@@ -6,7 +6,7 @@
   <title>Inkraft - Login</title>
   <meta name="description" content="Log in to your Inkraft account to access your comics, generation history, and dashboard.">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2">
   <link rel="stylesheet" href="auth-pages.css">
 </head>
 <body class="auth-body">
@@ -15,56 +15,131 @@
     <div class="auth-orb auth-orb-2"></div>
   </div>
 
-  <nav class="auth-nav">
-    <a href="/" class="auth-nav-logo">Inkraft</a>
-    <a href="/register.html" class="auth-nav-link">Create account →</a>
-  </nav>
+  <div class="auth-split-container">
+    <div class="auth-form-side">
+      <nav class="auth-nav">
+        <a href="/" class="auth-nav-logo">Inkraft</a>
+        <a href="/register.html" class="auth-nav-link">Create account →</a>
+      </nav>
 
-  <main class="auth-main">
-    <div class="auth-card glass-panel">
-      <div class="auth-card-icon">🎬</div>
-      <h1 class="auth-title">Welcome back</h1>
-      <p class="auth-subtitle">Log in to continue creating comics</p>
+      <main class="auth-form-main">
+        <div class="auth-card glass-panel">
+          <div class="auth-card-icon">💬</div>
+          <h1 class="auth-title">Welcome back</h1>
+          <p class="auth-subtitle">Log in to continue creating comics</p>
 
-      <form id="login-form" class="auth-form" novalidate>
-        <div class="form-group">
-          <label for="email-input">Email</label>
-          <input type="email" id="email-input" name="email" placeholder="you@example.com" autocomplete="email" required>
+          <form id="login-form" class="auth-form" novalidate>
+            <div class="form-group">
+              <label for="email-input">Email</label>
+              <input type="email" id="email-input" name="email" placeholder="you@example.com" autocomplete="email" required>
+            </div>
+            <div class="form-group">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                <label for="password-input" style="margin-bottom: 0;">Password</label>
+                <a href="#" onclick="alert('Password Recovery:\nDuring the Open Beta phase, please contact support@inkraft.ai to reset your password manually.'); return false;" style="font-size: 0.75rem; color: var(--accent-color); text-decoration: none; font-family: 'Outfit', sans-serif;">Forgot Password?</a>
+              </div>
+              <div class="password-wrap">
+                <input type="password" id="password-input" name="password" placeholder="••••••••" autocomplete="current-password" required>
+                <button type="button" class="toggle-pw" id="toggle-pw" aria-label="Show password">👁</button>
+              </div>
+            </div>
+
+            <div id="login-error" class="auth-error hidden"></div>
+
+            <button type="submit" class="glow-button auth-submit" id="login-btn">
+              <span id="login-btn-text">Sign In</span>
+              <span id="login-btn-spinner" class="btn-spinner hidden"></span>
+            </button>
+          </form>
+
+          <p class="auth-switch">Don't have an account? <a href="/register.html">Register free</a></p>
         </div>
-        <div class="form-group">
-          <label for="password-input">Password</label>
-          <div class="password-wrap">
-            <input type="password" id="password-input" name="password" placeholder="••••••••" autocomplete="current-password" required>
-            <button type="button" class="toggle-pw" id="toggle-pw" aria-label="Show password">👁</button>
+
+        <div class="auth-features" style="margin-top: 2rem;">
+          <div class="auth-feature-item">
+            <span class="feature-icon">🎁</span>
+            <span>10 Welcome Credits</span>
+          </div>
+          <div class="auth-feature-item">
+            <span class="feature-icon">🎨</span>
+            <span>All Styles Unlocked</span>
+          </div>
+          <div class="auth-feature-item">
+            <span class="feature-icon">🎭</span>
+            <span>Character Vault</span>
+          </div>
+          <div class="auth-feature-item">
+            <span class="feature-icon">💾</span>
+            <span>PNG Downloads</span>
+          </div>
+          <div class="auth-feature-item">
+            <span class="feature-icon">📄</span>
+            <span>PDF Export (1 Credit)</span>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div class="auth-visual-side">
+      <div class="manga-collage">
+        <!-- Panel 1 -->
+        <div class="collage-panel-wrapper panel-1">
+          <div class="collage-panel-clipper">
+            <div class="collage-panel-content">
+              <div class="panel-image-bg" style="background-image: url('/assets/Manga.png');"></div>
+              <div class="panel-overlay-dark"></div>
+              <div class="collage-caption speed">BOOM!</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Panel 2 -->
+        <div class="collage-panel-wrapper panel-2">
+          <div class="collage-panel-clipper">
+            <div class="collage-panel-content">
+              <div class="collage-speech-bubble">
+                <div class="bubble-text">CREATE STORIES IN INK!</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Panel 3 -->
+        <div class="collage-panel-wrapper panel-3">
+          <div class="collage-panel-clipper">
+            <div class="collage-panel-content">
+              <div class="panel-image-bg" style="background-image: url('/assets/Manhwa.png');"></div>
+              <div class="panel-overlay-dark"></div>
+              <div class="collage-caption highlight">ALL STYLES</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Panel 4 -->
+        <div class="collage-panel-wrapper panel-4">
+          <div class="collage-panel-clipper">
+            <div class="collage-panel-content">
+              <div class="collage-caption text-bubble">NO LIMITS</div>
+            </div>
           </div>
         </div>
 
-        <div id="login-error" class="auth-error hidden"></div>
-
-        <button type="submit" class="glow-button auth-submit" id="login-btn">
-          <span id="login-btn-text">Sign In</span>
-          <span id="login-btn-spinner" class="btn-spinner hidden"></span>
-        </button>
-      </form>
-
-      <p class="auth-switch">Don't have an account? <a href="/register.html">Register free</a></p>
-    </div>
-
-    <div class="auth-features">
-      <div class="auth-feature-item">
-        <span class="feature-icon">⚡</span>
-        <span>3 free comics daily</span>
-      </div>
-      <div class="auth-feature-item">
-        <span class="feature-icon">🎨</span>
-        <span>Manga · Manhwa · Cinematic</span>
-      </div>
-      <div class="auth-feature-item">
-        <span class="feature-icon">📚</span>
-        <span>Full generation history</span>
+        <!-- Ink Splatter Overlay -->
+        <div class="collage-ink-splatter">
+          <svg viewBox="0 0 100 100" fill="#000" stroke="#e8324a" stroke-width="1.5">
+            <path d="M 50,15 C 47,17 48,22 46,25 C 44,28 39,26 38,30 C 37,34 40,36 37,39 C 34,42 30,37 27,42 C 24,47 28,50 26,55 C 24,60 18,59 19,65 C 20,71 27,69 29,75 C 31,81 25,86 31,89 C 37,92 40,84 45,86 C 50,88 49,94 55,92 C 61,90 59,82 63,80 C 67,78 72,82 75,77 C 78,72 73,69 75,64 C 77,59 83,57 82,51 C 81,45 74,47 72,42 C 70,37 72,31 67,30 C 62,29 60,23 56,25 C 52,27 53,13 50,15 Z" />
+            <circle cx="25" cy="22" r="3.5" />
+            <circle cx="78" cy="28" r="4.5" />
+            <circle cx="83" cy="68" r="3" />
+            <circle cx="21" cy="74" r="5" />
+            <circle cx="48" cy="90" r="2.5" />
+            <circle cx="62" cy="18" r="2" />
+          </svg>
+        </div>
       </div>
     </div>
-  </main>
+  </div>
+
 
   <script type="module">
     import { authStore, redirectIfLoggedIn } from './auth.js?v=2';

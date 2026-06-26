@@ -6,7 +6,7 @@
   <title>Inkraft - My Comics</title>
   <meta name="description" content="Your Inkraft generation history — browse, download, and manage all your created comics.">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2">
   <link rel="stylesheet" href="app-shell.css">
   <link rel="stylesheet" href="history.css">
 </head>
@@ -19,9 +19,13 @@
       <a href="/"               class="nav-link">Generate</a>
       <a href="/history.html"   class="nav-link active">History</a>
       <a href="/gallery.html"   class="nav-link">Gallery</a>
+      <a href="/characters.html" class="nav-link">Vault</a>
     </nav>
+    <button class="hamburger-btn" id="hamburger-btn" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
     <div class="header-right">
-      <div class="credit-badge" id="credit-badge">
+      <div class="credit-badge" id="credit-badge" title="Credits Remaining (PDF downloads cost 1 credit)">
         <span class="credit-icon">⚡</span>
         <span id="credit-count">—</span>
       </div>
@@ -44,14 +48,78 @@
     <div class="history-toolbar">
       <h1 class="history-title">My Comics</h1>
       <div class="history-controls">
-        <input type="search" id="search-input" class="history-search" placeholder="🔍 Search comics…">
-        <select id="filter-style" class="history-filter">
-          <option value="">All styles</option>
-          <option value="manga">Manga</option>
-          <option value="manhwa">Manhwa</option>
-          <option value="anime">Anime</option>
-          <option value="cinematic">Cinematic</option>
-        </select>
+        <div class="search-input-wrap" style="display: flex; flex-direction: column; gap: 4px;">
+          <input type="search" id="search-input" class="history-search" placeholder="🔍 Search comics…" style="width: 240px; margin-bottom: 0;">
+          <span class="search-helper" style="font-size: 0.68rem; color: #a0a0a0; font-family: 'Outfit', sans-serif;">🔍 Search filters the 12 items loaded on the current page.</span>
+        </div>
+        
+        <!-- Custom Dropdown Replacement -->
+        <div class="custom-select-wrap" id="style-select-wrap" style="width: 180px;">
+          <button type="button" class="custom-select-trigger" id="style-select-trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="style-select-options">
+            <span class="trigger-icon">✨</span>
+            <span class="trigger-text" id="style-select-value">All styles</span>
+            <span class="trigger-arrow">▼</span>
+          </button>
+          <div class="custom-select-options" id="style-select-options" role="listbox" aria-label="Filter by Style">
+            <div class="custom-select-option" role="option" aria-selected="true" data-value="" tabindex="0">
+              <span class="option-icon">✨</span>
+              <div class="option-body">
+                <span class="option-name">All styles</span>
+                <span class="option-desc">Show all comics</span>
+              </div>
+              <span class="option-check">✓</span>
+            </div>
+            <div class="custom-select-option" role="option" aria-selected="false" data-value="manga" tabindex="0">
+              <span class="option-icon">📖</span>
+              <div class="option-body">
+                <span class="option-name">Manga</span>
+                <span class="option-desc">Japanese manga style</span>
+              </div>
+              <span class="option-check">✓</span>
+            </div>
+            <div class="custom-select-option" role="option" aria-selected="false" data-value="manhwa" tabindex="0">
+              <span class="option-icon">🌊</span>
+              <div class="option-body">
+                <span class="option-name">Manhwa</span>
+                <span class="option-desc">Modern webtoon style</span>
+              </div>
+              <span class="option-check">✓</span>
+            </div>
+            <div class="custom-select-option" role="option" aria-selected="false" data-value="anime" tabindex="0">
+              <span class="option-icon">🌸</span>
+              <div class="option-body">
+                <span class="option-name">Anime</span>
+                <span class="option-desc">Vibrant animated look</span>
+              </div>
+              <span class="option-check">✓</span>
+            </div>
+            <div class="custom-select-option" role="option" aria-selected="false" data-value="cinematic" tabindex="0">
+              <span class="option-icon">🎬</span>
+              <div class="option-body">
+                <span class="option-name">Cinematic</span>
+                <span class="option-desc">Detailed dramatic style</span>
+              </div>
+              <span class="option-check">✓</span>
+            </div>
+            <div class="custom-select-option" role="option" aria-selected="false" data-value="realistic" tabindex="0">
+              <span class="option-icon">📷</span>
+              <div class="option-body">
+                <span class="option-name">Realistic</span>
+                <span class="option-desc">RealVisXL photography</span>
+              </div>
+              <span class="option-check">✓</span>
+            </div>
+          </div>
+          <!-- Hidden select kept for JS compatibility -->
+          <select id="filter-style" style="display:none;">
+            <option value="">All styles</option>
+            <option value="manga">Manga</option>
+            <option value="manhwa">Manhwa</option>
+            <option value="anime">Anime</option>
+            <option value="cinematic">Cinematic</option>
+            <option value="realistic">Realistic</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -65,14 +133,15 @@
     <div id="history-error" class="auth-error hidden" style="max-width:500px;margin:2rem auto;"></div>
 
     <!-- Empty state -->
-    <div id="history-empty" class="history-empty hidden">
-      <div class="history-empty-icon">📖</div>
-      <h2>No comics yet</h2>
-      <p>Generate your first comic to see it here.</p>
-      <a href="/" class="glow-button history-gen-btn">Start Generating</a>
+    <div id="history-empty" class="history-empty premium-empty-state hidden">
+      <div class="empty-state-illustration">📖⚡</div>
+      <h2>No Comics Found</h2>
+      <p>Your history is clean. Let's start building your story. Paste your narrative description, choose your art style, and generate panel by panel.</p>
+      <a href="/" class="glow-button empty-state-cta">Launch Comic Creator</a>
     </div>
 
     <!-- Comic grid -->
+    <div id="history-summary-bar" class="hist-summary-bar hidden"></div>
     <div id="history-grid" class="history-grid hidden"></div>
 
     <!-- Pagination -->
@@ -96,8 +165,8 @@
           <p id="modal-date" class="modal-meta"></p>
           <p id="modal-style" class="modal-meta modal-style-badge"></p>
           <div class="modal-actions">
-            <a id="modal-download-png" href="#" class="glow-button modal-btn" target="_blank">⬇ Download PNG</a>
-            <a id="modal-download-pdf" href="#" class="glow-button modal-btn modal-btn-outline" target="_blank">📄 Download PDF</a>
+            <a id="modal-download-png" href="#" class="glow-button modal-btn" target="_blank">⬇ PNG (Free)</a>
+            <button id="modal-download-pdf" class="glow-button modal-btn modal-btn-outline">📄 PDF (1 Credit)</button>
             <button id="modal-share-btn" class="glow-button modal-btn modal-btn-outline">🌐 Share</button>
             <button id="modal-delete-btn" class="glow-button modal-btn modal-btn-danger">🗑 Delete</button>
           </div>
@@ -112,7 +181,7 @@
     if (!requireAuth('/login.html')) { /* redirected */ }
 
     // Auth UI
-    const unsubscribe = authStore.subscribe(({ user, credits }) => {
+    const unsubscribe = authStore.subscribe(({ user, credits, usageToday, dailyLimit }) => {
       if (user) {
         document.getElementById('user-email-label').textContent = user.email || 'User';
         document.getElementById('user-avatar').textContent = (user.email || 'U')[0].toUpperCase();
@@ -173,18 +242,24 @@
     }
 
     function renderGrid(comics) {
-      const grid = document.getElementById('history-grid');
+      const grid    = document.getElementById('history-grid');
+      const summary = document.getElementById('history-summary-bar');
+      if (summary) {
+        summary.textContent = `${comics.length} comic${comics.length !== 1 ? 's' : ''} found`;
+        summary.classList.remove('hidden');
+      }
       grid.innerHTML = '';
       comics.forEach(c => {
         const card = document.createElement('div');
         card.className   = 'hist-card';
         card.dataset.id  = c.id || c.comic_id;
 
-        const title   = c.title || c.auto_title || 'Untitled Comic';
-        const style   = c.style || '';
-        const imgSrc  = c.final_page || c.thumbnail || '';
-        const dateStr = c.created_at ? new Date(c.created_at).toLocaleDateString() : '';
-        const isPublic= c.is_public;
+        const title      = c.title || c.auto_title || 'Untitled Comic';
+        const style      = c.style || '';
+        const imgSrc     = c.final_page || c.thumbnail || '';
+        const dateStr    = c.created_at ? new Date(c.created_at).toLocaleDateString() : '';
+        const isPublic   = c.is_public;
+        const panelCount = c.panel_count;
 
         card.innerHTML = `
           <div class="hist-thumb-wrap">
@@ -194,10 +269,16 @@
             }
             ${style ? `<span class="hist-style-badge">${style}</span>` : ''}
             ${isPublic ? `<span class="hist-public-badge">🌐</span>` : ''}
+            <div class="hist-card-overlay">
+              <span class="hist-card-overlay-btn">Open →</span>
+            </div>
           </div>
           <div class="hist-card-info">
             <span class="hist-card-title">${title}</span>
-            <span class="hist-card-date">${dateStr}</span>
+            <div class="hist-card-meta">
+              ${dateStr ? `<span class="hist-meta-date">${dateStr}</span>` : ''}
+              ${panelCount ? `<span class="hist-meta-panels">${panelCount} panels</span>` : ''}
+            </div>
           </div>
         `;
         card.addEventListener('click', () => openModal(c));
@@ -255,10 +336,8 @@
       document.getElementById('modal-style').textContent = style ? `Style: ${style}` : '';
       document.getElementById('modal-img').src = imgSrc;
 
-      const pdfHref = `/api/download/${selectedComicId}/pdf`;
       const pngHref = imgSrc;
       document.getElementById('modal-download-png').href = pngHref;
-      document.getElementById('modal-download-pdf').href = pdfHref;
 
       const shareBtn = document.getElementById('modal-share-btn');
       shareBtn.textContent = comic.is_public ? '🔒 Unshare' : '🌐 Share';
@@ -307,6 +386,58 @@
       }
     });
 
+    async function downloadPDF(comicId) {
+      if (!comicId) {
+        alert("Error: No comic ID found.");
+        return;
+      }
+      try {
+        const res = await apiFetch(`/api/download/${comicId}/pdf`);
+        if (!res.ok) {
+          const err = await res.json();
+          alert("Error downloading PDF: " + (err.detail || "Server error"));
+          return;
+        }
+        const blob = await res.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `comic_${comicId.substring(0,8)}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(downloadUrl);
+        
+        // Refresh credit balance
+        const credRes = await apiFetch('/api/credits/balance');
+        if (credRes.ok) {
+          const credData = await credRes.json();
+          if (credData.balance !== undefined) {
+            authStore.setCredits(credData.balance, credData.usage_today, credData.daily_limit);
+          }
+        }
+      } catch (err) {
+        alert("PDF download failed: " + err.message);
+      }
+    }
+
+    document.getElementById('modal-download-pdf').addEventListener('click', async () => {
+      if (!selectedComicId) return;
+      if (!confirm("Downloading this comic as a high-quality PDF costs 1 credit. PNG downloads are free. Continue?")) {
+        return;
+      }
+      const btn = document.getElementById('modal-download-pdf');
+      const origText = btn.innerText;
+      btn.disabled = true;
+      btn.innerText = "Generating PDF...";
+      try {
+        await downloadPDF(selectedComicId);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = origText;
+      }
+    });
+
     // ── Handle hash link from dashboard ──
     const hashId = window.location.hash.replace('#', '');
     if (hashId) {
@@ -316,9 +447,103 @@
         .catch(() => {});
     }
 
+    // Custom Select Menu wiring
+    function initCustomSelect() {
+      const wrapper = document.getElementById('style-select-wrap');
+      const trigger = document.getElementById('style-select-trigger');
+      const valueSpan = document.getElementById('style-select-value');
+      const optionsContainer = document.getElementById('style-select-options');
+      const options = Array.from(optionsContainer.querySelectorAll('.custom-select-option'));
+      const hiddenSelect = document.getElementById('filter-style');
+
+      let focusedIndex = -1;
+
+      function toggleDropdown(show) {
+        const isOpen = show !== undefined ? show : !optionsContainer.classList.contains('open');
+        trigger.setAttribute('aria-expanded', isOpen);
+        if (isOpen) {
+          optionsContainer.classList.add('open');
+          const selected = options.find(opt => opt.getAttribute('aria-selected') === 'true');
+          focusedIndex = selected ? options.indexOf(selected) : 0;
+          options[focusedIndex].focus();
+        } else {
+          optionsContainer.classList.remove('open');
+          focusedIndex = -1;
+        }
+      }
+
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleDropdown();
+      });
+
+      options.forEach((opt, idx) => {
+        opt.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectOption(opt);
+        });
+
+        opt.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            focusedIndex = (idx + 1) % options.length;
+            options[focusedIndex].focus();
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            focusedIndex = (idx - 1 + options.length) % options.length;
+            options[focusedIndex].focus();
+          } else if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            selectOption(opt);
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            toggleDropdown(false);
+            trigger.focus();
+          }
+        });
+      });
+
+      function selectOption(opt) {
+        const val = opt.getAttribute('data-value');
+        const name = opt.querySelector('.option-name').textContent;
+        const icon = opt.querySelector('.option-icon').textContent;
+
+        options.forEach(o => {
+          o.setAttribute('aria-selected', o === opt ? 'true' : 'false');
+        });
+
+        valueSpan.textContent = name;
+        trigger.querySelector('.trigger-icon').textContent = icon;
+
+        hiddenSelect.value = val;
+        hiddenSelect.dispatchEvent(new Event('change'));
+
+        toggleDropdown(false);
+        trigger.focus();
+      }
+
+      document.addEventListener('click', () => {
+        toggleDropdown(false);
+      });
+
+      trigger.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleDropdown(true);
+        } else if (e.key === 'Escape') {
+          toggleDropdown(false);
+        }
+      });
+    }
+
+    initCustomSelect();
+
     loadHistory(1);
 
     window.addEventListener('unload', () => unsubscribe());
+
+    import { initNav } from './nav.js';
+    initNav();
   </script>
 </body>
 </html>

@@ -14,11 +14,13 @@ class JobManager:
         # Delegate to the newly created JobService
         self.job_service = JobService(resolved_db_path)
 
-    def create_job(self, panel_count: int = None, layout_type: str = None, panel_count_mode: str = None) -> str:
+    def create_job(self, panel_count: int = None, layout_type: str = None, panel_count_mode: str = None, generation_format: str = None, user_id: str = None) -> str:
         return self.job_service.create_job(
             panel_count=panel_count,
             layout_type=layout_type,
-            panel_count_mode=panel_count_mode
+            panel_count_mode=panel_count_mode,
+            generation_format=generation_format,
+            user_id=user_id
         )
 
     def update_job(self, job_id: str, status: str, result: str = None, error: str = None, progress: str = None):

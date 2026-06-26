@@ -10,20 +10,28 @@ from core.scene_interpreter import classify_scene, compute_panel_count
 _ollama_client = ollama.Client(host=settings.OLLAMA_HOST)
 
 
+_ollama_offline_cache = None
+
 def _wait_for_ollama(timeout: int = 30) -> bool:
     """
     Poll the Ollama HTTP endpoint until it responds or timeout expires.
     Returns True if ready, False if timed out.
     """
+    global _ollama_offline_cache
+    if _ollama_offline_cache is not None:
+        return _ollama_offline_cache
+        
     deadline = time.time() + timeout
     while time.time() < deadline:
         try:
             r = httpx.get(f"{settings.OLLAMA_HOST}/api/tags", timeout=2)
             if r.status_code == 200:
+                _ollama_offline_cache = True
                 return True
         except Exception:
             pass
         time.sleep(1)
+    _ollama_offline_cache = False
     return False
 
 
@@ -45,6 +53,131 @@ class LLMProcessor:
         "courtyard", "market", "lab", "ship", "school", "palace",
         "industrial district", "facility", "walkway", "steel beam",
     )
+
+    @staticmethod
+    def detect_character_gender(character_name: str, story_text: str) -> str:
+        """
+        Detects gender of a character based on name lists or pronouns in story_text.
+        High-confidence check against common gendered names is performed first.
+        If name list is inconclusive, checks an 8-word window around character name.
+        If the character name appears 0 times, falls back to full-text pronoun counting.
+        """
+        if not story_text:
+            story_text = ""
+        if not character_name:
+            return "male"
+
+        story_text_lower = story_text.lower()
+        char_name_lower = character_name.lower()
+
+        # Comprehensive lists of common female/male names to bypass noisy pronoun proximity
+        common_female_names = {
+            "mei", "sakura", "hinata", "rin", "miku", "asuka", "rei", "yuki", "haruka", 
+            "aoi", "yui", "kaguya", "chika", "mikasa", "historia", "annie", "sasha",
+            "elena", "lyra", "sara", "luna", "aria", "maya", "zara", "nova", "iris", 
+            "vera", "mia", "sofia", "anna", "emma", "lily", "rose", "violet", "aurora", 
+            "diana", "alice", "claire", "grace", "jade", "kate", "laura", "nina", 
+            "olivia", "ruby", "stella", "lucy", "erza", "juvia", "mirajane", "wendy", 
+            "mabel", "mary", "elizabeth", "sarah", "jennifer", "linda", "patricia", 
+            "susan", "jessica", "karen", "nancy", "lisa", "betty", "margaret", "sandra"
+        }
+        
+        common_male_names = {
+            "kaito", "hiro", "kenji", "takashi", "yuto", "ren", "haruto", "sota",
+            "john", "robert", "michael", "william", "david", "richard", "joseph",
+            "thomas", "charles", "christopher", "daniel", "matthew", "anthony",
+            "mark", "donald", "steven", "paul", "andrew", "joshua", "kenneth",
+            "kevin", "brian", "george", "edward", "ronald", "timothy", "jason"
+        }
+
+        name_words = set(char_name_lower.split())
+        
+        # 1. High-confidence name list check takes absolute precedence
+        if name_words.intersection(common_female_names):
+            gender = "female"
+            source = "name_list"
+            print(f"[CharacterDetection] {character_name}: method = name_list")
+            print(f"[CharacterDetection] {character_name}: detected gender = {gender} (source: {source})")
+            return gender
+        elif name_words.intersection(common_male_names):
+            gender = "male"
+            source = "name_list"
+            print(f"[CharacterDetection] {character_name}: method = name_list")
+            print(f"[CharacterDetection] {character_name}: detected gender = {gender} (source: {source})")
+            return gender
+
+        female_pronouns = {"she", "her", "herself", "hers"}
+        male_pronouns = {"he", "him", "himself", "his"}
+
+        # Tokenize story text into words
+        words = re.findall(r"\b\w+\b", story_text_lower)
+        char_tokens = re.findall(r"\b\w+\b", char_name_lower)
+
+        female_count = 0
+        male_count = 0
+        method_used = "default"
+
+        # Count occurrences of the character name in story_text
+        name_occurrences = 0
+        if char_tokens:
+            first_token = char_tokens[0]
+            for idx, word in enumerate(words):
+                if word == first_token:
+                    match_ok = True
+                    for offset, token in enumerate(char_tokens):
+                        if idx + offset >= len(words) or words[idx + offset] != token:
+                            match_ok = False
+                            break
+                    if match_ok:
+                        name_occurrences += 1
+
+        if name_occurrences > 0 and char_tokens:
+            # We use proximity window
+            method_used = "proximity_window"
+            first_token = char_tokens[0]
+            for idx, word in enumerate(words):
+                if word == first_token:
+                    match_ok = True
+                    for offset, token in enumerate(char_tokens):
+                        if idx + offset >= len(words) or words[idx + offset] != token:
+                            match_ok = False
+                            break
+                    if match_ok:
+                        # 8-word window before and after the matched name index
+                        start = max(0, idx - 8)
+                        end = min(len(words), idx + len(char_tokens) + 8)
+                        window_words = words[start:end]
+                        for w in window_words:
+                            if w in female_pronouns:
+                                female_count += 1
+                            elif w in male_pronouns:
+                                male_count += 1
+        else:
+            # Name appears 0 times or name is empty - fall back to full-text pronoun count
+            method_used = "full_text_fallback"
+            for w in words:
+                if w in female_pronouns:
+                    female_count += 1
+                elif w in male_pronouns:
+                    male_count += 1
+
+        # Determine gender based on counts
+        if female_count > male_count:
+            gender = "female"
+            source = "pronouns"
+        elif male_count > female_count:
+            gender = "male"
+            source = "pronouns"
+        else:
+            gender = "male"
+            source = "default"
+
+        # Log according to user instructions:
+        # [CharacterDetection] {name}: method = proximity_window | full_text_fallback
+        # [CharacterDetection] {name}: detected gender = {gender} (source: pronouns|name_list|default)
+        print(f"[CharacterDetection] {character_name}: method = {method_used}")
+        print(f"[CharacterDetection] {character_name}: detected gender = {gender} (source: {source})")
+        return gender
 
     def __init__(self, model_name=None):
         self.model_name = model_name or settings.LLM_MODEL
@@ -245,26 +378,117 @@ Rules:
         Reduce model female-bias by explicitly tagging gender in description.
         """
         desc = str(character.get("description", "")).lower()
-        name = str(character.get("name", "")).lower()
-        if "male" in desc or "man" in desc or "boy" in desc:
-            character["_gender_tag"] = "male character, masculine features"
-            character["_negative_gender"] = "feminine face, female anatomy"
-        elif "female" in desc or "woman" in desc or "girl" in desc:
+        desc_words = set(re.findall(r"\b\w+\b", desc))
+        if "female" in desc_words or "woman" in desc_words or "girl" in desc_words:
             character["_gender_tag"] = "female character"
             character["_negative_gender"] = ""
-        # If ambiguous, leave unset so prompt builder doesn't inject noise
+        elif "male" in desc_words or "man" in desc_words or "boy" in desc_words:
+            character["_gender_tag"] = "male character, masculine features"
+            character["_negative_gender"] = "feminine face, female anatomy"
         return character
 
-    def _normalize_characters(self, scene: dict):
-        """Clean up character list and apply gender bias fix."""
+    def _normalize_characters(self, scene: dict, source_text: str = ""):
+        """Clean up character list, enrich generic descriptions, and apply gender bias fix."""
+        blacklist = {
+            "he", "she", "it", "they", "them", "him", "her", "his", "hers", "their", "theirs",
+            "someone", "everyone", "nobody", "noone", "anybody", "somebody", "character",
+            "people", "man", "woman", "boy", "girl", "knight", "commander", "enemy", "the",
+            "and", "but", "then", "this", "when", "after", "for", "with", "a", "an", "of"
+        }
+        
+        # 1. Recover characters mentioned in action, dialogue, or focus_character that are missing
+        existing_names = {str(c.get("name", "")).strip().lower() for c in scene.get("characters", []) or []}
+        
+        # Extract character names from story text (2+ occurrences)
+        cap_words = re.findall(r'\b([A-Z][a-z]{2,})\b', source_text)
+        from collections import Counter
+        word_counts = Counter(cap_words)
+        all_story_chars = [
+            w for w in dict.fromkeys(cap_words)
+            if w.lower() not in blacklist and word_counts[w] >= 2
+        ]
+        
+        # Ensure focus character is present in characters list
+        focus_char = str(scene.get("focus_character", "")).strip()
+        if focus_char and focus_char.lower() not in blacklist:
+            if focus_char.lower() not in existing_names:
+                gender = self.detect_character_gender(focus_char, source_text)
+                scene.setdefault("characters", []).append({
+                    "name": focus_char,
+                    "character_role": "main_character",
+                    "description": f"{focus_char.lower()} character, {gender}"
+                })
+                existing_names.add(focus_char.lower())
+                
+        # Ensure dialogue speakers are present in characters list
+        for dlg in scene.get("dialogue", []) or []:
+            speaker = str(dlg.get("speaker", "")).strip()
+            if speaker and speaker.lower() not in ("narrator", "none", "") and speaker.lower() not in blacklist:
+                if speaker.lower() not in existing_names:
+                    gender = self.detect_character_gender(speaker, source_text)
+                    scene.setdefault("characters", []).append({
+                        "name": speaker,
+                        "character_role": "secondary_character",
+                        "description": f"{speaker.lower()} character, {gender}"
+                    })
+                    existing_names.add(speaker.lower())
+                    
+        # Ensure characters mentioned in scene action are present in characters list
+        action_text = str(scene.get("action", "")).lower()
+        for char_name in all_story_chars:
+            if char_name.lower() in action_text:
+                if char_name.lower() not in existing_names:
+                    gender = self.detect_character_gender(char_name, source_text)
+                    scene.setdefault("characters", []).append({
+                        "name": char_name,
+                        "character_role": "secondary_character",
+                        "description": f"{char_name.lower()} character, {gender}"
+                    })
+                    existing_names.add(char_name.lower())
+
+        fallback_appearances = [
+            # Character 1: main character
+            {
+                "female": "female, short black hair, school uniform",
+                "male": "male, short black hair, school uniform"
+            },
+            # Character 2: secondary character
+            {
+                "female": "female, long brown hair, ponytail, casual outfit",
+                "male": "male, messy brown hair, casual outfit"
+            },
+            # Character 3: third character
+            {
+                "female": "female, blonde hair, twin tails, red sweater",
+                "male": "male, spiky blonde hair, jacket"
+            }
+        ]
+
         seen = set()
         normalized = []
-        for char in scene.get("characters", []) or []:
+        for j, char in enumerate(scene.get("characters", []) or []):
             char = dict(char)
-            key = str(char.get("name", "")).lower()
-            if key in seen:
+            name = str(char.get("name", "")).strip()
+            key = name.lower()
+            if key in blacklist or key in seen:
                 continue
             seen.add(key)
+            
+            # Enrich description if generic or lacks visual detail
+            desc = str(char.get("description", "")).strip()
+            desc_lower = desc.lower()
+            is_generic = False
+            if not desc_lower or desc_lower in ("character", key, f"{key} character", "unknown"):
+                is_generic = True
+            elif not any(w in desc_lower for w in ("hair", "eye", "wear", "outfit", "uniform", "shirt", "pant", "jacket", "suit", "dress", "cloth", "skirt", "robe", "cloak")):
+                is_generic = True
+                
+            if is_generic:
+                gender = self.detect_character_gender(name, source_text)
+                app_idx = min(j, len(fallback_appearances) - 1)
+                visual_desc = fallback_appearances[app_idx].get(gender, f"{gender} character")
+                char["description"] = f"{key} character, {visual_desc}"
+                
             char = self._apply_gender_bias_fix(char)
             normalized.append(char)
         scene["characters"] = normalized
@@ -325,7 +549,7 @@ Rules:
             scene["environment"] = global_env
             scene["global_environment"] = global_env
             # Clean characters
-            self._normalize_characters(scene)
+            self._normalize_characters(scene, source_text=source_text)
             # Inject flags from scene interpreter
             flags = classify_scene(
                 str(scene.get("action", "")) + " " + source_text
@@ -375,30 +599,90 @@ Rules:
         if not chunks:
             chunks = [text]
 
-        # Extract rough character names using capitalized words heuristic
+        # Extract rough character names using capitalized words heuristic.
+        # FIX: require a candidate to appear 2+ times in the text so that
+        # sentence-starting words like "Across", "Meanwhile", "After"
+        # (which appear exactly once) are never accepted as character names.
         cap_words = re.findall(r'\b([A-Z][a-z]{2,})\b', text)
-        # Filter common English words that aren't names
-        skip = {"The", "He", "She", "It", "His", "Her", "They", "You", "We",
-                "And", "But", "Then", "That", "This", "When", "After", "For"}
-        char_names = list(dict.fromkeys(w for w in cap_words if w not in skip))[:3]
+        blacklist = {
+            # pronouns / generic references
+            "he", "she", "it", "they", "them", "him", "her", "his", "hers", "their", "theirs",
+            "someone", "everyone", "nobody", "noone", "anybody", "somebody", "character",
+            "people", "man", "woman", "boy", "girl", "knight", "commander", "enemy",
+            # common conjunctions / prepositions / articles
+            "the", "and", "but", "then", "this", "when", "after", "for", "with", "a", "an", "of",
+            # common sentence-starting adverbs / prepositions that get capitalised
+            "across", "above", "before", "below", "behind", "beside", "between",
+            "beyond", "during", "inside", "outside", "around", "against",
+            "meanwhile", "suddenly", "finally", "already", "later", "now",
+            "slowly", "quickly", "quietly", "together", "however", "though",
+            "although", "while", "until", "unless", "despite", "without",
+        }
+        # Count occurrences of each candidate in the full text.
+        # Only accept names that appear 2+ times — real character names recur;
+        # one-off sentence-start words do not.
+        from collections import Counter
+        word_counts = Counter(cap_words)
+        char_names = list(dict.fromkeys(
+            w for w in cap_words
+            if w.lower() not in blacklist and word_counts[w] >= 2
+        ))[:3]
+        # If frequency filter eliminates everything, fall back to single-occurrence
+        # words (still blacklist-filtered) so we always get at least one name.
+        if not char_names:
+            char_names = list(dict.fromkeys(
+                w for w in cap_words if w.lower() not in blacklist
+            ))[:3]
         if not char_names:
             char_names = ["Character"]
 
-        # Build the characters list
+        # Build the characters list with generic-but-distinct visual descriptions
         characters = []
+        fallback_appearances = [
+            # Character 1: main character
+            {
+                "female": "female, short black hair, school uniform",
+                "male": "male, short black hair, school uniform"
+            },
+            # Character 2: secondary character
+            {
+                "female": "female, long brown hair, ponytail, casual outfit",
+                "male": "male, messy brown hair, casual outfit"
+            },
+            # Character 3: third character
+            {
+                "female": "female, blonde hair, twin tails, red sweater",
+                "male": "male, spiky blonde hair, jacket"
+            }
+        ]
+
         for j, name in enumerate(char_names):
             role = "main_character" if j == 0 else "secondary_character"
+            gender = self.detect_character_gender(name, text)
+            
+            # Retrieve generic-but-distinct visual appearance based on index & detected gender
+            app_idx = min(j, len(fallback_appearances) - 1)
+            visual_desc = fallback_appearances[app_idx].get(gender, f"{gender} character")
+            
             characters.append({
                 "name": name,
                 "character_role": role,
-                "description": f"{name.lower()} character"
+                "description": f"{name.lower()} character, {visual_desc}"
             })
 
         # Detect environment
         global_env = self._extract_global_environment(text, {"scenes": []})
 
-        # Extract dialogue lines from text
-        dialogue_raw = re.findall(r'"([^"]{3,80})"', text)
+        # Extract dialogue lines from text: match double quotes, single quotes, or colon-based speech
+        dialogue_raw = re.findall(r'"([^"]{3,200})"', text)
+        if not dialogue_raw:
+            # Try single quotes
+            dialogue_raw = re.findall(r"'([^']{3,200})'", text)
+        if not dialogue_raw:
+            # Try matching text after "said:", "said quietly:", "says:", "replied:", "asked:" etc.
+            speech_matches = re.findall(r'(?:said|says|replied|asked|screamed|whispered|spoke|told)(?:\s+\w+){0,3}\s*:\s*([A-Z][^.!?]+)', text)
+            if speech_matches:
+                dialogue_raw = [m.strip() for m in speech_matches]
 
         # Build scene list
         scenes = []
@@ -413,6 +697,9 @@ Rules:
                     "type": "speech",
                     "text": dlg_text
                 }]
+            else:
+                dlg_list = LLMProcessor.extract_narrative_dialogue(chunk, char_names[0] if char_names else "Character")
+
             emotion = "determined" if flags["is_action"] else ("sad" if "cry" in chunk.lower() else "neutral")
             scenes.append({
                 "scene_id": i + 1,
@@ -433,6 +720,58 @@ Rules:
             "scenes": scenes
         }
         return self._normalize_storyboard(parsed, text, panel_count=panel_count, layout_type=layout_type)
+
+    @staticmethod
+    def extract_narrative_dialogue(text: str, focus_character: str) -> list[dict]:
+        dialogue_list = []
+        text_lower = text.lower()
+        
+        # 1. Check for "asks why"
+        match = re.search(r"(\b\w+\b)\s+asks\s+why", text, re.IGNORECASE)
+        if match:
+            speaker = match.group(1)
+            if speaker.lower() in ["she", "he", "it", "they"]:
+                speaker = focus_character or "Character"
+            dialogue_list.append({
+                "speaker": speaker,
+                "type": "speech",
+                "text": "Why did you do this?"
+            })
+            
+        # 2. Check for "apologizes" or "apologize"
+        match = re.search(r"(\b\w+\b)\s+apologizes?", text, re.IGNORECASE)
+        if match:
+            speaker = match.group(1)
+            if speaker.lower() in ["she", "he", "it", "they"]:
+                speaker = focus_character or "Character"
+            dialogue_list.append({
+                "speaker": speaker,
+                "type": "speech",
+                "text": "I'm sorry."
+            })
+            
+        # 3. Check for "accuse/accuses each other of betrayal" or "accuse/accuses ... of betrayal"
+        if "betrayal" in text_lower or "betray" in text_lower:
+            match_each = re.search(r"accuse(?:s)?\s+each\s+other", text_lower)
+            if match_each:
+                dialogue_list.append({
+                    "speaker": focus_character or "Character",
+                    "type": "speech",
+                    "text": "You betrayed the kingdom!"
+                })
+            else:
+                match_accuse = re.search(r"(\b\w+\b)\s+accuse(?:s)?\s+(\b\w+\b)", text, re.IGNORECASE)
+                if match_accuse:
+                     speaker = match_accuse.group(1)
+                     target = match_accuse.group(2)
+                     if speaker.lower() in ["she", "he", "it", "they"]:
+                         speaker = focus_character or "Character"
+                     dialogue_list.append({
+                         "speaker": speaker,
+                         "type": "speech",
+                         "text": f"You betrayed the kingdom, {target}!"
+                     })
+        return dialogue_list
 
     def process_text(self, text: str, panel_count: int = None, layout_type: str = None) -> dict:
         # Wait for Ollama to be reachable before first attempt

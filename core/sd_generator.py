@@ -477,6 +477,10 @@ class SDGenerator:
         action: str = "",
         panel_count: int = None,
         layout_type: str = None,
+        panel_width: int = 768,
+        panel_height: int = 1024,
+        focus_character: str = "",
+        job_id: str = "",
     ):
         # Ensure correct model is loaded for the requested style
         self.load_model(style=style)

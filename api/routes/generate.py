@@ -13,16 +13,18 @@ router = APIRouter()
 class NovelInput(BaseModel):
     text: str
     style: str = ""   # optional: anime | manga | manhwa | realistic | cinematic
-    panel_count: Optional[int] = Field(None, description="Optional panel count (2-10)")
+    panel_count: Optional[int] = Field(None, description="Optional panel count (1-10)")
     layout_type: Optional[str] = Field(None, description="Optional layout type")
     user_id: Optional[str] = Field(None, description="Optional user UUID or text string")
     characters: Optional[list] = Field(None, description="Optional character design sheets list")
+    re_generate: Optional[bool] = Field(False, description="Optional bypass daily limit and re-generate")
+    generation_format: Optional[str] = Field(None, description="Optional generation format: single_page | panel_strip | None")
 
     @field_validator("panel_count")
     @classmethod
     def validate_panel_count(cls, v):
-        if v is not None and (v < 2 or v > 10):
-            raise ValueError("panel_count must be between 2 and 10")
+        if v is not None and (v < 1 or v > 10):
+            raise ValueError("panel_count must be between 1 and 10")
         return v
 
 def fail(message: str, detail: str = None) -> JSONResponse:
@@ -65,9 +67,9 @@ def generate_comic(
 
     # Validate panel_count
     if novel_input.panel_count is not None:
-        if novel_input.panel_count < 2 or novel_input.panel_count > 10:
+        if novel_input.panel_count < 1 or novel_input.panel_count > 10:
             return fail(
-                "Invalid panel count. panel_count must be between 2 and 10.",
+                "Invalid panel count. panel_count must be between 1 and 10.",
                 f"Got panel_count={novel_input.panel_count}"
             )
 
@@ -89,7 +91,15 @@ def generate_comic(
     # Billing gate (only apply if not cached)
     if not is_cached:
         try:
-            credits_service.deduct_credit(user_id)
+            if getattr(novel_input, "re_generate", False):
+                # Refund old generation first to achieve net zero: refund +1, deduct -1
+                try:
+                    credits_service.refund_credit(user_id)
+                except Exception as refund_err:
+                    print(f"[Warning] Refund before regeneration failed: {refund_err}")
+                credits_service.deduct_credit(user_id, re_generate=True)
+            else:
+                credits_service.deduct_credit(user_id, re_generate=False)
         except ValueError as e:
             return fail(str(e), "Billing check failed. Please check credits balance and daily limit.")
         except Exception as e:
@@ -103,7 +113,8 @@ def generate_comic(
             panel_count=novel_input.panel_count,
             layout_type=novel_input.layout_type,
             user_id=user_id,
-            characters=novel_input.characters
+            characters=novel_input.characters,
+            generation_format=novel_input.generation_format
         )
     except Exception as e:
         # If queueing itself failed, refund immediately

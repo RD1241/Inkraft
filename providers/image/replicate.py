@@ -26,6 +26,12 @@ class ReplicateImageProvider(ImageProvider):
         panel_index: int = 0,
         style: str = None,
         action: str = "",
+        panel_count: int = None,
+        layout_type: str = None,
+        panel_width: int = 768,
+        panel_height: int = 1024,
+        focus_character: str = "",
+        job_id: str = "",
     ) -> str:
         """
         Replicate stub for generating panel image.

@@ -246,8 +246,23 @@
   margin-top: 0.5rem;
 }
 
+@media (max-width: 768px) {
+  .gallery-main { padding: 1.25rem; }
+  .gallery-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-pills {
+    justify-content: center;
+  }
+  .gallery-search {
+    width: 100%;
+  }
+}
+
 @media (max-width: 480px) {
-  .gallery-main { padding: 1rem; }
+  .gallery-grid { columns: 1; }
+  .gallery-main { padding: 0.75rem; }
   .gallery-hero-title { font-size: 1.75rem; }
   .gallery-filters { flex-direction: column; align-items: flex-start; }
   .gallery-search { width: 100%; }

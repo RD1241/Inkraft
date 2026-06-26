@@ -1,8 +1,12 @@
+import re
 import sqlite3
+from collections import Counter
 from fastapi import APIRouter, HTTPException, Query, Header, status
+from pydantic import BaseModel
 from typing import Optional, List
 from config import settings
 from core.character_designer import CharacterDesignSheet
+from core.llm_processor import LLMProcessor
 from providers.auth.supabase_auth import SupabaseAuth
 
 router = APIRouter(prefix="/characters", tags=["characters"])
@@ -94,15 +98,15 @@ def save_character(
                 "distinguishing_features": sheet.distinguishing_features,
                 "personality_note": sheet.personality_note
             }
-            res = auth.client.table("characters").select("id").eq("user_id", uid).eq("name", sheet.name).execute()
+            res = auth.client.table("character_design_sheets").select("name").eq("user_id", uid).eq("name", sheet.name).execute()
             existing = getattr(res, "data", [])
             if existing:
-                auth.client.table("characters").update(payload).eq("user_id", uid).eq("name", sheet.name).execute()
+                auth.client.table("character_design_sheets").update(payload).eq("user_id", uid).eq("name", sheet.name).execute()
             else:
-                auth.client.table("characters").insert({**payload, "user_id": uid}).execute()
+                auth.client.table("character_design_sheets").insert({**payload, "user_id": uid}).execute()
             supabase_synced = True
         except Exception as e:
-            print(f"[Supabase Sync Warning] Failed to save/update characters table: {e}")
+            print(f"[Supabase Sync Warning] Failed to save/update character_design_sheets table: {e}")
 
     return {
         "status": "success",
@@ -123,7 +127,7 @@ def list_characters(
     auth = SupabaseAuth()
     if auth.enabled and auth.client:
         try:
-            res = auth.client.table("characters").select("*").eq("user_id", uid).execute()
+            res = auth.client.table("character_design_sheets").select("*").eq("user_id", uid).execute()
             data = getattr(res, "data", []) or []
             sheets = []
             for row in data:
@@ -131,13 +135,13 @@ def list_characters(
                     "name": row.get("name"),
                     "gender": row.get("gender"),
                     "age_range": row.get("age_range"),
-                    "hair_style": row.get("hair_style") or row.get("hair_description", ""),
+                    "hair_style": row.get("hair_style") or "",
                     "hair_color": row.get("hair_color") or "",
                     "eye_color": row.get("eye_color") or "",
                     "body_type": row.get("body_type") or "",
-                    "primary_outfit": row.get("primary_outfit") or row.get("outfit", ""),
-                    "distinguishing_features": row.get("distinguishing_features") or row.get("features", ""),
-                    "personality_note": row.get("personality_note") or row.get("personality", "")
+                    "primary_outfit": row.get("primary_outfit") or "",
+                    "distinguishing_features": row.get("distinguishing_features") or "",
+                    "personality_note": row.get("personality_note") or ""
                 })
             return sheets
         except Exception as e:
@@ -174,6 +178,62 @@ def list_characters(
 
     return sheets
 
+# ---------------------------------------------------------------------------
+# Character detection endpoint (rule-based, no LLM)
+# ---------------------------------------------------------------------------
+
+class DetectRequest(BaseModel):
+    text: str
+    user_id: Optional[str] = None
+
+@router.post("/detect")
+def detect_characters(body: DetectRequest):
+    """
+    Scans story text for candidate character names using the same
+    capitalized-word, 2+ occurrence rule as _rule_based_extraction
+    in llm_processor.py, then detects gender for each via
+    LLMProcessor.detect_character_gender (static, no Ollama).
+
+    Returns: {"characters": [{"name": "Kaito", "gender": "male"}, ...]}
+    """
+    text = body.text or ""
+
+    blacklist = {
+        # pronouns / generic references
+        "he", "she", "it", "they", "them", "him", "her", "his", "hers", "their", "theirs",
+        "someone", "everyone", "nobody", "noone", "anybody", "somebody", "character",
+        "people", "man", "woman", "boy", "girl", "knight", "commander", "enemy",
+        # common conjunctions / prepositions / articles
+        "the", "and", "but", "then", "this", "when", "after", "for", "with", "a", "an", "of",
+        # common sentence-starting adverbs / prepositions that get capitalised
+        "across", "above", "before", "below", "behind", "beside", "between",
+        "beyond", "during", "inside", "outside", "around", "against",
+        "meanwhile", "suddenly", "finally", "already", "later", "now",
+        "slowly", "quickly", "quietly", "together", "however", "though",
+        "although", "while", "until", "unless", "despite", "without",
+    }
+
+    cap_words = re.findall(r'\b([A-Z][a-z]{2,})\b', text)
+    word_counts = Counter(cap_words)
+    # Accept names appearing 2+ times; preserve insertion order
+    char_names = list(dict.fromkeys(
+        w for w in cap_words
+        if w.lower() not in blacklist and word_counts[w] >= 2
+    ))
+    # If frequency filter eliminates everything, fall back to single-occurrence words
+    if not char_names:
+        char_names = list(dict.fromkeys(
+            w for w in cap_words if w.lower() not in blacklist
+        ))
+
+    processor = LLMProcessor()
+    characters = []
+    for name in char_names:
+        gender = processor.detect_character_gender(name, text)
+        characters.append({"name": name, "gender": gender})
+
+    return {"characters": characters}
+
 @router.get("/{name}")
 def get_character(
     name: str,
@@ -187,7 +247,7 @@ def get_character(
     auth = SupabaseAuth()
     if auth.enabled and auth.client:
         try:
-            res = auth.client.table("characters").select("*").eq("user_id", uid).eq("name", name).execute()
+            res = auth.client.table("character_design_sheets").select("*").eq("user_id", uid).eq("name", name).execute()
             data = getattr(res, "data", []) or []
             if data:
                 row = data[0]
@@ -195,13 +255,13 @@ def get_character(
                     "name": row.get("name"),
                     "gender": row.get("gender"),
                     "age_range": row.get("age_range"),
-                    "hair_style": row.get("hair_style") or row.get("hair_description", ""),
+                    "hair_style": row.get("hair_style") or "",
                     "hair_color": row.get("hair_color") or "",
                     "eye_color": row.get("eye_color") or "",
                     "body_type": row.get("body_type") or "",
-                    "primary_outfit": row.get("primary_outfit") or row.get("outfit", ""),
-                    "distinguishing_features": row.get("distinguishing_features") or row.get("features", ""),
-                    "personality_note": row.get("personality_note") or row.get("personality", "")
+                    "primary_outfit": row.get("primary_outfit") or "",
+                    "distinguishing_features": row.get("distinguishing_features") or "",
+                    "personality_note": row.get("personality_note") or ""
                 }
         except Exception as e:
             print(f"[Supabase Fetch Warning] Failed to get character: {e}. Falling back to SQLite.")
@@ -264,7 +324,7 @@ def delete_character(
     supabase_deleted = False
     if auth.enabled and auth.client:
         try:
-            auth.client.table("characters").delete().eq("user_id", uid).eq("name", name).execute()
+            auth.client.table("character_design_sheets").delete().eq("user_id", uid).eq("name", name).execute()
             supabase_deleted = True
         except Exception as e:
             print(f"[Supabase Delete Warning] Failed to delete character: {e}")

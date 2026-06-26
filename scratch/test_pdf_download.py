@@ -12,6 +12,9 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from api.main import app
 from services.billing_service import billing_service
+from services.credits_service import credits_service
+billing_service.supabase_enabled = False
+credits_service.supabase_enabled = False
 from config import settings
 
 class TestPDFDownload(unittest.TestCase):

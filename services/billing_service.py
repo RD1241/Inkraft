@@ -93,7 +93,7 @@ class BillingService:
             return r.json()
         except Exception as e:
             print(f"[BillingService] Supabase {method} {path} error: {e}")
-            return []
+            return None
 
     def _local_upsert_credits(self, user_id: str, balance: int, created_at: str, updated_at: str):
         conn = sqlite3.connect(self.db_path)
@@ -111,44 +111,86 @@ class BillingService:
     def get_or_create_balance(self, user_id: str) -> int:
         now = datetime.utcnow().isoformat()
         
+        supabase_failed = False
+        
         # 1. If Supabase is enabled, check balance there
         if self.supabase_enabled:
-            data = self._supabase_request("GET", "credits", params={"user_id": f"eq.{user_id}"})
-            if data and len(data) > 0:
-                balance = data[0].get("balance", 10)
-                # Keep local SQLite in sync
-                self._local_upsert_credits(user_id, balance, now, now)
-                return balance
-            else:
-                # User doesn't exist in Supabase yet, create them
-                self._supabase_request("POST", "credits", payload={
-                    "user_id": user_id,
-                    "balance": 10,
-                    "created_at": now,
-                    "updated_at": now
-                })
-                # Keep local SQLite in sync
-                self._local_upsert_credits(user_id, 10, now, now)
-                return 10
-                
+            try:
+                data = self._supabase_request("GET", "credits", params={"user_id": f"eq.{user_id}"})
+                if data is None:
+                    supabase_failed = True
+                elif len(data) > 0:
+                    balance = data[0].get("balance", 10)
+                    # Keep local SQLite in sync
+                    self._local_upsert_credits(user_id, balance, now, now)
+                    print("[CREDITS] Existing balance synced.")
+                    return balance
+                else:
+                    # User doesn't exist in Supabase yet (GET succeeded but returned empty list)
+                    # Check SQLite before seeding
+                    conn = sqlite3.connect(self.db_path)
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT balance FROM credits WHERE user_id = ?", (user_id,))
+                    row = cursor.fetchone()
+                    conn.close()
+                    
+                    if row:
+                        balance = row[0]
+                        print(f"[CREDITS] User not in Supabase but found in SQLite. Syncing SQLite balance ({balance}) to Supabase.")
+                        self._supabase_request("POST", "credits", payload={
+                            "user_id": user_id,
+                            "balance": balance,
+                            "created_at": now,
+                            "updated_at": now
+                        })
+                        return balance
+                    else:
+                        # User does not exist in Supabase AND does not exist in SQLite
+                        print("[CREDITS] No balance found anywhere.")
+                        self._supabase_request("POST", "credits", payload={
+                            "user_id": user_id,
+                            "balance": 10,
+                            "created_at": now,
+                            "updated_at": now
+                        })
+                        self._local_upsert_credits(user_id, 10, now, now)
+                        print("[CREDITS] Initial balance seeded.")
+                        return 10
+            except Exception as e:
+                print(f"[Warning] Supabase fetch error in BillingService: {e}")
+                supabase_failed = True
+
+        if supabase_failed:
+            print("[CREDITS] Supabase unavailable.")
+            
         # 2. Local SQLite balance retrieval
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute("SELECT balance FROM credits WHERE user_id = ?", (user_id,))
         row = cursor.fetchone()
+        conn.close()
         
         if row:
             balance = row[0]
-            conn.close()
+            if supabase_failed:
+                print(f"[CREDITS] Using existing SQLite balance. (balance={balance})")
             return balance
         else:
-            # Create user locally with 10 default credits
+            if supabase_failed:
+                print("[CREDITS] BALANCE_VERIFICATION_FAILED")
+                raise ValueError("Unable to verify account balance.\nPlease try again shortly.")
+            
+            # If supabase is not enabled, register locally
+            print("[CREDITS] No balance found anywhere.")
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
             cursor.execute('''
                 INSERT OR REPLACE INTO credits (user_id, balance, created_at, updated_at)
                 VALUES (?, ?, ?, ?)
             ''', (user_id, 10, now, now))
             conn.commit()
             conn.close()
+            print("[CREDITS] Initial balance seeded.")
             return 10
 
     def deduct_credit(self, user_id: str, amount: int = 1, reason: str = "pdf_download") -> bool:

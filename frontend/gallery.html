@@ -6,7 +6,7 @@
   <title>Inkraft - Community Gallery</title>
   <meta name="description" content="Explore the Inkraft community gallery — discover stunning manga and manhwa comics created by users worldwide.">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2">
   <link rel="stylesheet" href="app-shell.css">
   <link rel="stylesheet" href="gallery.css">
 </head>
@@ -19,7 +19,11 @@
       <a href="/"               class="nav-link">Generate</a>
       <a href="/history.html"   class="nav-link" id="nav-history">History</a>
       <a href="/gallery.html"   class="nav-link active">Gallery</a>
+      <a href="/characters.html" class="nav-link">Vault</a>
     </nav>
+    <button class="hamburger-btn" id="hamburger-btn" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
     <div class="header-right" id="header-right">
       <!-- Populated by JS based on auth state -->
     </div>
@@ -58,11 +62,11 @@
     <div id="gallery-error" class="auth-error hidden" style="max-width:500px;margin:0 auto;"></div>
 
     <!-- Empty -->
-    <div id="gallery-empty" class="history-empty hidden">
-      <div class="history-empty-icon">🎨</div>
-      <h2>No public comics yet</h2>
-      <p>Be the first to share your creation!</p>
-      <a href="/" class="glow-button history-gen-btn">Generate Now</a>
+    <div id="gallery-empty" class="history-empty premium-empty-state hidden">
+      <div class="empty-state-illustration">🎨🌐</div>
+      <h2>No Public Masterpieces Yet</h2>
+      <p>Be the pioneer of this community! Create a comic from the workspace and share it to publish it on the global community board.</p>
+      <a href="/" class="glow-button empty-state-cta">Generate & Share Now</a>
     </div>
 
     <!-- Masonry grid -->
@@ -97,10 +101,10 @@
 
     // ── Header: show auth or login links ──
     const headerRight = document.getElementById('header-right');
-    const unsubscribe = authStore.subscribe(({ token, user, credits }) => {
+    const unsubscribe = authStore.subscribe(({ token, user, credits, usageToday, dailyLimit }) => {
       if (token && user) {
         headerRight.innerHTML = `
-          <div class="credit-badge">
+          <div class="credit-badge" title="Credits Remaining (PDF downloads cost 1 credit)">
             <span class="credit-icon">⚡</span>
             <span id="credit-count">${credits !== null ? credits : '—'}</span>
           </div>
@@ -200,24 +204,24 @@
         const date   = c.created_at ? new Date(c.created_at).toLocaleDateString() : '';
 
         const card = document.createElement('div');
-        card.className = 'gallery-card';
+        card.className = 'gallery-card comic-card-base';
         card.innerHTML = `
-          <div class="gallery-thumb-wrap">
+          <div class="gallery-thumb-wrap comic-thumb-wrap">
             ${imgSrc
               ? `<img src="${imgSrc}" alt="${title}" class="gallery-thumb" loading="lazy">`
               : `<div class="gallery-thumb-placeholder">🎨</div>`
             }
-            <div class="gallery-card-overlay">
-              <button class="gallery-preview-btn">👁 Preview</button>
+            <div class="comic-card-overlay gallery-card-overlay">
+              <button class="comic-overlay-btn gallery-preview-btn">👁 Preview</button>
             </div>
-            ${style ? `<span class="gallery-style-badge">${style}</span>` : ''}
+            ${style ? `<span class="gallery-style-badge comic-style-badge" data-style="${style}">${style}</span>` : ''}
           </div>
-          <div class="gallery-card-info">
-            <span class="gallery-card-title">${title}</span>
-            <span class="gallery-card-date">${date}</span>
+          <div class="gallery-card-info comic-card-info">
+            <span class="gallery-card-title comic-card-title">${title}</span>
+            <span class="gallery-card-date comic-card-meta">${date}</span>
           </div>
         `;
-        card.querySelector('.gallery-preview-btn').addEventListener('click', () => openGalleryModal(c));
+        card.querySelector('.gallery-preview-btn').addEventListener('click', (e) => { e.stopPropagation(); openGalleryModal(c); });
         card.addEventListener('click', () => openGalleryModal(c));
         grid.appendChild(card);
       });
@@ -271,6 +275,9 @@
 
     loadGallery(1, false);
     window.addEventListener('unload', () => unsubscribe());
+
+    import { initNav } from './nav.js';
+    initNav();
   </script>
 </body>
 </html>

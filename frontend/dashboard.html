@@ -5,23 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Inkraft - Dashboard</title>
   <meta name="description" content="Your Inkraft dashboard — recent comics, credit balance, and quick generation.">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=2">
   <link rel="stylesheet" href="app-shell.css">
   <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
-  <!-- ── Shared Header ────────────────────────────────────── -->
+
+  <!-- ── Shared Header ──────────────────────────────────────── -->
   <header class="app-header glass-panel" id="app-header">
     <a href="/" class="header-logo">Inkraft</a>
-    <nav class="header-nav">
+
+    <nav class="header-nav" id="header-nav">
       <a href="/dashboard.html" class="nav-link active">Dashboard</a>
       <a href="/"               class="nav-link">Generate</a>
       <a href="/history.html"   class="nav-link">History</a>
       <a href="/gallery.html"   class="nav-link">Gallery</a>
+      <a href="/characters.html" class="nav-link">Vault</a>
     </nav>
+
+    <!-- Hamburger -->
+    <button class="hamburger-btn" id="hamburger-btn" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+
     <div class="header-right">
-      <div class="credit-badge" id="credit-badge" title="Your credits">
+      <div class="credit-badge" id="credit-badge" title="Credits Remaining (PDF downloads cost 1 credit)">
         <span class="credit-icon">⚡</span>
         <span id="credit-count">—</span>
       </div>
@@ -30,8 +39,9 @@
         <div class="user-dropdown glass-panel" id="user-dropdown">
           <span id="user-email-label" class="dropdown-email">Loading…</span>
           <hr class="dropdown-divider">
-          <a href="/history.html" class="dropdown-item">📚 My Comics</a>
-          <a href="/gallery.html" class="dropdown-item">🌐 Gallery</a>
+          <a href="/history.html"   class="dropdown-item">📚 My Comics</a>
+          <a href="/gallery.html"   class="dropdown-item">🌐 Gallery</a>
+          <a href="/characters.html" class="dropdown-item">🎭 Character Vault</a>
           <hr class="dropdown-divider">
           <button id="logout-btn" class="dropdown-item dropdown-logout">🚪 Sign out</button>
         </div>
@@ -39,7 +49,7 @@
     </div>
   </header>
 
-  <!-- ── Dashboard Body ───────────────────────────────────── -->
+  <!-- ── Dashboard Body ─────────────────────────────────────── -->
   <main class="dashboard-main">
 
     <!-- Greeting -->
@@ -50,36 +60,45 @@
       </div>
     </section>
 
-    <!-- Stats Row -->
+    <!-- Stats Row — 4 cards -->
     <section class="dash-stats-row">
-      <div class="stat-card glass-panel">
-        <div class="stat-icon">⚡</div>
+
+      <!-- Credits -->
+      <div class="stat-card stat-card--credits glass-panel">
+        <div class="stat-icon-box">⚡</div>
         <div class="stat-body">
           <span class="stat-value" id="stat-credits">—</span>
-          <span class="stat-label">Credits remaining</span>
+          <span class="stat-label">Credits Remaining</span>
         </div>
       </div>
-      <div class="stat-card glass-panel">
-        <div class="stat-icon">🎨</div>
+
+      <!-- Comics Generated -->
+      <div class="stat-card stat-card--comics glass-panel">
+        <div class="stat-icon-box">🎨</div>
         <div class="stat-body">
           <span class="stat-value" id="stat-total">—</span>
-          <span class="stat-label">Comics generated</span>
+          <span class="stat-label">Comics Generated</span>
         </div>
       </div>
-      <div class="stat-card glass-panel">
-        <div class="stat-icon">📅</div>
+
+      <!-- Characters Saved -->
+      <div class="stat-card stat-card--characters glass-panel">
+        <div class="stat-icon-box">🎭</div>
         <div class="stat-body">
-          <span class="stat-value" id="stat-today">—</span>
-          <span class="stat-label">Generated today</span>
+          <span class="stat-value" id="stat-characters">—</span>
+          <span class="stat-label">Characters Saved</span>
         </div>
       </div>
-      <div class="stat-card glass-panel">
-        <div class="stat-icon">🌐</div>
+
+      <!-- Shared to Gallery -->
+      <div class="stat-card stat-card--shared glass-panel">
+        <div class="stat-icon-box">🌐</div>
         <div class="stat-body">
           <span class="stat-value" id="stat-shared">—</span>
-          <span class="stat-label">Shared to gallery</span>
+          <span class="stat-label">Shared to Gallery</span>
         </div>
       </div>
+
     </section>
 
     <!-- Quick Generate + Recent Comics (2-column grid) -->
@@ -87,37 +106,67 @@
 
       <!-- Quick Generate Card -->
       <div class="quick-gen-card glass-panel">
-        <h2 class="section-heading">⚡ Quick Generate</h2>
+        <h2 class="dash-section-heading">⚡ Quick Generate</h2>
         <form id="quick-gen-form" novalidate>
+
+          <!-- Textarea -->
           <div class="form-group">
             <label for="qg-text">Novel excerpt</label>
-            <textarea id="qg-text" rows="5" placeholder="Paste a scene or chapter excerpt…" maxlength="3000"></textarea>
+            <textarea
+              id="qg-text"
+              class="qg-textarea"
+              rows="5"
+              placeholder="Paste a scene or chapter excerpt… (min 20 characters)"
+              maxlength="3000"
+            ></textarea>
             <span class="char-counter" id="qg-counter">0 / 3000</span>
           </div>
-          <div class="qg-options">
-            <div class="form-group">
-              <label for="qg-style">Art style</label>
-              <select id="qg-style">
-                <option value="">Auto-detect</option>
-                <option value="manga">Manga</option>
-                <option value="manhwa">Manhwa</option>
-                <option value="anime">Anime</option>
-                <option value="cinematic">Cinematic</option>
-                <option value="realistic">Realistic</option>
-              </select>
+
+          <!-- Art Style Chips -->
+          <div class="form-group">
+            <span class="qg-chips-label">Art Style</span>
+            <div class="qg-style-chips" id="qg-style-chips">
+              <button type="button" class="style-chip active" data-value="">✨ Auto</button>
+              <button type="button" class="style-chip" data-value="manga">📖 Manga</button>
+              <button type="button" class="style-chip" data-value="manhwa">🌊 Manhwa</button>
+              <button type="button" class="style-chip" data-value="anime">🌸 Anime</button>
+              <button type="button" class="style-chip" data-value="cinematic">🎬 Cinematic</button>
+              <button type="button" class="style-chip" data-value="realistic">📷 Realistic</button>
             </div>
-            <div class="form-group">
-              <label for="qg-layout">Layout</label>
-              <select id="qg-layout">
-                <option value="">AI decides</option>
-                <option value="action">Action</option>
-                <option value="drama">Drama</option>
-                <option value="dialogue">Dialogue</option>
-              </select>
-            </div>
+            <!-- Hidden select kept for JS compatibility -->
+            <select id="qg-style" style="display:none">
+              <option value="">Auto-detect</option>
+              <option value="manga">Manga</option>
+              <option value="manhwa">Manhwa</option>
+              <option value="anime">Anime</option>
+              <option value="cinematic">Cinematic</option>
+              <option value="realistic">Realistic</option>
+            </select>
           </div>
+
+          <!-- Layout Chips -->
+          <div class="form-group">
+            <span class="qg-chips-label">Panel Layout</span>
+            <div class="qg-layout-chips" id="qg-layout-chips">
+              <button type="button" class="layout-chip-sm active" data-value="">🤖 AI</button>
+              <button type="button" class="layout-chip-sm" data-value="action">💥 Action</button>
+              <button type="button" class="layout-chip-sm" data-value="drama">🎭 Drama</button>
+              <button type="button" class="layout-chip-sm" data-value="dialogue">💬 Dialogue</button>
+            </div>
+            <!-- Hidden select kept for JS compatibility -->
+            <select id="qg-layout" style="display:none">
+              <option value="">AI decides</option>
+              <option value="action">Action</option>
+              <option value="drama">Drama</option>
+              <option value="dialogue">Dialogue</option>
+            </select>
+          </div>
+
           <div id="qg-error" class="auth-error hidden"></div>
-          <button type="submit" class="glow-button" id="qg-btn">Generate Comic</button>
+
+          <button type="submit" class="qg-generate-btn" id="qg-btn">
+            Generate Comic →
+          </button>
         </form>
 
         <!-- Progress feedback (hidden until generating) -->
@@ -126,9 +175,9 @@
           <p id="qg-progress-text">Initializing…</p>
           <div class="progress-steps" id="qg-steps">
             <span class="step active" id="qg-step-llm">📖 Extracting Scenes</span>
-            <span class="step" id="qg-step-board">🎬 Storyboard</span>
-            <span class="step" id="qg-step-draw">🎨 Drawing</span>
-            <span class="step" id="qg-step-assemble">📄 Assembling</span>
+            <span class="step"        id="qg-step-board">🎬 Storyboard</span>
+            <span class="step"        id="qg-step-draw">🎨 Drawing</span>
+            <span class="step"        id="qg-step-assemble">📄 Assembling</span>
           </div>
         </div>
 
@@ -136,8 +185,8 @@
         <div id="qg-result" class="qg-result hidden">
           <img id="qg-result-img" src="" alt="Generated comic page">
           <div class="qg-result-actions">
-            <a id="qg-result-view" href="#" class="glow-button qg-btn-view">View Full Comic</a>
-            <button id="qg-result-new" class="glow-button qg-btn-new">Generate Another</button>
+            <a id="qg-result-view" href="#" class="qg-btn-view">View Full Comic</a>
+            <button id="qg-result-new" class="qg-btn-new">Generate Another</button>
           </div>
         </div>
       </div>
@@ -145,18 +194,28 @@
       <!-- Recent Comics 2×2 Grid -->
       <div class="recent-comics-card glass-panel">
         <div class="recent-header">
-          <h2 class="section-heading">📚 Recent Comics</h2>
+          <h2 class="dash-section-heading">📚 Recent Comics</h2>
           <a href="/history.html" class="view-all-link">View all →</a>
         </div>
         <div class="recent-grid" id="recent-grid">
-          <!-- Populated by JS -->
+          <!-- Populated by JS; default empty state shown until data loads -->
           <div class="recent-placeholder">
-            <div class="placeholder-icon">📖</div>
-            <p>No comics yet. Generate your first one!</p>
+            <span class="empty-state-illustration">📚✨</span>
+            <h3>Shelf is Empty</h3>
+            <p>You haven't generated any comics yet. Write or paste your story excerpt and watch your words come to life in full manga style!</p>
+            <a href="/" class="qg-generate-btn empty-state-cta">Create Your First Comic</a>
           </div>
         </div>
       </div>
 
+    </section>
+
+    <!-- Activity Feed -->
+    <section class="activity-feed-section" id="activity-feed-section">
+      <h2 class="activity-feed-title">Recent Activity</h2>
+      <div id="activity-list" class="activity-list">
+        <div class="activity-empty">Loading activity...</div>
+      </div>
     </section>
   </main>
 
@@ -174,8 +233,21 @@
                   'Good evening ✨';
     document.getElementById('greeting-text').textContent = greetingText;
 
+    // ── Animated counter helper ──
+    function animateCounter(el, target, duration = 900) {
+      if (typeof target !== 'number' || isNaN(target)) { el.textContent = target; return; }
+      const start = performance.now();
+      const step = (now) => {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3); // ease-out-cubic
+        el.textContent = Math.round(eased * target);
+        if (progress < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }
+
     // ── Auth state → populate UI ──
-    const unsubscribe = authStore.subscribe(({ user, credits }) => {
+    const unsubscribe = authStore.subscribe(({ user, credits, usageToday, dailyLimit }) => {
       if (user) {
         const emailLabel = user.email || 'User';
         document.getElementById('user-email-label').textContent = emailLabel;
@@ -183,15 +255,36 @@
       }
       if (credits !== null && credits !== undefined) {
         document.getElementById('credit-count').textContent = credits;
-        document.getElementById('stat-credits').textContent  = credits;
+        const statCredits = document.getElementById('stat-credits');
+        if (statCredits && statCredits.textContent === '—') {
+          animateCounter(statCredits, Number(credits));
+        } else if (statCredits) {
+          statCredits.textContent = credits;
+        }
       }
     });
 
     // ── Credit polling ──
     const pollInterval = startCreditPolling(30000);
 
+    // ── Hamburger menu ──
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const headerNav    = document.getElementById('header-nav');
+    hamburgerBtn?.addEventListener('click', () => {
+      const isOpen = headerNav.classList.toggle('open');
+      hamburgerBtn.classList.toggle('open', isOpen);
+      hamburgerBtn.setAttribute('aria-expanded', isOpen);
+    });
+    document.addEventListener('click', (e) => {
+      if (headerNav && hamburgerBtn &&
+          !headerNav.contains(e.target) && !hamburgerBtn.contains(e.target)) {
+        headerNav.classList.remove('open');
+        hamburgerBtn.classList.remove('open');
+        hamburgerBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
     // ── User menu toggle ──
-    const userMenu     = document.getElementById('user-menu');
     const userDropdown = document.getElementById('user-dropdown');
     document.getElementById('user-avatar').addEventListener('click', (e) => {
       e.stopPropagation();
@@ -222,7 +315,7 @@
           const comics   = histData.comics || histData.items || [];
           const total    = histData.total  || comics.length;
 
-          document.getElementById('stat-total').textContent = total;
+          animateCounter(document.getElementById('stat-total'), Number(total));
 
           // Count today's comics
           const today = new Date().toDateString();
@@ -230,20 +323,60 @@
             const d = c.created_at || c.timestamp || '';
             return new Date(d).toDateString() === today;
           }).length;
-          document.getElementById('stat-today').textContent = todayCount;
 
           // Count shared
           const sharedCount = comics.filter(c => c.is_public).length;
-          document.getElementById('stat-shared').textContent = sharedCount;
+
+          // stat-today is not in the new 4-card layout but we keep the ID for safety
+          const statToday = document.getElementById('stat-today');
+          if (statToday) animateCounter(statToday, todayCount);
+          animateCounter(document.getElementById('stat-shared'), sharedCount);
 
           renderRecentComics(comics.slice(0, 4));
+          renderActivityFeed(comics);
         }
+
+        // Characters count
+        try {
+          const charRes = await apiFetch('/api/characters');
+          if (charRes.ok) {
+            const charData = await charRes.json();
+            const charCount = (charData.characters || charData || []).length;
+            const statCharsEl = document.getElementById('stat-characters');
+            if (statCharsEl) animateCounter(statCharsEl, charCount);
+          }
+        } catch (charErr) {
+          console.warn('[Dashboard] Characters fetch failed:', charErr.message);
+          const statCharsEl = document.getElementById('stat-characters');
+          if (statCharsEl) statCharsEl.textContent = '0';
+        }
+
       } catch (err) {
         console.warn('[Dashboard] Failed to load data:', err.message);
         document.getElementById('stat-total').textContent   = '—';
-        document.getElementById('stat-today').textContent   = '—';
         document.getElementById('stat-shared').textContent  = '—';
       }
+    }
+
+    function renderActivityFeed(comics) {
+      const list = document.getElementById('activity-list');
+      if (!list) return;
+      if (!comics || comics.length === 0) {
+        list.innerHTML = '<div class="activity-empty">No recent activity yet. Generate your first comic!</div>';
+        return;
+      }
+      const recent = comics.slice(0, 5);
+      list.innerHTML = recent.map(c => {
+        const title   = c.title || c.auto_title || 'Untitled Comic';
+        const dateStr = c.created_at ? new Date(c.created_at).toLocaleDateString() : '';
+        return `
+          <div class="activity-row">
+            <span class="activity-icon">🎨</span>
+            <span class="activity-text">${title}</span>
+            <span class="activity-date">${dateStr}</span>
+          </div>
+        `;
+      }).join('');
     }
 
     function renderRecentComics(comics) {
@@ -252,23 +385,26 @@
 
       grid.innerHTML = '';
       comics.forEach(c => {
-        const title    = c.title || c.auto_title || 'Untitled Comic';
-        const style    = c.style || '';
-        const imgSrc   = c.final_page || c.thumbnail || '';
-        const comicId  = c.id || c.comic_id;
-        const dateStr  = c.created_at ? new Date(c.created_at).toLocaleDateString() : '';
+        const title   = c.title || c.auto_title || 'Untitled Comic';
+        const style   = c.style || '';
+        const imgSrc  = c.final_page || c.thumbnail || '';
+        const comicId = c.id || c.comic_id;
+        const dateStr = c.created_at ? new Date(c.created_at).toLocaleDateString() : '';
 
         const card = document.createElement('a');
-        card.href  = `/history.html#${comicId}`;
-        card.className = 'recent-comic-card';
+        card.href      = `/history.html#${comicId}`;
+        card.className = 'recent-comic-card comic-card-base';
 
         card.innerHTML = `
-          <div class="recent-thumb-wrap">
+          <div class="recent-thumb-wrap comic-thumb-wrap">
             ${imgSrc
               ? `<img src="${imgSrc}" alt="${title}" class="recent-thumb" loading="lazy">`
               : `<div class="recent-thumb-placeholder">🎨</div>`
             }
-            ${style ? `<span class="recent-style-badge">${style}</span>` : ''}
+            ${style ? `<span class="recent-style-badge comic-style-badge" data-style="${style}">${style}</span>` : ''}
+            <div class="comic-card-overlay">
+              <span class="comic-card-overlay-btn">Open →</span>
+            </div>
           </div>
           <div class="recent-card-info">
             <span class="recent-card-title">${title}</span>
@@ -280,6 +416,28 @@
     }
 
     loadDashboardData();
+
+    // ── Style chips sync ──
+    const styleChipsContainer = document.getElementById('qg-style-chips');
+    const styleSelect         = document.getElementById('qg-style');
+    styleChipsContainer?.addEventListener('click', (e) => {
+      const chip = e.target.closest('.style-chip');
+      if (!chip) return;
+      styleChipsContainer.querySelectorAll('.style-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      styleSelect.value = chip.dataset.value;
+    });
+
+    // ── Layout chips sync ──
+    const layoutChipsContainer = document.getElementById('qg-layout-chips');
+    const layoutSelect         = document.getElementById('qg-layout');
+    layoutChipsContainer?.addEventListener('click', (e) => {
+      const chip = e.target.closest('.layout-chip-sm');
+      if (!chip) return;
+      layoutChipsContainer.querySelectorAll('.layout-chip-sm').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      layoutSelect.value = chip.dataset.value;
+    });
 
     // ── Quick Generate form ──
     const qgText    = document.getElementById('qg-text');
@@ -336,7 +494,7 @@
           const progress   = statusData.progress || '';
 
           if (progress !== lastProgress) {
-            lastProgress    = progress;
+            lastProgress        = progress;
             qgPText.textContent = progress || 'AI is working…';
 
             if (progress.includes('extraction'))  setQgStep('qg-step-llm');
@@ -369,7 +527,7 @@
         qgError.classList.remove('hidden');
       } finally {
         qgBtn.disabled = false;
-        qgBtn.textContent = 'Generate Comic';
+        qgBtn.textContent = 'Generate Comic →';
       }
     });
 
@@ -385,5 +543,6 @@
       unsubscribe();
     });
   </script>
+
 </body>
 </html>

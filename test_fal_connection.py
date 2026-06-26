@@ -35,9 +35,10 @@ def main():
         return
 
     prompt = "a cinematic manga drawing of a futuristic city"
-    endpoint = "fal-ai/fast-animagine-xl"
+    endpoint = "fal-ai/fast-sdxl"
+    model_name = "cagliostrolab/animagine-xl-3.1"
     
-    print(f"[FalAI Test Connection] Sending test request to endpoint '{endpoint}'...")
+    print(f"[FalAI Test Connection] Sending test request to endpoint '{endpoint}' with model '{model_name}'...")
     print(f"[FalAI Test Connection] Prompt: '{prompt}'")
     
     try:
@@ -47,7 +48,11 @@ def main():
             arguments={
                 "prompt": prompt,
                 "negative_prompt": "lowres, bad anatomy, text, error, worst quality",
-                "image_size": "square_hd",
+                "model_name": model_name,
+                "image_size": {
+                    "width": 512,
+                    "height": 512
+                },
                 "seed": 42
             }
         )
@@ -70,7 +75,7 @@ def main():
             f.write(response.content)
             
         print(f"[FalAI Test Connection] Image saved successfully to: {output_path}")
-        print("[FalAI] Panel generated — model: fal-ai/fast-animagine-xl, estimated cost: $0.003")
+        print(f"[FalAI] Panel generated — model: {model_name}, estimated cost: $0.003")
         print("[FalAI Test Connection] TEST PASSED SUCCESSFULLY.")
         
     except Exception as e:

@@ -95,6 +95,9 @@ class CreditsService:
         If the user does not exist, registers them with 10 starting credits.
         """
         u_id = clean_uuid(user_id)
+        now = datetime.utcnow().isoformat()
+
+        supabase_failed = False
 
         # 1. Try querying Supabase if enabled
         if self.supabase_enabled:
@@ -111,12 +114,44 @@ class CreditsService:
                         balance = int(data[0].get("balance", 10))
                         # Sync to local sqlite
                         self._sqlite_sync_balance(u_id, balance)
+                        print("[CREDITS] Existing balance synced.")
                         return balance
                     else:
-                        # User doesn't exist in Supabase, let's register them
-                        return self._register_user(u_id)
+                        # User doesn't exist in Supabase yet (GET succeeded but returned empty list)
+                        # Check SQLite before seeding
+                        conn = sqlite3.connect(self.db_path)
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT balance FROM credits WHERE user_id = ?", (u_id,))
+                        row = cursor.fetchone()
+                        conn.close()
+                        
+                        if row is not None:
+                            balance = row[0]
+                            print(f"[CREDITS] User not in Supabase but found in SQLite. Syncing SQLite balance ({balance}) to Supabase.")
+                            try:
+                                credits_url = f"{self.supabase_url.rstrip('/')}/rest/v1/credits"
+                                httpx.post(credits_url, headers={**headers, "Content-Type": "application/json"}, json={
+                                    "user_id": u_id,
+                                    "balance": balance,
+                                    "created_at": now,
+                                    "updated_at": now
+                                }, timeout=10.0)
+                            except Exception as e:
+                                print(f"[Warning] Failed to sync local balance to Supabase: {e}")
+                            return balance
+                        else:
+                            # User does not exist in Supabase AND does not exist in SQLite
+                            print("[CREDITS] No balance found anywhere.")
+                            return self._register_user(u_id)
+                else:
+                    print(f"[Warning] Supabase credits GET returned status: {r.status_code}")
+                    supabase_failed = True
             except Exception as e:
                 print(f"[Warning] Failed to fetch balance from Supabase: {e}. Falling back to SQLite.")
+                supabase_failed = True
+
+        if supabase_failed:
+            print("[CREDITS] Supabase unavailable.")
 
         # 2. SQLite Fallback
         conn = sqlite3.connect(self.db_path)
@@ -126,9 +161,17 @@ class CreditsService:
         conn.close()
 
         if row is not None:
-            return row[0]
+            balance = row[0]
+            if supabase_failed:
+                print(f"[CREDITS] Using existing SQLite balance. (balance={balance})")
+            return balance
         else:
-            # User not found in SQLite either, let's register them
+            if supabase_failed:
+                print("[CREDITS] BALANCE_VERIFICATION_FAILED")
+                raise ValueError("Unable to verify account balance.\nPlease try again shortly.")
+            
+            # If supabase is not enabled, register locally
+            print("[CREDITS] No balance found anywhere.")
             return self._register_user(u_id)
 
     def _register_user(self, user_id: str) -> int:
@@ -152,6 +195,7 @@ class CreditsService:
                 VALUES (?, ?, ?, ?, ?)
             ''', (txn_id, user_id, starting_balance, "new_user_bonus", now))
             conn.commit()
+            print("[CREDITS] Initial balance seeded.")
         except Exception as e:
             print(f"[Error] Local registration failed: {e}")
         finally:
@@ -256,51 +300,19 @@ class CreditsService:
 
     def check_daily_limit(self, user_id: str) -> bool:
         """
-        Restricts free daily outputs to 3.
-        Returns True if the user is allowed to generate, False if the limit of 3 is reached.
+        Bypassed - Always returns True.
         """
-        u_id = clean_uuid(user_id)
-        start_of_day = datetime.utcnow().date().isoformat() + "T00:00:00"
+        return True
 
-        # 1. Supabase Query
-        if self.supabase_enabled:
-            url = f"{self.supabase_url.rstrip('/')}/rest/v1/credit_transactions?user_id=eq.{u_id}&reason=eq.generation&created_at=gte.{start_of_day}"
-            headers = {
-                "apikey": self.supabase_key,
-                "Authorization": f"Bearer {self.supabase_key}"
-            }
-            try:
-                r = httpx.get(url, headers=headers, timeout=10.0)
-                if r.status_code == 200:
-                    data = r.json()
-                    # Count successful deductions (generations)
-                    # Note: We filter reason=generation and amount=-1
-                    gen_count = sum(1 for item in data if int(item.get("amount", 0)) < 0)
-                    return gen_count < 3
-            except Exception as e:
-                print(f"[Warning] Failed to fetch daily limit from Supabase: {e}. Falling back to SQLite.")
-
-        # 2. SQLite Fallback
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute('''
-            SELECT COUNT(*) FROM credit_transactions
-            WHERE user_id = ? AND reason = 'generation' AND amount < 0 AND created_at >= ?
-        ''', (u_id, start_of_day))
-        count = cursor.fetchone()[0]
-        conn.close()
-
-        return count < 3
-
-    def deduct_credit(self, user_id: str) -> bool:
+    def deduct_credit(self, user_id: str, re_generate: bool = False) -> bool:
         """
         Checks daily limit and balance, then deducts 1 credit from user balance
-        and registers a transaction of -1 with reason 'generation'.
+        and registers a transaction of -1 with reason 'generation' or 'regeneration'.
         """
         u_id = clean_uuid(user_id)
         
-        # Check free daily limit of 3 generations
-        if not self.check_daily_limit(u_id):
+        # Check free daily limit of 3 generations unless bypassing via re_generate
+        if not re_generate and not self.check_daily_limit(u_id):
             raise ValueError("Daily limit of 3 generations reached.")
 
         # Get current balance
@@ -311,6 +323,7 @@ class CreditsService:
         new_balance = balance - 1
         now = datetime.utcnow().isoformat()
         txn_id = str(uuid.uuid4())
+        reason = "regeneration" if re_generate else "generation"
 
         # 1. Update SQLite
         conn = sqlite3.connect(self.db_path)
@@ -322,7 +335,7 @@ class CreditsService:
             cursor.execute('''
                 INSERT INTO credit_transactions (id, user_id, amount, reason, created_at)
                 VALUES (?, ?, ?, ?, ?)
-            ''', (txn_id, u_id, -1, "generation", now))
+            ''', (txn_id, u_id, -1, reason, now))
             conn.commit()
         except Exception as e:
             print(f"[Error] Local deduction failed: {e}")
@@ -356,13 +369,14 @@ class CreditsService:
                     "id": txn_id,
                     "user_id": u_id,
                     "amount": -1,
-                    "reason": "generation",
+                    "reason": reason,
                     "created_at": now
                 }, timeout=10.0)
             except Exception as e:
                 print(f"[Warning] Failed to post deduction transaction in Supabase: {e}")
 
         return True
+
 
     def refund_credit(self, user_id: str) -> bool:
         """
@@ -426,5 +440,65 @@ class CreditsService:
                 print(f"[Warning] Failed to post refund transaction in Supabase: {e}")
 
         return True
+
+    def get_daily_usage(self, user_id: str) -> dict:
+        """
+        Returns a dictionary summarizing:
+          - balance: user's current credit balance
+          - usage_today: number of generations today
+          - daily_limit: daily limit of generations (3)
+          - remaining_generations: max(0, 3 - usage_today)
+          - reset_countdown_seconds: seconds until the next UTC day starts
+        """
+        u_id = clean_uuid(user_id)
+        balance = self.get_balance(u_id)
+        
+        # Calculate start of day in UTC
+        start_of_day = datetime.utcnow().date().isoformat() + "T00:00:00"
+        
+        # Count successful generations today
+        if self.supabase_enabled:
+            url = f"{self.supabase_url.rstrip('/')}/rest/v1/credit_transactions?user_id=eq.{u_id}&reason=eq.generation&created_at=gte.{start_of_day}"
+            headers = {
+                "apikey": self.supabase_key,
+                "Authorization": f"Bearer {self.supabase_key}"
+            }
+            try:
+                r = httpx.get(url, headers=headers, timeout=10.0)
+                if r.status_code == 200:
+                    data = r.json()
+                    usage_today = sum(1 for item in data if int(item.get("amount", 0)) < 0)
+                else:
+                    usage_today = 0
+            except Exception as e:
+                print(f"[Warning] Failed to fetch usage from Supabase: {e}. Falling back to SQLite.")
+                usage_today = self._sqlite_count_usage(u_id, start_of_day)
+        else:
+            usage_today = self._sqlite_count_usage(u_id, start_of_day)
+            
+        # Calculate seconds until next UTC day (00:00:00)
+        from datetime import time as dt_time, timedelta
+        now = datetime.utcnow()
+        next_day = datetime.combine(now.date() + timedelta(days=1), dt_time.min)
+        reset_countdown_seconds = int((next_day - now).total_seconds())
+        
+        return {
+            "balance": balance,
+            "usage_today": usage_today,
+            "daily_limit": 3,
+            "remaining_generations": max(0, 3 - usage_today),
+            "reset_countdown_seconds": reset_countdown_seconds
+        }
+
+    def _sqlite_count_usage(self, user_id: str, start_of_day: str) -> int:
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT COUNT(*) FROM credit_transactions
+            WHERE user_id = ? AND reason = 'generation' AND amount < 0 AND created_at >= ?
+        ''', (user_id, start_of_day))
+        count = cursor.fetchone()[0]
+        conn.close()
+        return count
 
 credits_service = CreditsService()

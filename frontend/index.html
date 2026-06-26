@@ -6,7 +6,7 @@
   <title>Inkraft - AI Comic Generator</title>
   <meta name="description" content="Convert your novel text into AI-generated manga and manhwa comics. Dynamic panel counts, cinematic layouts, multiple art styles. 100% local AI pipeline.">
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2">
   <link rel="stylesheet" href="app-shell.css">
 </head>
 <body>
@@ -18,7 +18,11 @@
       <a href="#generator-workspace" class="nav-link active">Generate</a>
       <a href="/history.html"   class="nav-link" id="nav-history">History</a>
       <a href="/gallery.html"   class="nav-link">Gallery</a>
+      <a href="/characters.html" class="nav-link">Vault</a>
     </nav>
+    <button class="hamburger-btn" id="hamburger-btn" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
     <div class="header-right" id="header-right">
       <!-- Populated by JS -->
     </div>
@@ -29,62 +33,103 @@
     <div class="speed-lines-bg"></div>
     <div class="hero-grid">
       <div class="hero-content">
-        <h1 class="hero-title">Your Story.<br>Your Manga.</h1>
+        <h1 class="hero-title">Turn Stories Into<br>Manga, Manhwa &<br>Comics with AI</h1>
         <p class="hero-subtitle">
-          Transform raw text, scripts, or storyboards into beautifully stylized manga and manhwa panels instantly. Powered by advanced local AI consistency engines.
+          Generate complete visual stories from plain text.
         </p>
-        <button class="glow-button hero-cta-btn" onclick="document.getElementById('generator-workspace').scrollIntoView({behavior: 'smooth'})">
-          Launch Generator →
-        </button>
+        <div class="hero-ctas">
+          <button class="glow-button hero-cta-btn" onclick="document.getElementById('generator-workspace').scrollIntoView({behavior: 'smooth'})">
+            Generate Now
+          </button>
+          <a href="/gallery.html" class="glow-button hero-cta-btn secondary-btn">
+            View Gallery
+          </a>
+        </div>
       </div>
       <div class="hero-showcase">
-        <div class="showcase-container">
+        <div class="showcase-grid-collage">
           <!-- Card 1: Manga style preview -->
-          <div class="showcase-card">
+          <div class="showcase-card style-manga">
             <div class="showcase-header">
               <span class="showcase-tag">MANGA</span>
               <h3 class="showcase-title">SHADOW BLADE</h3>
             </div>
             <div class="showcase-body">
-              <div style="position: absolute; bottom: 10px; left: 10px; background: #000; border: 2px solid #fff; padding: 0.2rem 0.5rem; font-family: 'Bangers', cursive; font-size: 0.8rem; transform: rotate(-3deg);">
+              <div style="position: absolute; bottom: 8px; left: 8px; background: #000; border: 2px solid #fff; padding: 0.2rem 0.5rem; font-family: 'Bangers', cursive; font-size: 0.75rem; transform: rotate(-3deg); color: #fff;">
                 "THIS ENDS NOW!"
               </div>
             </div>
             <div class="showcase-footer">
               <span>VOL. 01</span>
-              <span>INKRAFT STUDIOS</span>
+              <span>MANGA SHADE</span>
             </div>
           </div>
+
           <!-- Card 2: Manhwa style preview -->
-          <div class="showcase-card">
+          <div class="showcase-card style-manhwa">
             <div class="showcase-header">
               <span class="showcase-tag" style="background-color: #3b82f6;">MANHWA</span>
               <h3 class="showcase-title">SOLO ASCENT</h3>
             </div>
-            <div class="showcase-body" style="background-image: radial-gradient(rgba(59, 130, 246, 0.1) 15%, transparent 16%);">
-              <div style="position: absolute; bottom: 15px; right: 10px; background: #000; border: 2px solid #3b82f6; padding: 0.2rem 0.5rem; font-family: 'Bangers', cursive; font-size: 0.8rem; transform: rotate(2deg);">
-                "STATUS WINDOW ACTIVE."
+            <div class="showcase-body">
+              <div style="position: absolute; bottom: 8px; right: 8px; background: #000; border: 2px solid #3b82f6; padding: 0.2rem 0.5rem; font-family: 'Bangers', cursive; font-size: 0.75rem; transform: rotate(2deg); color: #3b82f6; box-shadow: 0 0 6px rgba(59, 130, 246, 0.4);">
+                "LEVEL UP!"
               </div>
             </div>
             <div class="showcase-footer">
               <span>CHAP. 42</span>
-              <span>INKRAFT COMICS</span>
+              <span>SYSTEM ACTIVE</span>
             </div>
           </div>
-          <!-- Card 3: Cinematic style preview -->
-          <div class="showcase-card">
+
+          <!-- Card 3: Anime style preview -->
+          <div class="showcase-card style-anime">
+            <div class="showcase-header">
+              <span class="showcase-tag" style="background-color: #ec4899;">ANIME</span>
+              <h3 class="showcase-title">CHRONO GEAR</h3>
+            </div>
+            <div class="showcase-body">
+              <div style="position: absolute; top: 8px; left: 8px; background: #fff; border: 2px solid #000; padding: 0.2rem 0.5rem; font-family: 'Bangers', cursive; font-size: 0.7rem; transform: rotate(-1deg); color: #000; border-radius: 6px;">
+                "CHRONO DRIVE!"
+              </div>
+            </div>
+            <div class="showcase-footer">
+              <span>EP. 01</span>
+              <span>CEL SHADED</span>
+            </div>
+          </div>
+
+          <!-- Card 4: Cinematic style preview -->
+          <div class="showcase-card style-cinematic">
             <div class="showcase-header">
               <span class="showcase-tag" style="background-color: #10b981;">CINEMATIC</span>
               <h3 class="showcase-title">NEON RUNNERS</h3>
             </div>
-            <div class="showcase-body" style="background-image: radial-gradient(rgba(16, 185, 129, 0.1) 15%, transparent 16%);">
-              <div style="position: absolute; top: 15px; left: 15px; background: #000; border: 2px solid #10b981; padding: 0.2rem 0.5rem; font-family: 'Bangers', cursive; font-size: 0.75rem; transform: rotate(-1deg);">
-                "NEON GLARE IN THE RAIN..."
+            <div class="showcase-body">
+              <div style="position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.2); padding: 0.1rem 0.5rem; font-family: 'Nunito', sans-serif; font-size: 0.65rem; color: #fff; letter-spacing: 0.5px; white-space: nowrap;">
+                [NEON GLARE IN THE RAIN]
               </div>
             </div>
             <div class="showcase-footer">
               <span>SCENE 3</span>
-              <span>STUDIO INKRAFT</span>
+              <span>CINE-SHOT</span>
+            </div>
+          </div>
+
+          <!-- Card 5: Realistic style preview -->
+          <div class="showcase-card style-realistic">
+            <div class="showcase-header">
+              <span class="showcase-tag" style="background-color: #f59e0b;">REALISTIC</span>
+              <h3 class="showcase-title">LOST TEMPLE</h3>
+            </div>
+            <div class="showcase-body">
+              <div style="position: absolute; top: 8px; right: 8px; background: #0a0a0a; border: 2px solid #f59e0b; padding: 0.2rem 0.5rem; font-family: 'Bangers', cursive; font-size: 0.7rem; transform: rotate(3deg); color: #f59e0b;">
+                "THE RUNES GLOW..."
+              </div>
+            </div>
+            <div class="showcase-footer">
+              <span>VOL. 05</span>
+              <span>REAL-RENDER</span>
             </div>
           </div>
         </div>
@@ -95,109 +140,325 @@
   <!-- ── Interactive Workspace Section ───────────────────── -->
   <section class="generator-workspace-section" id="generator-workspace">
     <div class="app-container" style="max-width: 1200px; margin: 0 auto;">
+      
+      <!-- Onboarding Guide -->
+      <div id="onboarding-guide" class="onboarding-guide glass-panel collapsed hidden">
+        <div class="onboarding-header">
+          <h3>🎨 Welcome to Inkraft Creator!</h3>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <button type="button" id="onboarding-toggle-btn" class="onboarding-toggle-btn">
+              Quick Guide <span class="onboarding-toggle-arrow">▲</span>
+            </button>
+            <button type="button" id="close-onboarding-btn" class="close-onboarding-btn">×</button>
+          </div>
+        </div>
+        <div id="onboarding-body" class="onboarding-body hidden">
+          <p class="onboarding-subtitle">Your quick guide to generating local AI manga in 5 steps:</p>
+          <div class="onboarding-steps">
+            <div class="onboarding-step-card">
+              <div class="onboarding-step-num">1</div>
+              <h4>Paste Story</h4>
+              <p>Paste a chapter or scene (min 20 characters) in the story textbox.</p>
+            </div>
+            <div class="onboarding-step-card">
+              <div class="onboarding-step-num">2</div>
+              <h4>Choose Style</h4>
+              <p>Select traditional Manga, vibrant Manhwa, Anime, Cinematic, or Realistic.</p>
+            </div>
+            <div class="onboarding-step-card">
+              <div class="onboarding-step-num">3</div>
+              <h4>Choose Format</h4>
+              <p>Configure panel strips or single-page layout cards with custom pacing.</p>
+            </div>
+            <div class="onboarding-step-card">
+              <div class="onboarding-step-num">4</div>
+              <h4>Active Cast</h4>
+              <p>Select characters from your vault to lock visual consistency across panels.</p>
+            </div>
+            <div class="onboarding-step-card">
+              <div class="onboarding-step-num">5</div>
+              <h4>Generate</h4>
+              <p>Review the configuration summary and paint your comic page!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <main>
         <!-- Input section -->
         <section class="input-section glass-panel">
-          <h2>Enter Novel Text</h2>
-          <textarea id="novel-input" placeholder="Paste a chapter or scene from your novel here… (min 20 characters)" maxlength="3000"></textarea>
-          <div id="char-counter" class="char-counter">0 / 3000</div>
-
-          <!-- Style Selection pills -->
-          <div class="style-selector-wrap" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
-            <span class="selector-label">Art Style Selection</span>
-            <div class="style-pills-container">
-              <button type="button" class="style-pill active" data-value="">
-                <span class="style-thumb">✨</span>
-                <span class="style-label">Auto-detect</span>
-              </button>
-              <button type="button" class="style-pill" data-value="manga">
-                <span class="style-thumb"><img src="assets/Manga.png" alt="Manga" class="style-preview-img"></span>
-                <span class="style-label">Manga</span>
-              </button>
-              <button type="button" class="style-pill" data-value="manhwa">
-                <span class="style-thumb"><img src="assets/Manhwa.png" alt="Manhwa" class="style-preview-img"></span>
-                <span class="style-label">Manhwa</span>
-              </button>
-              <button type="button" class="style-pill" data-value="anime">
-                <span class="style-thumb"><img src="assets/anime_style_example.png" alt="Anime" class="style-preview-img"></span>
-                <span class="style-label">Anime</span>
-              </button>
-              <button type="button" class="style-pill" data-value="cinematic">
-                <span class="style-thumb"><img src="assets/Cinematic.png" alt="Cinematic" class="style-preview-img"></span>
-                <span class="style-label">Cinematic</span>
-              </button>
-              <button type="button" class="style-pill" data-value="realistic">
-                <span class="style-thumb"><img src="assets/realistic_style_example.png" alt="Realistic" class="style-preview-img"></span>
-                <span class="style-label">Realistic</span>
-              </button>
+          <!-- Wizard Steps Indicator -->
+          <div class="workspace-steps-indicator">
+            <div class="step-indicator-item active" data-step="1">
+              <div class="step-num-bubble">1</div>
+              <div class="step-label">Story</div>
             </div>
-            <!-- Hidden select elements kept to preserve original script behaviors -->
-            <select id="style-select" style="display: none;">
-              <option value="">Auto-detect</option>
-              <option value="anime">Anime</option>
-              <option value="manga">Manga</option>
-              <option value="manhwa">Manhwa</option>
-              <option value="realistic">Realistic</option>
-              <option value="cinematic">Cinematic</option>
-            </select>
+            <div class="step-indicator-line"></div>
+            <div class="step-indicator-item" data-step="2">
+              <div class="step-num-bubble">2</div>
+              <div class="step-label">Style</div>
+            </div>
+            <div class="step-indicator-line"></div>
+            <div class="step-indicator-item" data-step="3">
+              <div class="step-num-bubble">3</div>
+              <div class="step-label">Format</div>
+            </div>
+            <div class="step-indicator-line"></div>
+            <div class="step-indicator-item" data-step="4">
+              <div class="step-num-bubble">4</div>
+              <div class="step-label">Cast</div>
+            </div>
+            <div class="step-indicator-line"></div>
+            <div class="step-indicator-item" data-step="5">
+              <div class="step-num-bubble">5</div>
+              <div class="step-label">Create</div>
+            </div>
           </div>
 
-          <!-- Layout Selection pills -->
-          <div class="layout-selector-wrap" style="margin-top: 1rem; margin-bottom: 1.5rem;">
-            <span class="selector-label">Panel Layout Style</span>
-            <div class="layout-pills-container">
-              <button type="button" class="layout-pill active" data-value="" title="AI dynamically decides layout coordinates based on pace">
-                AI Decides
-              </button>
-              <button type="button" class="layout-pill tooltip" data-value="action">
-                Action
-                <span class="tooltiptext">Fast cuts, dynamic angles</span>
-              </button>
-              <button type="button" class="layout-pill tooltip" data-value="drama">
-                Drama
-                <span class="tooltiptext">Close-ups, emotional pacing</span>
-              </button>
-              <button type="button" class="layout-pill tooltip" data-value="dialogue">
-                Dialogue
-                <span class="tooltiptext">Conversation framing</span>
-              </button>
-            </div>
-            <!-- Hidden select elements kept to preserve original script behaviors -->
-            <select id="layout-select" style="display: none;">
-              <option value="">AI decides</option>
-              <option value="action">Action</option>
-              <option value="drama">Drama</option>
-              <option value="dialogue">Dialogue</option>
-            </select>
-          </div>
-
-          <!-- Your Characters (Optional) -->
-          <div class="character-design-section" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
-              <div>
-                <h3 style="margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-primary);">Your Characters (Optional)</h3>
-                <p style="margin: 0; font-size: 0.75rem; color: var(--text-secondary);">Define your characters for consistent appearance across panels</p>
+          <!-- STEP 1: Story Input -->
+          <div class="step-content active" data-step="1">
+            <h3 class="step-heading">Step 1: Enter Novel Text</h3>
+            <p class="step-instruction">Paste a scene or chapter from your novel. The AI parses the text to design panel scripts, pacing, and visual narration.</p>
+            <div class="comic-textarea-wrap">
+              <textarea id="novel-input" placeholder="Paste a chapter or scene from your novel here… (min 20 characters)" maxlength="3000"></textarea>
+              <div class="textarea-footer">
+                <div id="story-stats-bar" class="story-stats-bar">
+                  <span class="stat-pill" id="stat-words"><span class="stat-label">Words</span>&nbsp;<span class="stat-value">0</span></span>
+                  <span class="stat-pill" id="stat-read-time"><span class="stat-label">Read</span>&nbsp;<span class="stat-value">—</span></span>
+                  <span class="stat-pill estimate" id="stat-panels" title="Estimate based on text length"><span class="stat-label">~Panels</span>&nbsp;<span class="stat-value" id="panel-estimate">—</span></span>
+                </div>
+                <div id="char-counter" class="char-counter">0 / 3000</div>
               </div>
-              <button id="add-char-btn" class="step" style="cursor: pointer; border-color: var(--accent-color); color: var(--text-primary); background: rgba(232, 50, 74, 0.1); padding: 0.4rem 0.8rem; font-size: 0.75rem; border-radius: 0px;">+ Add Character</button>
             </div>
+          </div>
+
+          <!-- STEP 2: Choose Style -->
+          <div class="step-content" data-step="2">
+            <h3 class="step-heading">Step 2: Choose Art Style</h3>
+            <p class="step-instruction">Select the primary aesthetic rendering style. All visual traits will follow this style direction.</p>
             
-            <!-- Character list container -->
-            <div id="character-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; margin-top: 0.75rem;">
-              <!-- Injected character cards -->
+            <div class="style-selector-wrap">
+              <div class="style-pills-container">
+                <button type="button" class="style-pill active" data-value="">
+                  <span class="style-icon-wrapper">✨</span>
+                  <div class="style-card-content">
+                    <span class="style-label">Auto-detect</span>
+                    <span class="style-desc">Let AI determine the best match</span>
+                  </div>
+                </button>
+                <button type="button" class="style-pill" data-value="manga">
+                  <span class="style-icon-wrapper">🖌️</span>
+                  <div class="style-card-content">
+                    <span class="style-label">Manga</span>
+                    <span class="style-desc">Traditional B&W screen tones & hatching</span>
+                  </div>
+                </button>
+                <button type="button" class="style-pill" data-value="manhwa">
+                  <span class="style-icon-wrapper">⚡</span>
+                  <div class="style-card-content">
+                    <span class="style-label">Manhwa</span>
+                    <span class="style-desc">Vibrant webtoon colors & status layouts</span>
+                  </div>
+                </button>
+                <button type="button" class="style-pill" data-value="anime">
+                  <span class="style-icon-wrapper">🌸</span>
+                  <div class="style-card-content">
+                    <span class="style-label">Anime</span>
+                    <span class="style-desc">Cel-shaded scenes & digital light effects</span>
+                  </div>
+                </button>
+                <button type="button" class="style-pill" data-value="cinematic">
+                  <span class="style-icon-wrapper">🎬</span>
+                  <div class="style-card-content">
+                    <span class="style-label">Cinematic</span>
+                    <span class="style-desc">Moody shadow mapping & scenic aspect ratios</span>
+                  </div>
+                </button>
+                <button type="button" class="style-pill" data-value="realistic">
+                  <span class="style-icon-wrapper">📷</span>
+                  <div class="style-card-content">
+                    <span class="style-label">Realistic</span>
+                    <span class="style-desc">High-fidelity textures & physics rendering</span>
+                  </div>
+                </button>
+              </div>
+              
+              <!-- Hidden select elements kept to preserve original script behaviors -->
+              <select id="style-select" style="display: none;">
+                <option value="">Auto-detect</option>
+                <option value="anime">Anime</option>
+                <option value="manga">Manga</option>
+                <option value="manhwa">Manhwa</option>
+                <option value="realistic">Realistic</option>
+                <option value="cinematic">Cinematic</option>
+              </select>
             </div>
           </div>
 
-          <button id="generate-btn" class="glow-button" style="margin-top: 1rem;">Generate Comic</button>
+          <!-- STEP 3: Choose Format -->
+          <div class="step-content" data-step="3">
+            <h3 class="step-heading">Step 3: Choose Format & Pacing</h3>
+            <p class="step-instruction">Select page format. Single Page gives a high-impact cover shot, while Panel Strip creates sequenced panels.</p>
+            
+            <div class="format-selector-wrap">
+              <div class="format-cards-container">
+                <!-- CARD 1 — Single Page -->
+                <div class="format-card tooltip" data-value="single_page">
+                  <span class="tooltiptext">One widescreen or portrait cinematic frame. Best for cover pages and system window scenes.</span>
+                  <div class="format-card-icon">📄</div>
+                  <div class="format-card-details">
+                    <span class="format-card-label">Single Page</span>
+                    <span class="format-card-subtitle">One cinematic panel</span>
+                    <span class="format-card-tag">Manhwa • Cinematic</span>
+                  </div>
+                </div>
 
-          <!-- Credits warning for guests -->
-          <div id="guest-notice" class="guest-notice hidden">
-            ⚡ <a href="/register.html">Register free</a> to save your comics and track your history.
+                <!-- CARD 2 — Panel Strip -->
+                <div class="format-card tooltip" data-value="panel_strip">
+                  <span class="tooltiptext">Classic sequenced manga pages. Best for dialogue exchanges, actions, and episodic panels.</span>
+                  <div class="format-card-icon">📊</div>
+                  <div class="format-card-details">
+                    <span class="format-card-label">Panel Strip</span>
+                    <span class="format-card-subtitle">Multiple panels</span>
+                    <span class="format-card-tag">Manga • Anime</span>
+                  </div>
+                </div>
+
+                <!-- CARD 3 — AI Decides -->
+                <div class="format-card active tooltip" data-value="">
+                  <span class="tooltiptext">Recommended: AI evaluates style and pacing to arrange the ideal format layout automatically.</span>
+                  <div class="format-card-icon">✨</div>
+                  <div class="format-card-details">
+                    <span class="format-card-label">AI Decides</span>
+                    <span class="format-card-subtitle">Auto-select layout</span>
+                    <span class="format-card-tag recomend-tag">Recommended</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Hidden select elements kept to preserve original script behaviors -->
+              <select id="format-select" style="display: none;">
+                <option value="">AI decides</option>
+                <option value="single_page">Single Page</option>
+                <option value="panel_strip">Panel Strip</option>
+              </select>
+
+              <div id="format-info-message" style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+                Format chosen automatically based on your style
+              </div>
+              <div id="single-page-warning-badge" class="comic-warning-badge hidden">
+                <span>⚠️</span>
+                <span>
+                  Single Page mode generates one large illustration.
+                  Layout styles only affect multi-panel comics.
+                </span>
+              </div>
+            </div>
+
+            <!-- Layout Selection pills -->
+            <div class="layout-selector-wrap" style="margin-top: 1rem; margin-bottom: 1.5rem;">
+              <span class="selector-label">Panel Layout Style</span>
+              <div class="layout-pills-container">
+                <button type="button" class="layout-pill active" data-value="" title="AI dynamically decides layout coordinates based on pace">
+                  AI Decides
+                </button>
+                <button type="button" class="layout-pill tooltip" data-value="action">
+                  Action
+                  <span class="tooltiptext">Fast cuts, dynamic angles</span>
+                </button>
+                <button type="button" class="layout-pill tooltip" data-value="drama">
+                  Drama
+                  <span class="tooltiptext">Close-ups, emotional pacing</span>
+                </button>
+                <button type="button" class="layout-pill tooltip" data-value="dialogue">
+                  Dialogue
+                  <span class="tooltiptext">Conversation framing</span>
+                </button>
+              </div>
+              
+              <!-- Hidden select elements kept to preserve original script behaviors -->
+              <select id="layout-select" style="display: none;">
+                <option value="">AI decides</option>
+                <option value="action">Action</option>
+                <option value="drama">Drama</option>
+                <option value="dialogue">Dialogue</option>
+              </select>
+            </div>
           </div>
 
-          <!-- Error Banner -->
-          <div id="error-banner" class="error-banner hidden">
-            <span id="error-text"></span>
-            <button onclick="document.getElementById('error-banner').classList.add('hidden')">✕</button>
+          <!-- STEP 4: Character Selection -->
+          <div class="step-content" data-step="4">
+            <h3 class="step-heading">Step 4: Active Cast</h3>
+            <p class="step-instruction">Select character profiles to cast them into this comic generation. The AI consistency engine will lock their visual traits across panels.</p>
+            
+            <div class="character-design-section" style="margin-top: 1rem; margin-bottom: 1.5rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                  <h3 style="margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-primary);">Active Character Sheets <span id="cast-selected-count" style="color: var(--accent-color); font-size: 0.85rem; margin-left: 0.5rem;"></span></h3>
+                  <p style="margin: 0; font-size: 0.75rem; color: var(--text-secondary);">Profiles checked here will be cast in this comic generation</p>
+                </div>
+                <button type="button" id="add-char-btn" class="step" style="cursor: pointer; border-color: var(--accent-color); color: var(--text-primary); background: rgba(232, 50, 74, 0.1); padding: 0.4rem 0.8rem; font-size: 0.75rem; border-radius: 0px;">+ Add Character</button>
+              </div>
+              
+              <!-- Character list container -->
+              <div id="character-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; margin-top: 0.75rem;">
+                <!-- Injected character cards -->
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 5: Generate -->
+          <div class="step-content" data-step="5">
+            <h3 class="step-heading">Step 5: Review & Generate</h3>
+            <p class="step-instruction">Review your creator configuration below before initializing the local AI rendering sequence.</p>
+            
+            <!-- Summary Card -->
+            <div class="selection-summary-card">
+              <h4 class="summary-title">Configuration Summary</h4>
+              <div class="summary-details">
+                <div class="summary-item story-summary">
+                  <span class="summary-label">Story Script:</span>
+                  <p id="summary-story" class="summary-value-text"></p>
+                </div>
+                <div class="summary-grid">
+                  <div class="summary-item">
+                    <span class="summary-label">Art Style:</span>
+                    <span id="summary-style" class="summary-value"></span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Format:</span>
+                    <span id="summary-format" class="summary-value"></span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Pacing Layout:</span>
+                    <span id="summary-layout" class="summary-value"></span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Characters Active:</span>
+                    <span id="summary-characters" class="summary-value"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button id="generate-btn" class="glow-button main-generate-cta" style="margin-top: 1.5rem;">Paint Comic Page! ⚡</button>
+            
+            <!-- Credits warning for guests -->
+            <div id="guest-notice" class="guest-notice hidden" style="margin-top: 1rem; margin-bottom: 0px;">
+              ⚡ <a href="/register.html">Register free</a> to save your comics and track your history.
+            </div>
+
+            <!-- Error Banner -->
+            <div id="error-banner" class="error-banner hidden" style="margin-top: 1rem; margin-bottom: 0px;">
+              <span id="error-text"></span>
+              <button type="button" onclick="document.getElementById('error-banner').classList.add('hidden')">✕</button>
+            </div>
+          </div>
+
+          <!-- Wizard Navigation Buttons -->
+          <div class="step-navigation-container">
+            <button type="button" id="prev-step-btn" class="step-nav-btn prev-btn hidden">← Back</button>
+            <button type="button" id="next-step-btn" class="step-nav-btn next-btn">Next Step →</button>
           </div>
         </section>
 
@@ -214,8 +475,53 @@
           <h2>Comic Output</h2>
 
           <div id="loading-state" class="hidden">
-            <div class="spinner"></div>
-            <p id="loading-text">Initializing AI pipeline…</p>
+            <!-- Production Pipeline -->
+            <div id="pipeline-flow" class="pipeline-flow-container">
+              <div class="pipeline-stage" id="ps-extract" data-stage="extract">
+                <div class="pipeline-stage-dot">📖</div>
+                <div class="pipeline-stage-label">Scene<br>Extraction</div>
+              </div>
+              <div class="pipeline-connector"></div>
+              <div class="pipeline-stage" id="ps-storyboard" data-stage="storyboard">
+                <div class="pipeline-stage-dot">📐</div>
+                <div class="pipeline-stage-label">Story<br>board</div>
+              </div>
+              <div class="pipeline-connector"></div>
+              <div class="pipeline-stage" id="ps-render" data-stage="render">
+                <div class="pipeline-stage-dot">🎨</div>
+                <div class="pipeline-stage-label">Panel<br>Render</div>
+              </div>
+              <div class="pipeline-connector"></div>
+              <div class="pipeline-stage" id="ps-assemble" data-stage="assemble">
+                <div class="pipeline-stage-dot">📄</div>
+                <div class="pipeline-stage-label">Final<br>Assembly</div>
+              </div>
+            </div>
+
+            <!-- Live Comic Workspace -->
+            <div id="live-workspace" class="live-workspace-container">
+              <!-- Panel cards injected by JS -->
+            </div>
+
+            <!-- Status text -->
+            <p id="loading-text" class="loading-text-fade">Analyzing your story...</p>
+
+            <!-- Smooth progress bar -->
+            <div class="manga-progress-wrapper">
+              <div class="manga-progress-container">
+                <div id="manga-progress-bar" class="manga-progress-bar"></div>
+              </div>
+              <div class="manga-progress-stats">
+                <span id="raw-progress-subtitle">Initializing AI pipeline...</span>
+                <span id="manga-progress-percentage">0%</span>
+              </div>
+            </div>
+
+            <!-- Dynamic time estimate -->
+            <div id="loading-time-estimate" class="time-estimate">
+              ⏳ Estimated time: <span>Calculating...</span>
+            </div>
+
             <div class="progress-steps" id="progress-steps">
               <span id="step-llm" class="step">📖 Extracting Scenes</span>
               <!-- Panel steps injected by script.js -->
@@ -224,25 +530,60 @@
           </div>
 
           <div id="results-state" class="hidden">
-            <h3>Final Comic Page</h3>
-            <img id="final-comic-img" src="" alt="Final Comic Page">
-
-            <div class="result-actions">
-              <a id="download-png-btn" href="#" class="glow-button result-btn" target="_blank">⬇ Download PNG</a>
-              <a href="/history.html" class="glow-button result-btn result-btn-outline" id="view-history-link">📚 View History</a>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem;">
+              <h3 style="margin: 0;">Final Comic Page</h3>
+              <button id="copy-story-btn" class="step" style="cursor: pointer; font-size: 0.75rem; padding: 0.4rem 0.8rem; background: #111; border-color: var(--accent-color);">📋 Copy Story Text</button>
             </div>
 
-            <!-- Share to Gallery toggle visible immediately after completion -->
-            <div class="share-gallery-container">
-              <label class="switch">
-                <input type="checkbox" id="share-gallery-toggle">
-                <span class="slider round"></span>
-              </label>
-              <span style="font-weight: 700; font-size: 0.9rem;">Share to Community Gallery</span>
+            <!-- Sticky Action Toolbar above the fold -->
+            <div class="result-actions-toolbar">
+              <a id="download-png-btn" href="#" class="glow-button result-btn" target="_blank" style="text-align: center;">⬇ PNG (Free)</a>
+              <button id="download-pdf-btn" class="glow-button result-btn">📄 PDF (1 Credit)</button>
+              <button id="share-gallery-btn" class="glow-button result-btn">🌐 Share</button>
+              <button id="generate-again-btn" class="glow-button result-btn">🔄 Regenerate</button>
+              <button id="new-story-btn" class="glow-button result-btn result-btn-outline">✍ New Story</button>
+              <button id="save-character-action-btn" class="glow-button result-btn result-btn-outline">👤 Save Character</button>
             </div>
-            <div id="share-gallery-status" style="font-size: 0.8rem; margin-top: 0.5rem; font-weight: bold; color: var(--accent-color);"></div>
 
-            <h3 style="margin-top: 1.5rem;">Individual Panels</h3>
+            <!-- Generation Summary Card -->
+            <div class="generation-summary-card">
+              <div class="summary-item">
+                <span class="summary-label">Style</span>
+                <span class="summary-value" id="summary-style">—</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Model Used</span>
+                <span class="summary-value" id="summary-model">—</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Panel Count</span>
+                <span class="summary-value" id="summary-panels">—</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Format</span>
+                <span class="summary-value" id="summary-format">—</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Duration</span>
+                <span class="summary-value" id="summary-duration">—</span>
+              </div>
+            </div>
+
+            <!-- Share to Gallery status indicator -->
+            <div id="share-gallery-status" style="font-size: 0.85rem; margin-top: 1rem; font-weight: bold; color: var(--accent-color); text-align: center; margin-bottom: 1rem;"></div>
+
+            <!-- Thumbnail row of individual panels -->
+            <div id="thumbnail-row" class="thumbnail-row" style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.75rem; margin-bottom: 1.5rem;">
+              <!-- Individual panel thumbnails will be injected here -->
+            </div>
+
+            <!-- Stitched final page image wrapper for lightbox zoom -->
+            <div id="final-comic-wrapper" class="final-comic-img-wrapper" style="cursor: zoom-in;">
+              <img id="final-comic-img" src="" alt="Final Comic Page">
+              <div class="zoom-hint">🔍 Click to enlarge</div>
+            </div>
+
+            <h3 style="margin-top: 2.5rem;">Individual Panels</h3>
             <div id="panels-grid" class="panels-grid"></div>
           </div>
 
@@ -261,24 +602,48 @@
     <div class="section-title-wrap">
       <h2 class="section-title">How It Works</h2>
     </div>
-    <div class="steps-grid">
-      <div class="step-card">
-        <span class="step-num">01</span>
-        <span class="step-icon">📝</span>
-        <h3>Paste Story</h3>
-        <p>Input raw script details, novel passages, or action descriptions directly into the generator text area.</p>
+    <div class="comic-strip-steps">
+      <div class="comic-step-panel step-1">
+        <div class="step-panel-header">
+          <span class="step-panel-num">PANEL 1</span>
+          <span class="step-panel-action">WRITE</span>
+        </div>
+        <div class="step-panel-content">
+          <div class="step-panel-icon">📝</div>
+          <h3>Paste Story</h3>
+          <p>Input raw script details, novel passages, or action descriptions directly into the generator workspace.</p>
+        </div>
+        <div class="step-panel-footer">"The beginning of an epic adventure..."</div>
       </div>
-      <div class="step-card">
-        <span class="step-num">02</span>
-        <span class="step-icon">🎨</span>
-        <h3>Choose Style</h3>
-        <p>Select your desired format: black-and-white manga, full-color manhwa, vibrant anime, or epic cinematic lines.</p>
+      
+      <div class="comic-step-arrow">➡️</div>
+
+      <div class="comic-step-panel step-2">
+        <div class="step-panel-header" style="background: var(--accent-color);">
+          <span class="step-panel-num">PANEL 2</span>
+          <span class="step-panel-action">STYLE</span>
+        </div>
+        <div class="step-panel-content">
+          <div class="step-panel-icon">🎨</div>
+          <h3>Choose Style</h3>
+          <p>Select your desired format: black-and-white Manga, full-color Manhwa, vibrant Anime, or epic Cinematic layouts.</p>
+        </div>
+        <div class="step-panel-footer">"Setting the visual mood and canvas..."</div>
       </div>
-      <div class="step-card">
-        <span class="step-num">03</span>
-        <span class="step-icon">⚡</span>
-        <h3>Get Comic</h3>
-        <p>Watch as local AI plans panels, coordinates consistency, and paints your comic frame by frame in seconds.</p>
+
+      <div class="comic-step-arrow">➡️</div>
+
+      <div class="comic-step-panel step-3">
+        <div class="step-panel-header">
+          <span class="step-panel-num">PANEL 3</span>
+          <span class="step-panel-action">GENERATE</span>
+        </div>
+        <div class="step-panel-content">
+          <div class="step-panel-icon">⚡</div>
+          <h3>Get Comic</h3>
+          <p>Watch as local AI plans panel cuts, coordinates character consistency, and paints your comic frame by frame.</p>
+        </div>
+        <div class="step-panel-footer">"SHAZAM! Your creation comes alive!"</div>
       </div>
     </div>
   </section>
@@ -289,74 +654,117 @@
       <h2 class="section-title">Style Showcase</h2>
     </div>
     <div class="style-showcase-row">
+      <!-- Manga Card -->
       <div class="showcase-style-card" data-style="manga">
-        <div class="showcase-style-badge">Traditional Ink</div>
-        <h3>Manga</h3>
-        <p>Retro black-and-white screen tones, hand-drawn hatching, and sharp action speed lines.</p>
+        <div class="showcase-style-header">
+          <div class="showcase-style-badge">Traditional Ink</div>
+          <span class="style-badge-icon">✒️</span>
+        </div>
+        <div class="showcase-style-body">
+          <h3>Manga</h3>
+          <p>Retro black-and-white screen tones, hand-drawn hatching, and sharp action speed lines.</p>
+        </div>
         <div class="showcase-style-cta">Try Style →</div>
       </div>
+
+      <!-- Manhwa Card -->
       <div class="showcase-style-card" data-style="manhwa">
-        <div class="showcase-style-badge">Webtoon Style</div>
-        <h3>Manhwa</h3>
-        <p>Vibrant webcomic colors, clean layouts, and epic system window overlay styling.</p>
+        <div class="showcase-style-header">
+          <div class="showcase-style-badge">Webtoon Style</div>
+          <span class="style-badge-icon">📱</span>
+        </div>
+        <div class="showcase-style-body">
+          <h3>Manhwa</h3>
+          <p>Vibrant webcomic colors, clean layouts, and epic system window overlay styling.</p>
+        </div>
         <div class="showcase-style-cta">Try Style →</div>
       </div>
+
+      <!-- Anime Card -->
       <div class="showcase-style-card" data-style="anime">
-        <div class="showcase-style-badge">Vibrant Cel</div>
-        <h3>Anime</h3>
-        <p>Rich cinematic lighting, cel-shaded details, and gorgeous modern digital illustration.</p>
+        <div class="showcase-style-header">
+          <div class="showcase-style-badge">Vibrant Cel</div>
+          <span class="style-badge-icon">✨</span>
+        </div>
+        <div class="showcase-style-body">
+          <h3>Anime</h3>
+          <p>Rich cinematic lighting, cel-shaded details, and gorgeous modern digital illustration.</p>
+        </div>
         <div class="showcase-style-cta">Try Style →</div>
       </div>
+
+      <!-- Cinematic Card -->
       <div class="showcase-style-card" data-style="cinematic">
-        <div class="showcase-style-badge">Cine-Shot</div>
-        <h3>Cinematic</h3>
-        <p>Moody lighting, realistic shadows, dramatic camera angles, and wide aspect frames.</p>
+        <div class="showcase-style-header">
+          <div class="showcase-style-badge">Cine-Shot</div>
+          <span class="style-badge-icon">🎬</span>
+        </div>
+        <div class="showcase-style-body">
+          <h3>Cinematic</h3>
+          <p>Moody lighting, realistic shadows, dramatic camera angles, and wide aspect frames.</p>
+        </div>
         <div class="showcase-style-cta">Try Style →</div>
       </div>
-      <div class="showcase-style-card" data-style="manhwa">
-        <div class="showcase-style-badge">Wuxia / Xianxia</div>
-        <h3>Manhua</h3>
-        <p>Epic Chinese fantasy illustration style, sweeping action, and vibrant color detailing.</p>
+
+      <!-- Realistic Card -->
+      <div class="showcase-style-card" data-style="realistic">
+        <div class="showcase-style-header">
+          <div class="showcase-style-badge">Photo-Art</div>
+          <span class="style-badge-icon">📷</span>
+        </div>
+        <div class="showcase-style-body">
+          <h3>Realistic</h3>
+          <p>Detailed high-fidelity characters, immersive dramatic environments, and modern lighting.</p>
+        </div>
         <div class="showcase-style-cta">Try Style →</div>
       </div>
     </div>
   </section>
 
-  <!-- ── Section 4: Features Grid ────────────────────────── -->
-  <section class="landing-section" id="features-grid">
+  <!-- ── Section 4: Why Inkraft? (Trust Section) ────────────────── -->
+  <section class="landing-section" id="why-inkraft">
     <div class="section-title-wrap">
-      <h2 class="section-title">Features Grid</h2>
+      <h2 class="section-title">Why Inkraft?</h2>
     </div>
-    <div class="features-grid">
-      <div class="feature-card">
-        <span class="feature-icon">🎬</span>
-        <h3>AI Storyboard Director</h3>
-        <p>Plans complex camera shot compositions, lighting details, and layouts before drawing.</p>
+    <div class="trust-grid">
+      <!-- Story -> Comic Gen -->
+      <div class="trust-card">
+        <div class="trust-card-badge">01 // AUTOMATION</div>
+        <span class="trust-icon">📖</span>
+        <h3>Story to Comic Generation</h3>
+        <p>Directly convert raw novel chapters, script files, or plain text descriptions into dynamic comic panels. No manual panel drawing or layout coordination required.</p>
       </div>
-      <div class="feature-card">
-        <span class="feature-icon">🧠</span>
-        <h3>Character Memory</h3>
-        <p>Locks visual traits like hair, clothing, and eyes across panels via IP-Adapter anchor locks.</p>
+      
+      <!-- Character Vault -->
+      <div class="trust-card">
+        <div class="trust-card-badge">02 // STORAGE</div>
+        <span class="trust-icon">🔒</span>
+        <h3>Character Vault</h3>
+        <p>Store, refine, and lock character profiles. Save distinct traits like hair style, outfit, and gender to easily reference them during generation.</p>
       </div>
-      <div class="feature-card">
-        <span class="feature-icon">📐</span>
-        <h3>Smart Panel Layout</h3>
-        <p>Arranges frames using asymmetrical offsets, dynamic panel count heights, and manga frames.</p>
+      
+      <!-- Character Consistency System -->
+      <div class="trust-card">
+        <div class="trust-card-badge">03 // COHESION</div>
+        <span class="trust-icon">🧠</span>
+        <h3>Character Consistency System</h3>
+        <p>Powered by advanced visual consistency engines that lock distinct facial structures, hair colors, and clothing across multiple scene renders.</p>
       </div>
-      <div class="feature-card">
-        <span class="feature-icon">🎭</span>
-        <h3>10 Emotions</h3>
-        <p>Expressive facial configurations from quiet shock to intense rage mapped dynamically.</p>
+      
+      <!-- Custom Styles -->
+      <div class="trust-card">
+        <div class="trust-card-badge">04 // AESTHETICS</div>
+        <span class="trust-icon">🎨</span>
+        <h3>Custom Styles</h3>
+        <p>Select customized style pipelines for B&W screen-toned Manga, vertical system-window Manhwa, vibrant cel Anime, or Moody Cinematic illustration.</p>
       </div>
-      <div class="feature-card">
-        <span class="feature-icon">🖼️</span>
-        <h3>6 Layout Styles</h3>
-        <p>Configure pacing layouts customized for fast-paced action, conversational flow, or slow drama.</p>
-      </div>
-      <div class="feature-card">
-        <span class="feature-icon">💾</span>
-        <h3>Instant Download</h3>
-        <p>Export your full pages in high resolution PNG or printable PDF books directly to your device.</p>
+      
+      <!-- One-click Generations -->
+      <div class="trust-card">
+        <div class="trust-card-badge">05 // VELOCITY</div>
+        <span class="trust-icon">⚡</span>
+        <h3>One-Click Generations</h3>
+        <p>A completely unified layout pipeline that automatically extracts scenes, determines panels, generates art, and stitches them in a single workflow.</p>
       </div>
     </div>
   </section>
@@ -364,45 +772,61 @@
   <!-- ── Section 5: Pricing Preview ──────────────────────── -->
   <section class="landing-section" id="pricing-preview">
     <div class="section-title-wrap">
-      <h2 class="section-title">Pricing Plans</h2>
+      <h2 class="section-title">Open Beta & Pricing Plans</h2>
     </div>
     <div class="pricing-container">
-      <div class="pricing-card">
-        <h3>Free</h3>
+      <div class="pricing-card free-beta">
+        <div class="badge" style="background-color: var(--accent-color);">ACTIVE</div>
+        <h3>Free Open Beta</h3>
         <div class="price">$0</div>
-        <p class="price-desc">Perfect for testing the pipeline</p>
+        <p class="price-desc">Try the complete comic pipeline during our open beta</p>
         <ul>
-          <li>5 free daily credits</li>
-          <li>Standard rendering queue</li>
-          <li>Default Anime & Manga styles</li>
+          <li>✔ 10 Welcome Credits on signup</li>
+          <li>✔ All styles & layouts unlocked</li>
+          <li>✔ Active Cast (Character Vault) enabled</li>
+          <li>✔ PNG panel downloads (Free)</li>
+          <li>✔ PDF export (Costs 1 credit)</li>
         </ul>
-        <button class="pricing-btn glow-button" onclick="document.getElementById('generator-workspace').scrollIntoView({behavior: 'smooth'})">Generate Free</button>
+        <button class="pricing-btn glow-button" onclick="document.getElementById('generator-workspace').scrollIntoView({behavior: 'smooth'})">Get Started Free</button>
       </div>
-      <div class="pricing-card premium">
-        <div class="badge">POPULAR</div>
-        <h3>Basic</h3>
+      <div class="pricing-card premium disabled-tier" style="opacity: 0.75;" title="Currently gathering creator feedback before enabling purchases.">
+        <div class="badge" style="background-color: #555;">Available After Beta Launch</div>
+        <h3>50 Credits Pack</h3>
         <div class="price">$5</div>
-        <p class="price-desc">Best for hobbyist writers</p>
+        <p class="price-desc">Great for single volume projects</p>
         <ul>
-          <li>50 generation credits / mo</li>
-          <li>Priority queue rendering</li>
-          <li>All styles & layouts unlocked</li>
-          <li>Individual panel downloads</li>
+          <li>✔ 50 standard credits</li>
+          <li>✔ All styles & layouts unlocked</li>
+          <li>✔ Active Cast (Character Vault) enabled</li>
+          <li>✔ High-quality PDF exports</li>
         </ul>
-        <button class="pricing-btn glow-button">Choose Basic</button>
+        <button class="pricing-btn glow-button" disabled style="background: #222 !important; color: #666 !important; border-color: #444 !important; box-shadow: none !important; cursor: not-allowed;" title="Currently gathering creator feedback before enabling purchases.">Available After Beta Launch</button>
       </div>
-      <div class="pricing-card pro">
-        <h3>Pro</h3>
-        <div class="price">$12</div>
-        <p class="price-desc">For serious comic creators</p>
+      <div class="pricing-card premium disabled-tier" style="opacity: 0.75;" title="Currently gathering creator feedback before enabling purchases.">
+        <div class="badge" style="background-color: #555;">Available After Beta Launch</div>
+        <h3>120 Credits Pack</h3>
+        <div class="price">$10</div>
+        <p class="price-desc">Popular for series creators</p>
         <ul>
-          <li>150 generation credits / mo</li>
-          <li>Super priority rendering</li>
-          <li>Advanced character profiles</li>
-          <li>Multi-character support</li>
-          <li>PDF book exports</li>
+          <li>✔ 120 standard credits</li>
+          <li>✔ All styles & layouts unlocked</li>
+          <li>✔ Active Cast (Character Vault) enabled</li>
+          <li>✔ High-quality PDF exports</li>
         </ul>
-        <button class="pricing-btn glow-button">Choose Pro</button>
+        <button class="pricing-btn glow-button" disabled style="background: #222 !important; color: #666 !important; border-color: #444 !important; box-shadow: none !important; cursor: not-allowed;" title="Currently gathering creator feedback before enabling purchases.">Available After Beta Launch</button>
+      </div>
+      <div class="pricing-card pro disabled-tier" style="opacity: 0.75;" title="Currently gathering creator feedback before enabling purchases.">
+        <div class="badge" style="background-color: #555;">Available After Beta Launch</div>
+        <h3>300 Credits Pack</h3>
+        <div class="price">$20</div>
+        <p class="price-desc">Best value for comic studios</p>
+        <ul>
+          <li>✔ 300 standard credits</li>
+          <li>✔ All styles & layouts unlocked</li>
+          <li>✔ Active Cast (Character Vault) enabled</li>
+          <li>✔ High-quality PDF exports</li>
+        </ul>
+        <button class="pricing-btn glow-button" disabled style="background: #222 !important; color: #666 !important; border-color: #444 !important; box-shadow: none !important; cursor: not-allowed;" title="Currently gathering creator feedback before enabling purchases.">Available After Beta Launch</button>
       </div>
     </div>
   </section>
@@ -419,10 +843,23 @@
         <a href="/history.html">My Comics</a>
       </div>
     </div>
-    <div class="footer-copy">
-      © 2026 Inkraft. Generate your story. All rights reserved.
+    <div class="footer-copy" style="display: flex; flex-direction: column; gap: 0.5rem; align-items: center;">
+      <div>© 2026 Inkraft. Generate your story. All rights reserved.</div>
+      <div style="font-size: 0.8rem; display: flex; gap: 1rem; margin-top: 0.25rem;">
+        <a href="#" id="tos-footer-link" style="color: var(--text-secondary); text-decoration: none; transition: color 0.2s;">Terms of Service</a>
+        <span style="color: #444;">|</span>
+        <a href="#" id="privacy-footer-link" style="color: var(--text-secondary); text-decoration: none; transition: color 0.2s;">Privacy Policy</a>
+      </div>
     </div>
   </footer>
+
+  <!-- ── Zoom Lightbox Overlay ── -->
+  <div id="lightbox-overlay" class="lightbox-overlay hidden">
+    <button id="close-lightbox-btn" class="close-lightbox-btn">&times;</button>
+    <div class="lightbox-content-wrapper">
+      <img id="lightbox-img" src="" alt="Zoomed Comic Page">
+    </div>
+  </div>
 
   <!-- ── Character Design Modal ── -->
   <div id="char-modal" class="modal-overlay hidden">
@@ -496,14 +933,18 @@
 
   <script type="module">
     import { authStore, startCreditPolling, apiFetch } from './auth.js?v=2';
+    import { initNav } from './nav.js';
+
+    // Initialize mobile navigation drawer
+    initNav();
 
     // ── Header: auth-aware UI ──
     const headerRight = document.getElementById('header-right');
-    const unsubscribe = authStore.subscribe(({ token, user, credits }) => {
+    const unsubscribe = authStore.subscribe(({ token, user, credits, usageToday, dailyLimit }) => {
       if (token && user) {
         document.getElementById('guest-notice')?.classList.add('hidden');
         headerRight.innerHTML = `
-          <div class="credit-badge">
+          <div class="credit-badge" title="Credits Remaining (PDF downloads cost 1 credit)">
             <span class="credit-icon">⚡</span>
             <span id="credit-count">${credits !== null ? credits : '—'}</span>
           </div>
@@ -538,17 +979,300 @@
     document.addEventListener('click', () => document.getElementById('user-dropdown')?.classList.remove('open'));
     startCreditPolling();
 
-    // ── Sync Pills with hidden selects ──
+    // ── Onboarding Flow ──
+    const onboardingGuide = document.getElementById('onboarding-guide');
+    const closeOnboardingBtn = document.getElementById('close-onboarding-btn');
+    if (onboardingGuide) {
+      if (localStorage.getItem('inkraft_onboarding_dismissed') === 'true') {
+        onboardingGuide.classList.add('hidden');
+      } else {
+        onboardingGuide.classList.remove('hidden');
+      }
+    }
+    if (closeOnboardingBtn) {
+      closeOnboardingBtn.addEventListener('click', () => {
+        if (onboardingGuide) onboardingGuide.classList.add('hidden');
+        localStorage.setItem('inkraft_onboarding_dismissed', 'true');
+      });
+    }
+
+    // Onboarding collapsible toggle
+    const onboardingToggleBtn = document.getElementById('onboarding-toggle-btn');
+    if (onboardingToggleBtn && onboardingGuide) {
+      onboardingToggleBtn.addEventListener('click', () => {
+        const body = document.getElementById('onboarding-body');
+        if (body) body.classList.toggle('hidden');
+        onboardingGuide.classList.toggle('collapsed');
+      });
+    }
+
+    // ── Wizard Step Navigation ──
+    let currentStep = 1;
+    const totalSteps = 5;
+
+    function updateGenerationSummary() {
+      const summaryStory = document.getElementById('summary-story');
+      const summaryStyle = document.getElementById('summary-style');
+      const summaryFormat = document.getElementById('summary-format');
+      const summaryLayout = document.getElementById('summary-layout');
+      const summaryCharacters = document.getElementById('summary-characters');
+      
+      if (summaryStory) {
+        const textVal = novelInput.value.trim();
+        summaryStory.textContent = textVal.length > 120 ? textVal.substring(0, 120) + '...' : textVal;
+      }
+      
+      if (summaryStyle) {
+        const styleVal = styleSelect.value;
+        const stylePill = document.querySelector(`.style-pill[data-value="${styleVal}"]`);
+        const styleLabel = stylePill ? stylePill.querySelector('.style-label').textContent : 'Auto-detect';
+        const styleIcon = stylePill ? stylePill.querySelector('.style-icon-wrapper').textContent : '✨';
+        summaryStyle.innerHTML = `<span class="summary-icon">${styleIcon}</span> <span>${styleLabel}</span>`;
+      }
+      
+      if (summaryFormat) {
+        const formatVal = formatSelect.value;
+        const formatCard = document.querySelector(`.format-card[data-value="${formatVal}"]`);
+        const formatLabel = formatCard ? formatCard.querySelector('.format-card-label').textContent : 'AI Decides';
+        const formatIcon = formatCard ? formatCard.querySelector('.format-card-icon').textContent : '✨';
+        summaryFormat.innerHTML = `<span class="summary-icon">${formatIcon}</span> <span>${formatLabel}</span>`;
+      }
+      
+      if (summaryLayout) {
+        const layoutVal = layoutSelect.value;
+        const layoutPill = document.querySelector(`.layout-pill[data-value="${layoutVal}"]`);
+        const layoutLabel = layoutPill ? layoutPill.textContent.trim().split('\n')[0].trim() : 'AI Decides';
+        
+        const formatVal = formatSelect.value;
+        if (formatVal === 'single_page') {
+          summaryLayout.parentElement.style.display = 'none';
+        } else {
+          summaryLayout.parentElement.style.display = 'flex';
+          summaryLayout.innerHTML = `<span class="summary-icon">📐</span> <span>${layoutLabel}</span>`;
+        }
+      }
+      
+      if (summaryCharacters) {
+        const selectedChars = localCharacters.filter(c => c.selected !== false);
+        if (selectedChars.length === 0) {
+          summaryCharacters.innerHTML = `<span class="summary-icon">👤</span> <span>No characters cast (AI Auto-cast)</span>`;
+        } else {
+          const names = selectedChars.map(c => c.name).join(', ');
+          summaryCharacters.innerHTML = `<span class="summary-icon">👥</span> <span>${selectedChars.length} cast: <strong>${names}</strong></span>`;
+        }
+      }
+    }
+
+    function showStep(stepNum) {
+      currentStep = stepNum;
+      
+      // Hide all step content panels
+      document.querySelectorAll('.step-content').forEach(el => {
+        el.classList.remove('active');
+      });
+      
+      // Show active step content panel
+      const activeContent = document.querySelector(`.step-content[data-step="${stepNum}"]`);
+      if (activeContent) activeContent.classList.add('active');
+      
+      // Update step indicator status bubble class lists
+      document.querySelectorAll('.step-indicator-item').forEach(el => {
+        const step = parseInt(el.getAttribute('data-step'));
+        el.classList.remove('active', 'completed');
+        if (step === stepNum) {
+          el.classList.add('active');
+        } else if (step < stepNum) {
+          el.classList.add('completed');
+        }
+      });
+
+      // Update button displays
+      const prevBtn = document.getElementById('prev-step-btn');
+      const nextBtn = document.getElementById('next-step-btn');
+      
+      if (prevBtn) {
+        if (stepNum === 1) {
+          prevBtn.classList.add('hidden');
+        } else {
+          prevBtn.classList.remove('hidden');
+        }
+      }
+      
+      if (nextBtn) {
+        if (stepNum === 5) {
+          nextBtn.classList.add('hidden');
+        } else {
+          nextBtn.classList.remove('hidden');
+        }
+      }
+
+      if (stepNum === 5) {
+        updateGenerationSummary();
+      }
+    }
+
+    // Hook wizard step navigation buttons
+    const prevBtn = document.getElementById('prev-step-btn');
+    const nextBtn = document.getElementById('next-step-btn');
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        if (currentStep === 1) {
+          const textVal = novelInput.value.trim();
+          if (textVal.length < MIN_CHARS) {
+            showError(`Story text too short. Please enter at least ${MIN_CHARS} characters.`);
+            return;
+          }
+          if (textVal.length > MAX_CHARS) {
+            showError(`Story text too long. Max ${MAX_CHARS} characters allowed.`);
+            return;
+          }
+          document.getElementById('error-banner').classList.add('hidden');
+        }
+        if (currentStep < totalSteps) {
+          showStep(currentStep + 1);
+        }
+      });
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        if (currentStep > 1) {
+          showStep(currentStep - 1);
+        }
+      });
+    }
+
+    // Allow step bubble direct navigation with validation on step 1
+    document.querySelectorAll('.step-indicator-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const targetStep = parseInt(item.getAttribute('data-step'));
+        if (targetStep > 1) {
+          const textVal = novelInput.value.trim();
+          if (textVal.length < MIN_CHARS) {
+            showError(`Story text too short. Please enter at least ${MIN_CHARS} characters.`);
+            return;
+          }
+        }
+        document.getElementById('error-banner').classList.add('hidden');
+        showStep(targetStep);
+      });
+    });
+
+    // ── Sync Pills and Format Cards with hidden selects ──
     const styleSelect = document.getElementById('style-select');
+    const formatSelect = document.getElementById('format-select');
+    const layoutSelect = document.getElementById('layout-select');
+    const layoutSelectorWrap = document.querySelector('.layout-selector-wrap');
+    const formatInfoMessage = document.getElementById('format-info-message');
+
+    const layoutPills = document.querySelectorAll('.layout-pill');
+
+    function updateFormatUI(formatVal) {
+      const warningBadge = document.getElementById('single-page-warning-badge');
+      
+      if (formatVal === 'single_page') {
+        warningBadge.classList.remove('hidden');
+        layoutSelectorWrap.classList.remove('hidden');
+        layoutPills.forEach(pill => {
+          pill.setAttribute('disabled', 'true');
+          pill.style.opacity = '0.4';
+          pill.style.pointerEvents = 'none';
+          pill.setAttribute('title', 'Available only for multi-panel comics.');
+          const tooltip = pill.querySelector('.tooltiptext');
+          if (tooltip) {
+            if (!tooltip.getAttribute('data-original')) {
+              tooltip.setAttribute('data-original', tooltip.textContent);
+            }
+            tooltip.textContent = 'Available only for multi-panel comics.';
+          }
+        });
+      } else {
+        warningBadge.classList.add('hidden');
+        if (formatVal === '') {
+          layoutSelectorWrap.classList.add('hidden');
+        } else {
+          layoutSelectorWrap.classList.remove('hidden');
+          layoutPills.forEach(pill => {
+            pill.removeAttribute('disabled');
+            pill.style.opacity = '1';
+            pill.style.pointerEvents = 'auto';
+            const val = pill.getAttribute('data-value');
+            if (val === '') {
+              pill.setAttribute('title', 'AI dynamically decides layout coordinates based on pace');
+            } else if (val === 'action') {
+              pill.setAttribute('title', 'Fast cuts, dynamic angles');
+            } else if (val === 'drama') {
+              pill.setAttribute('title', 'Close-ups, emotional pacing');
+            } else if (val === 'dialogue') {
+              pill.setAttribute('title', 'Conversation framing');
+            }
+            const tooltip = pill.querySelector('.tooltiptext');
+            const orig = tooltip?.getAttribute('data-original');
+            if (tooltip && orig) {
+              tooltip.textContent = orig;
+            }
+          });
+        }
+      }
+
+      if (formatVal === 'single_page') {
+        formatInfoMessage.textContent = "Cinematic portrait layout. Ideal for high-impact character focus, webtoon covers, or key illustrations.";
+      } else if (formatVal === 'panel_strip') {
+        formatInfoMessage.textContent = "Classic multi-panel sequence. Ideal for action fights, comedic dialogue, or narrative drama.";
+      } else {
+        formatInfoMessage.textContent = "Format chosen automatically based on your style";
+      }
+    }
+
+    // Initialize format UI
+    updateFormatUI(formatSelect.value);
+
+    document.querySelectorAll('.format-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.format-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        const formatVal = card.getAttribute('data-value');
+        formatSelect.value = formatVal;
+        updateFormatUI(formatVal);
+      });
+    });
+
     document.querySelectorAll('.style-pill').forEach(pill => {
       pill.addEventListener('click', () => {
         document.querySelectorAll('.style-pill').forEach(p => p.classList.remove('active'));
         pill.classList.add('active');
-        styleSelect.value = pill.getAttribute('data-value');
+        const styleVal = pill.getAttribute('data-value');
+        styleSelect.value = styleVal;
+
+        // Auto-select format card based on style selection
+        let autoFormat = '';
+        if (styleVal === 'manhwa' || styleVal === 'manhua' || styleVal === 'cinematic') {
+          autoFormat = 'single_page';
+        } else if (styleVal === 'manga' || styleVal === 'anime') {
+          autoFormat = 'panel_strip';
+        }
+
+        if (autoFormat !== '') {
+          const targetCard = document.querySelector(`.format-card[data-value="${autoFormat}"]`);
+          if (targetCard) {
+            document.querySelectorAll('.format-card').forEach(c => c.classList.remove('active'));
+            targetCard.classList.add('active');
+            formatSelect.value = autoFormat;
+            updateFormatUI(autoFormat);
+
+            // Trigger bounce animation
+            targetCard.classList.remove('format-bounce');
+            void targetCard.offsetWidth; // trigger reflow
+            targetCard.classList.add('format-bounce');
+            setTimeout(() => {
+              targetCard.classList.remove('format-bounce');
+            }, 300);
+          }
+        }
       });
     });
 
-    const layoutSelect = document.getElementById('layout-select');
     document.querySelectorAll('.layout-pill').forEach(pill => {
       pill.addEventListener('click', () => {
         document.querySelectorAll('.layout-pill').forEach(p => p.classList.remove('active'));
@@ -564,6 +1288,27 @@
         const pill = document.querySelector(`.style-pill[data-value="${styleVal}"]`);
         if (pill) {
           pill.click();
+          showStep(2);
+        }
+        document.getElementById('generator-workspace').scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+
+    document.querySelectorAll('.showcase-grid-collage .showcase-card').forEach(card => {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', () => {
+        let styleVal = '';
+        card.classList.forEach(cls => {
+          if (cls.startsWith('style-')) {
+            styleVal = cls.replace('style-', '');
+          }
+        });
+        if (styleVal) {
+          const pill = document.querySelector(`.style-pill[data-value="${styleVal}"]`);
+          if (pill) {
+            pill.click();
+            showStep(2);
+          }
         }
         document.getElementById('generator-workspace').scrollIntoView({ behavior: 'smooth' });
       });
@@ -576,11 +1321,31 @@
     const MAX_CHARS   = 3000;
 
     novelInput.addEventListener('input', () => {
-      const len = novelInput.value.length;
+      const text = novelInput.value;
+      const len  = text.length;
       charCounter.textContent = `${len} / ${MAX_CHARS}`;
       charCounter.style.color =
         len < MIN_CHARS ? '#e8324a' :
         len > MAX_CHARS * 0.9 ? '#e8324a' : '#a0a0a0';
+
+      // Story stats
+      const words = text.trim() ? text.trim().split(/\s+/).filter(w => w).length : 0;
+      const readMins = words > 0 ? Math.ceil(words / 200) : 0;
+      const estPanels = words > 0 ? Math.min(8, Math.max(2, Math.round(words / 90))) : 0;
+
+      const wordEl  = document.querySelector('#stat-words .stat-value');
+      const readEl  = document.querySelector('#stat-read-time .stat-value');
+      const panelEl = document.getElementById('panel-estimate');
+      if (wordEl)  wordEl.textContent  = words > 0 ? words : '0';
+      if (readEl)  readEl.textContent  = words > 0 ? `${readMins} min` : '—';
+      if (panelEl) panelEl.textContent = words > 0 ? estPanels : '—';
+
+      // Generate button glow
+      const genBtn = document.getElementById('generate-btn');
+      if (genBtn) {
+        if (len >= MIN_CHARS) genBtn.classList.add('btn-valid-glow');
+        else genBtn.classList.remove('btn-valid-glow');
+      }
     });
 
     // ── Helpers ──
@@ -662,36 +1427,58 @@
       for (let i = 0; i < 40; i++) {
         const p = document.createElement('div');
         p.className = 'confetti-particle';
-        const color = ['#e8324a', '#000000', '#f0f0f0'][Math.floor(Math.random() * 3)];
-        p.style.backgroundColor = color;
+        const colors = ['#e8324a', '#3b82f6', '#10b981', '#f59e0b', '#ec4899'];
+        p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
         p.style.left = Math.random() * 100 + '%';
-        p.style.top = '-10px';
-        p.style.width = (Math.random() * 8 + 6) + 'px';
-        p.style.height = (Math.random() * 8 + 6) + 'px';
-        p.style.opacity = Math.random();
-        
-        const animName = `confetti-fall-${Math.floor(Math.random() * 3)}`;
-        const duration = (Math.random() * 1.5 + 1) + 's';
-        p.style.animation = `${animName} ${duration} ease-out forwards`;
-        
+        p.style.width = Math.random() * 8 + 6 + 'px';
+        p.style.height = Math.random() * 12 + 8 + 'px';
+        p.style.animationDelay = Math.random() * 1.5 + 's';
+        p.style.animationDuration = Math.random() * 2.5 + 1.5 + 's';
         container.appendChild(p);
-        setTimeout(() => p.remove(), 2500);
+        setTimeout(() => p.remove(), 4000);
       }
     }
 
-    // ── Share to Gallery toggle logic ──
-    const shareToggle = document.getElementById('share-gallery-toggle');
-    const shareStatus = document.getElementById('share-gallery-status');
-    let generatedComicId = null;
+    // ── PDF downloader ──
+    async function downloadPDF(comicId) {
+      if (!comicId) {
+        alert("Error: No comic ID found.");
+        return;
+      }
+      try {
+        const res = await apiFetch(`/api/download/${comicId}/pdf`);
+        if (!res.ok) {
+          const err = await res.json();
+          alert("Error downloading PDF: " + (err.detail || "Server error"));
+          return;
+        }
+        const blob = await res.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `comic_${comicId.substring(0,8)}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(downloadUrl);
+      } catch (err) {
+        alert("PDF download failed: " + err.message);
+      }
+    }
 
-    shareToggle.addEventListener('change', async () => {
+    // ── Share to Gallery logic ──
+    const shareStatus = document.getElementById('share-gallery-status');
+    const shareBtn = document.getElementById('share-gallery-btn');
+    let generatedComicId = null;
+    let isSharedToGallery = false;
+ 
+    shareBtn.addEventListener('click', async () => {
       if (!generatedComicId) {
         shareStatus.textContent = "Error: Comic not found in user history database.";
-        shareToggle.checked = !shareToggle.checked;
         return;
       }
       
-      const isPublic = shareToggle.checked;
+      const isPublic = !isSharedToGallery;
       shareStatus.textContent = isPublic ? "Sharing comic page..." : "Unsharing comic page...";
       
       try {
@@ -700,6 +1487,8 @@
         });
         
         if (res.ok) {
+          isSharedToGallery = isPublic;
+          shareBtn.innerText = isPublic ? "✅ Shared to Gallery" : "🌐 Share to Gallery";
           shareStatus.textContent = isPublic 
             ? "✅ Shared to community gallery!" 
             : "Removed from community gallery.";
@@ -708,15 +1497,182 @@
         }
       } catch (err) {
         shareStatus.textContent = "❌ " + err.message;
-        shareToggle.checked = !isPublic; // revert checkbox
       }
     });
 
-    // ── Generate handler ──
-    document.getElementById('generate-btn').addEventListener('click', async () => {
+    // ── Copy Story button ──
+    document.getElementById('copy-story-btn').addEventListener('click', () => {
+      const text = novelInput.value.trim();
+      if (text) {
+        navigator.clipboard.writeText(text).then(() => {
+          const copyBtn = document.getElementById('copy-story-btn');
+          const origText = copyBtn.innerText;
+          copyBtn.innerText = "✅ Copied!";
+          setTimeout(() => copyBtn.innerText = origText, 2000);
+        }).catch(err => {
+          alert("Failed to copy text: " + err);
+        });
+      }
+    });
+
+    // ── New Story button ──
+    document.getElementById('new-story-btn').onclick = () => {
+      novelInput.value = '';
+      document.getElementById('char-counter').textContent = '0 / 3000';
+      document.getElementById('results-state').classList.add('hidden');
+      document.getElementById('idle-state').classList.remove('hidden');
+      document.getElementById('generator-workspace').scrollIntoView({ behavior: 'smooth' });
+    };
+
+    // ── Download PDF button ──
+    document.getElementById('download-pdf-btn').onclick = async () => {
+      if (!confirm("Exporting this comic as a high-quality PDF book costs 1 credit. PNG downloads are free. Continue?")) {
+        return;
+      }
+      if (generatedComicId) {
+        const btn = document.getElementById('download-pdf-btn');
+        const origText = btn.innerText;
+        btn.disabled = true;
+        btn.innerText = "Generating PDF...";
+        try {
+          await downloadPDF(generatedComicId);
+          // Refresh credit balance
+          const credRes = await apiFetch('/api/credits/balance');
+          if (credRes.ok) {
+            const credData = await credRes.json();
+            if (credData.balance !== undefined) {
+              authStore.setCredits(credData.balance, credData.usage_today, credData.daily_limit);
+            }
+          }
+        } finally {
+          btn.disabled = false;
+          btn.innerText = origText;
+        }
+      } else {
+        alert("Please wait until generation completes or log in to download PDF.");
+      }
+    };
+
+    // ── Lightbox Zoom Overlay ──
+    const lightbox = document.getElementById('lightbox-overlay');
+    const lightboxImg = document.getElementById('lightbox-img');
+    
+    function openLightbox(src) {
+      lightboxImg.src = src;
+      lightbox.classList.remove('hidden');
+    }
+    
+    document.getElementById('close-lightbox-btn').onclick = (e) => {
+      e.stopPropagation();
+      lightbox.classList.add('hidden');
+    };
+    
+    lightbox.onclick = () => {
+      lightbox.classList.add('hidden');
+    };
+
+    // ── Rotating Status Messages ──
+    let rotatingInterval = null;
+    const rotatingMessages = [
+      "Storyboard Director is planning panels...",
+      "Character Engine is locking identities...",
+      "Building visual prompts...",
+      "Generating artwork...",
+      "Composing comic page...",
+      "Finalizing your story..."
+    ];
+
+    function startRotatingStatus() {
+      const loadingText = document.getElementById('loading-text');
+      if (!loadingText) return;
+      let idx = 0;
+      loadingText.innerText = rotatingMessages[idx];
+      
+      if (rotatingInterval) clearInterval(rotatingInterval);
+
+      rotatingInterval = setInterval(() => {
+        idx = (idx + 1) % rotatingMessages.length;
+        loadingText.classList.add('fade-out');
+        setTimeout(() => {
+          loadingText.innerText = rotatingMessages[idx];
+          loadingText.classList.remove('fade-out');
+        }, 300);
+      }, 2500);
+    }
+
+    function stopRotatingStatus() {
+      if (rotatingInterval) {
+        clearInterval(rotatingInterval);
+        rotatingInterval = null;
+      }
+    }
+
+    // ── Live Workspace helpers ──
+    let workspacePanelCount = 0;
+    let workspacePanelsBuilt = false;
+
+    function buildLiveWorkspace(panelCount) {
+      if (workspacePanelsBuilt && workspacePanelCount === panelCount) return;
+      workspacePanelsBuilt = true;
+      workspacePanelCount = panelCount;
+      const ws = document.getElementById('live-workspace');
+      if (!ws) return;
+      ws.innerHTML = '';
+      for (let i = 1; i <= panelCount; i++) {
+        const card = document.createElement('div');
+        card.className = 'workspace-panel-card state-queued';
+        card.id = `ws-panel-${i}`;
+        card.innerHTML = `
+          <span class="panel-num">Panel ${i}</span>
+          <span class="panel-state-icon">🔒</span>
+          <span class="panel-label">Queued</span>
+        `;
+        ws.appendChild(card);
+      }
+    }
+
+    function setPanelState(panelNum, state) {
+      const card = document.getElementById(`ws-panel-${panelNum}`);
+      if (!card) return;
+      card.className = `workspace-panel-card state-${state}`;
+      const icons  = { queued: '🔒', drawing: '✏️', completed: '✅' };
+      const labels = { queued: 'Queued', drawing: 'Rendering...', completed: 'Complete' };
+      card.innerHTML = `
+        <span class="panel-num">Panel ${panelNum}</span>
+        <span class="panel-state-icon">${icons[state]}</span>
+        <span class="panel-label">${labels[state]}</span>
+      `;
+    }
+
+    function setPipelineStage(stage) {
+      const order = ['extract','storyboard','render','assemble'];
+      const idx   = order.indexOf(stage);
+      order.forEach((s, i) => {
+        const el = document.getElementById(`ps-${s}`);
+        if (!el) return;
+        el.classList.remove('active','completed');
+        if (i < idx) el.classList.add('completed');
+        else if (i === idx) el.classList.add('active');
+      });
+    }
+
+    async function showRevealAnimation() {
+      const overlay = document.getElementById('reveal-overlay');
+      if (!overlay) return;
+      overlay.classList.add('active');
+      overlay.setAttribute('aria-hidden', 'false');
+      await new Promise(r => setTimeout(r, 800));
+      overlay.classList.remove('active');
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+
+    // ── Generate / Re-generate handler ──
+    async function runGeneration(reGenerate = false) {
+      const generationStartTime = Date.now();
       const text   = novelInput.value.trim();
       const style  = styleSelect.value;
       const layout = layoutSelect.value;
+      const format = formatSelect.value;
 
       if (text.length < MIN_CHARS) {
         showError(`Text too short. Please enter at least ${MIN_CHARS} characters.`);
@@ -727,31 +1683,136 @@
         return;
       }
 
+      // Check character vault enforcement
+      try {
+        const detectRes = await apiFetch('/api/characters/detect', {
+          method: 'POST',
+          body: JSON.stringify({ text })
+        });
+        if (detectRes.ok) {
+          const detectData = await detectRes.json();
+          const detectedList = detectData.characters || [];
+          if (detectedList.length >= 2) {
+            // Find which detected characters are NOT in localCharacters (case-insensitive name check)
+            const missingChars = detectedList.filter(det => {
+              return !localCharacters.some(local => local.name.trim().toLowerCase() === det.name.trim().toLowerCase());
+            });
+            
+            if (missingChars.length > 0) {
+              // Block submission and open modal pre-filled for the first missing character
+              const firstMissing = missingChars[0];
+              console.log("[Enforcement] Blocking generation due to missing character:", firstMissing);
+              
+              openAddModalPreFilled(firstMissing.name, firstMissing.gender);
+              
+              // Save callback to resume generation
+              onCharacterSavedCallback = async () => {
+                onCharacterSavedCallback = null; // Clear to prevent loops
+                runGeneration(reGenerate); // Resume
+              };
+              return;
+            }
+          }
+        }
+      } catch (detectErr) {
+        console.error("Failed to run character vault precheck:", detectErr);
+      }
+
+      // Calculate dynamic time estimate
+      let panelCount = 1;
+      if (format === 'panel_strip' || format === '') {
+        panelCount = Math.max(2, Math.min(5, Math.ceil(text.length / 600)));
+      }
+      let secPerPanel = 20; // default
+      if (style === 'manga') secPerPanel = 15;
+      else if (style === 'anime' || style === 'manhwa') secPerPanel = 22;
+      else if (style === 'realistic' || style === 'cinematic') secPerPanel = 28;
+
+      const expectedTime = panelCount * secPerPanel;
+      const minSec = Math.max(10, Math.round(expectedTime * 0.8));
+      const maxSec = Math.round(expectedTime * 1.2);
+      const timeEstimateEl = document.getElementById('loading-time-estimate');
+      if (timeEstimateEl) {
+        timeEstimateEl.innerHTML = `⏳ Estimated time: <strong>${minSec}-${maxSec} seconds</strong>`;
+      }
+
+      // Inject shimmering skeleton panels based on format
+      const skeletonContainer = document.getElementById('loading-skeleton');
+      if (skeletonContainer) {
+        if (format === 'single_page') {
+          skeletonContainer.className = 'skeleton-container format-single-page';
+          skeletonContainer.innerHTML = `
+            <div class="skeleton-frame shimmer">
+              <div class="skeleton-speech shimmer"></div>
+            </div>
+          `;
+        } else {
+          skeletonContainer.className = 'skeleton-container format-panel-strip';
+          skeletonContainer.innerHTML = `
+            <div class="skeleton-strip">
+              <div class="skeleton-frame shimmer size-large">
+                <div class="skeleton-speech shimmer"></div>
+              </div>
+              <div class="skeleton-row">
+                <div class="skeleton-frame shimmer size-medium"></div>
+                <div class="skeleton-frame shimmer size-small"></div>
+              </div>
+              <div class="skeleton-frame shimmer size-medium">
+                <div class="skeleton-speech shimmer speech-right"></div>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // Start rotating status messages
+      startRotatingStatus();
+
+      // Reset progress bar
+      const progressBarInit = document.getElementById('manga-progress-bar');
+      const progressPercInit = document.getElementById('manga-progress-percentage');
+      if (progressBarInit) progressBarInit.style.width = '5%';
+      if (progressPercInit) progressPercInit.textContent = '5%';
+
       // Reset panel steps & share parameters for a fresh run
       panelStepsBuilt = false;
+      workspacePanelsBuilt = false;
+      workspacePanelCount = 0;
+      const wsReset = document.getElementById('live-workspace');
+      if (wsReset) wsReset.innerHTML = '';
+      document.querySelectorAll('.pipeline-stage').forEach(s => s.classList.remove('active','completed'));
       document.querySelectorAll('[id^="step-panel"]').forEach(el => el.remove());
       generatedComicId = null;
-      shareToggle.checked = false;
+      isSharedToGallery = false;
+      shareBtn.innerText = "🌐 Share to Gallery";
       shareStatus.textContent = '';
 
       document.getElementById('error-banner').classList.add('hidden');
       document.getElementById('generate-btn').disabled = true;
-      document.getElementById('generate-btn').innerText = 'Generating…';
+      document.getElementById('generate-btn').innerText = reGenerate ? 'Regenerating…' : 'Generating…';
+      const genAgainBtn = document.getElementById('generate-again-btn');
+      if (genAgainBtn) {
+        genAgainBtn.disabled = true;
+        genAgainBtn.innerText = 'Regenerating…';
+      }
       document.getElementById('results-state').classList.add('hidden');
       document.getElementById('idle-state').classList.add('hidden');
       document.getElementById('loading-state').classList.remove('hidden');
 
-      const loadingText = document.getElementById('loading-text');
-      loadingText.innerText = getMangaProgressMessage('0% - Waiting in queue...');
+      const rawProgressElInit = document.getElementById('raw-progress-subtitle');
+      if (rawProgressElInit) {
+        rawProgressElInit.innerText = getMangaProgressMessage('0% - Waiting in queue...');
+      }
       setStep('step-llm');
 
       try {
-        // Use apiFetch so auth token is injected if user is logged in
         const body = { 
           text, 
           style: style || undefined, 
           layout_type: layout || undefined,
-          characters: localCharacters.length > 0 ? localCharacters : undefined
+          generation_format: format || null,
+          characters: localCharacters.filter(c => c.selected !== false).length > 0 ? localCharacters.filter(c => c.selected !== false) : undefined,
+          re_generate: reGenerate
         };
         const response = await apiFetch('/api/generate_comic', {
           method: 'POST',
@@ -778,7 +1839,6 @@
             resultData = statusData.result;
             if (typeof resultData === 'string') resultData = JSON.parse(resultData);
             
-            // Collect enriched comic ID from backend
             generatedComicId = statusData.comic_id || (resultData && resultData.comic_id);
             break;
           } else if (statusData.status === 'failed') {
@@ -787,43 +1847,215 @@
 
           const progress = statusData.progress || '';
           if (progress !== lastProgress) {
-            lastProgress          = progress;
-            loadingText.innerText = getMangaProgressMessage(progress);
+            lastProgress = progress;
+            
+            if (progress) {
+              stopRotatingStatus();
+              const loadingText = document.getElementById('loading-text');
+              if (loadingText) {
+                loadingText.innerText = getMangaProgressMessage(progress);
+              }
+            }
+            
+            const rawProgressEl = document.getElementById('raw-progress-subtitle');
+            if (rawProgressEl) {
+              rawProgressEl.innerText = getMangaProgressMessage(progress);
+            }
 
             if (progress.includes('Extracting') || progress.includes('extraction')) {
               setStep('step-llm');
+              setPipelineStage('extract');
+              buildLiveWorkspace(workspacePanelCount || 3);
+            } else if (progress.toLowerCase().includes('35%') || progress.toLowerCase().includes('storyboard') || progress.toLowerCase().includes('planning')) {
+              setPipelineStage('storyboard');
             } else if (progress.toLowerCase().includes('drawing panel')) {
+              setPipelineStage('render');
               const parsed = parsePanelProgress(progress);
               if (parsed) {
                 buildPanelSteps(parsed.total);
                 setStep(`step-panel${parsed.current}`);
               }
-            } else if (progress.includes('Assembl')) {
+              // Live workspace: panel 1 drawing
+              if (progress.toLowerCase().includes('drawing panel 1')) {
+                const totalMatch = progress.match(/panels\s+\d+-(\d+)/i);
+                if (totalMatch) buildLiveWorkspace(parseInt(totalMatch[1]));
+                else if (!workspacePanelsBuilt) buildLiveWorkspace(3);
+                setPanelState(1, 'drawing');
+              } else if (progress.toLowerCase().includes('drawing panels 2-')) {
+                const totalMatch = progress.match(/drawing panels 2-(\d+)/i);
+                if (totalMatch) {
+                  const total = parseInt(totalMatch[1]);
+                  buildLiveWorkspace(total);
+                  setPanelState(1, 'completed');
+                  for (let p = 2; p <= total; p++) setPanelState(p, 'drawing');
+                }
+                const doneMatch = progress.match(/(\d+)\/(\d+)\s+completed/i);
+                if (doneMatch) {
+                  const done  = parseInt(doneMatch[1]);
+                  const total = parseInt(doneMatch[2]);
+                  buildLiveWorkspace(total + 1);
+                  setPanelState(1, 'completed');
+                  for (let p = 2; p <= done + 1; p++) setPanelState(p, 'completed');
+                  for (let p = done + 2; p <= total + 1; p++) setPanelState(p, 'drawing');
+                }
+              }
+            } else if (progress.includes('Assembl') || progress.includes('100%')) {
               setStep('step-assemble');
+              setPipelineStage('assemble');
+              for (let p = 1; p <= workspacePanelCount; p++) setPanelState(p, 'completed');
             }
           }
+
+          // Calculate estimated progress percentage dynamically
+          let progressPercent = 5;
+          if (progress.toLowerCase().includes('extracting') || progress.toLowerCase().includes('extraction')) {
+            progressPercent = 20;
+          } else if (progress.toLowerCase().includes('storyboard plan complete') || progress.includes('35%')) {
+            progressPercent = 35;
+          } else if (progress.toLowerCase().includes('drawing panel')) {
+            const parsed = parsePanelProgress(progress);
+            if (parsed) {
+              const ratio = parsed.current / parsed.total;
+              progressPercent = Math.round(35 + ratio * 55);
+            } else {
+              progressPercent = 50;
+            }
+          } else if (progress.toLowerCase().includes('assembl') || progress.toLowerCase().includes('rendering') || progress.toLowerCase().includes('100%')) {
+            progressPercent = 95;
+          }
+
+          const progressBar = document.getElementById('manga-progress-bar');
+          const progressPerc = document.getElementById('manga-progress-percentage');
+          if (progressBar) progressBar.style.width = `${progressPercent}%`;
+          if (progressPerc) progressPerc.textContent = `${progressPercent}%`;
+
           await new Promise(r => setTimeout(r, 3000));
         }
 
         // Render results
         setStep('step-assemble');
+        stopRotatingStatus();
+        const progressBarComplete = document.getElementById('manga-progress-bar');
+        const progressPercComplete = document.getElementById('manga-progress-percentage');
+        if (progressBarComplete) progressBarComplete.style.width = '100%';
+        if (progressPercComplete) progressPercComplete.textContent = '100%';
+
         const finalSrc = (resultData.final_page || '') + '?t=' + Date.now();
         document.getElementById('final-comic-img').src = finalSrc;
         document.getElementById('download-png-btn').href = resultData.final_page || '#';
+        document.getElementById('final-comic-wrapper').onclick = () => openLightbox(finalSrc);
 
+        // Populate Generation Summary Card
+        const genDuration = Math.round((Date.now() - generationStartTime) / 1000);
+        document.getElementById('summary-style').textContent = style || 'Auto-detect';
+        document.getElementById('summary-model').textContent = getModelForStyle(style);
+        document.getElementById('summary-panels').textContent = (resultData.panels || []).length || 1;
+        document.getElementById('summary-format').textContent = formatSelect.value === 'single_page' ? 'Single Page' : formatSelect.value === 'panel_strip' ? 'Panel Strip' : 'AI Decides';
+        document.getElementById('summary-duration').textContent = genDuration + 's';
+
+        // Render thumbnails and grids depending on format
+        const isSinglePage = (resultData.panels || []).length === 1;
+        const finalComicWrapper = document.getElementById('final-comic-wrapper');
+        const thumbRow = document.getElementById('thumbnail-row');
         const panelsGrid = document.getElementById('panels-grid');
-        panelsGrid.innerHTML = '';
-        (resultData.panels || []).forEach(panelPath => {
-          const img = document.createElement('img');
-          img.src = panelPath + '?t=' + Date.now();
-          img.alt = 'Comic Panel';
-          panelsGrid.appendChild(img);
-        });
+        
+        // Find panels grid h3 header
+        const panelsHeader = document.querySelector('#results-state h3:nth-of-type(2)');
 
+        // Clear any old single-page details badge
+        document.getElementById('single-page-details-badge')?.remove();
+
+        if (isSinglePage) {
+          thumbRow.style.display = 'none';
+          finalComicWrapper.classList.add('single-page-prominent');
+          if (panelsHeader) panelsHeader.style.display = 'none';
+          panelsGrid.style.display = 'none';
+
+          // Inject details header badge
+          const genDuration = Math.round((Date.now() - generationStartTime) / 1000);
+          const badge = document.createElement('div');
+          badge.id = 'single-page-details-badge';
+          badge.style.textAlign = 'center';
+          badge.style.margin = '1rem auto 1.5rem auto';
+          badge.style.fontSize = '0.9rem';
+          badge.style.fontWeight = 'bold';
+          badge.style.color = 'var(--text-secondary)';
+          badge.style.background = '#111';
+          badge.style.border = '2px solid #000';
+          badge.style.padding = '0.5rem 1rem';
+          badge.style.boxShadow = '3px 3px 0 #000';
+          badge.style.width = 'fit-content';
+          badge.textContent = `Full Page • ${(style || 'Auto').toUpperCase()} • Generated in ${genDuration}s`;
+          
+          // Insert after page title
+          const pageTitle = document.querySelector('#results-state h3');
+          if (pageTitle) {
+            pageTitle.parentNode.insertBefore(badge, pageTitle.nextSibling);
+          }
+        } else {
+          thumbRow.style.display = 'flex';
+          finalComicWrapper.classList.remove('single-page-prominent');
+          if (panelsHeader) panelsHeader.style.display = 'block';
+          panelsGrid.style.display = 'grid';
+
+          // Render thumbnails
+          thumbRow.innerHTML = '';
+          const finalThumb = document.createElement('img');
+          finalThumb.src = finalSrc;
+          finalThumb.className = 'thumb-img active';
+          finalThumb.alt = 'Final Page Thumbnail';
+          finalThumb.addEventListener('click', () => {
+            document.querySelectorAll('.thumb-img').forEach(t => t.classList.remove('active'));
+            finalThumb.classList.add('active');
+            document.getElementById('final-comic-img').src = finalSrc;
+            document.getElementById('final-comic-wrapper').onclick = () => openLightbox(finalSrc);
+          });
+          thumbRow.appendChild(finalThumb);
+
+          (resultData.panels || []).forEach((panelPath, pIdx) => {
+            const pSrc = panelPath + '?t=' + Date.now();
+            const thumb = document.createElement('img');
+            thumb.src = pSrc;
+            thumb.className = 'thumb-img';
+            thumb.alt = `Panel ${pIdx + 1} Thumbnail`;
+            thumb.addEventListener('click', () => {
+              document.querySelectorAll('.thumb-img').forEach(t => t.classList.remove('active'));
+              thumb.classList.add('active');
+              document.getElementById('final-comic-img').src = pSrc;
+              document.getElementById('final-comic-wrapper').onclick = () => openLightbox(pSrc);
+            });
+            thumbRow.appendChild(thumb);
+          });
+
+          // Render panels grid
+          panelsGrid.innerHTML = '';
+          (resultData.panels || []).forEach(panelPath => {
+            const img = document.createElement('img');
+            img.src = panelPath + '?t=' + Date.now();
+            img.alt = 'Comic Panel';
+            img.style.cursor = 'zoom-in';
+            img.onclick = () => openLightbox(img.src);
+            panelsGrid.appendChild(img);
+          });
+        }
+
+        await showRevealAnimation();
         document.getElementById('loading-state').classList.add('hidden');
         document.getElementById('results-state').classList.remove('hidden');
+        // Animate comic reveal
+        const comicWrapper = document.getElementById('final-comic-wrapper');
+        if (comicWrapper) {
+          comicWrapper.classList.remove('comic-reveal-animate');
+          void comicWrapper.offsetWidth; // force reflow
+          comicWrapper.classList.add('comic-reveal-animate');
+        }
+        // Show created badge
+        const createdBadge = document.getElementById('comic-created-badge');
+        if (createdBadge) {
+          createdBadge.style.animationDelay = '0.3s';
+          createdBadge.style.opacity = '';
+        }
 
-        // Trigger ink-splash and confetti!
         triggerConfetti();
 
         // Fallback search to get comic ID if enrich failed
@@ -856,11 +2088,27 @@
       } finally {
         document.getElementById('generate-btn').disabled  = false;
         document.getElementById('generate-btn').innerText = 'Generate Comic';
+        if (genAgainBtn) {
+          genAgainBtn.disabled = false;
+          genAgainBtn.innerText = '🔄 Generate Again';
+        }
       }
-    });
+    }
+
+    function getModelForStyle(style) {
+      const s = (style || '').toLowerCase();
+      if (s === 'realistic') return 'Realistic Vision V5.1';
+      if (s === 'cinematic') return 'Stable Diffusion XL';
+      return 'DreamShaper 8';
+    }
+
+    document.getElementById('generate-btn').addEventListener('click', () => runGeneration(false));
+    document.getElementById('generate-again-btn').addEventListener('click', () => runGeneration(true));
+    document.getElementById('save-character-action-btn').addEventListener('click', openAddModal);
 
     // ── Character Design Section State & Methods ──
     let localCharacters = [];
+    let onCharacterSavedCallback = null;
     const charListContainer = document.getElementById('character-list');
     const charModal = document.getElementById('char-modal');
     const charForm = document.getElementById('char-form');
@@ -869,14 +2117,26 @@
     const modalTitle = document.getElementById('modal-title');
     const charOriginalName = document.getElementById('char-original-name');
     
+    function updateSelectedCount() {
+      const selected = localCharacters.filter(c => c.selected !== false);
+      const el = document.getElementById('cast-selected-count');
+      if (el) {
+        el.textContent = `(${selected.length} / ${localCharacters.length} selected)`;
+      }
+      updateGenerationSummary();
+    }
+
     async function loadCharacters() {
-      const state = authStore.getState();
-      if (state.token && state.user) {
+      const token = authStore.getToken();
+      const user = authStore.getUser();
+      if (token && user) {
         try {
           const res = await apiFetch('/api/characters');
           if (res.ok) {
-            localCharacters = await res.json();
+            const data = await res.json();
+            localCharacters = data.map(c => ({ ...c, selected: true }));
             renderCharacters();
+            updateSelectedCount();
             return;
           }
         } catch (e) {
@@ -885,51 +2145,86 @@
       }
       
       const cached = localStorage.getItem('inkraft_characters');
-      localCharacters = cached ? JSON.parse(cached) : [];
+      const data = cached ? JSON.parse(cached) : [];
+      localCharacters = data.map(c => ({ ...c, selected: true }));
       renderCharacters();
+      updateSelectedCount();
     }
     
     function renderCharacters() {
       charListContainer.innerHTML = '';
       if (localCharacters.length === 0) {
-        charListContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); font-size: 0.8rem; padding: 1.5rem; border: 2px dashed var(--glass-border); background: rgba(0,0,0,0.2);">No characters added yet. Characters you add here will be used to enforce visual consistency.</div>';
+        charListContainer.innerHTML = `
+          <div class="premium-empty-state character-empty" style="grid-column: 1/-1; margin: 1rem 0;">
+            <div class="empty-state-illustration">👤🎭</div>
+            <h3>Character Vault is Empty</h3>
+            <p>Define recurring character names, clothing, and hairstyles. The AI consistency engine will lock their visual traits across all panel frames.</p>
+            <button id="empty-add-char-btn" class="glow-button empty-state-cta" style="margin-top: 0.5rem; max-width: 250px;">+ Create Profile</button>
+          </div>
+        `;
+        document.getElementById('empty-add-char-btn').onclick = openAddModal;
         return;
       }
       
       localCharacters.forEach(char => {
         const card = document.createElement('div');
-        card.style.background = '#151515';
-        card.style.border = '2px solid #000';
-        card.style.padding = '1rem';
-        card.style.display = 'flex';
-        card.style.flexDirection = 'column';
-        card.style.justifyContent = 'space-between';
-        card.style.gap = '0.5rem';
-        card.style.boxShadow = '3px 3px 0 #000';
+        card.className = 'character-card char-card-selectable' + (char.selected !== false ? ' selected' : '');
         
+        const attrs = [
+          { label: 'Gender', value: char.gender },
+          { label: 'Age', value: char.age_range },
+          { label: 'Hair', value: (char.hair_style || char.hair_color) ? `${char.hair_style || ''} ${char.hair_color || ''}`.trim() : null },
+          { label: 'Eyes', value: char.eye_color },
+          { label: 'Body', value: char.body_type },
+          { label: 'Outfit', value: char.primary_outfit || char.outfit },
+          { label: 'Features', value: char.distinguishing_features },
+        ].filter(a => a.value);
+
+        const attrsHTML = attrs.map(a => `
+          <span class="char-attr-chip">
+            <span class="chip-label">${a.label}</span>
+            <span class="chip-value">${a.value}</span>
+          </span>
+        `).join('');
+
+        const initialBadgeText = char.selected !== false ? 'Selected ✓' : 'Excluded';
+        const initialBadgeStyle = char.selected !== false ? '' : 'style="background:#222;color:#888;"';
+
         card.innerHTML = `
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: start; gap: 0.5rem;">
-              <span style="font-weight: 800; color: var(--accent-color); font-size: 0.95rem; word-break: break-all;">${char.name}</span>
-              <span style="font-size: 0.7rem; color: var(--text-secondary); background: #050505; border: 1px solid #222; padding: 0.1rem 0.4rem; white-space: nowrap;">${char.gender} • ${char.age_range}</span>
-            </div>
-            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem; line-height: 1.4;">
-              ${char.hair_style || char.hair_color ? `<div><strong>Hair:</strong> ${char.hair_style} ${char.hair_color}</div>` : ''}
-              ${char.eye_color ? `<div><strong>Eyes:</strong> ${char.eye_color}</div>` : ''}
-              ${char.body_type ? `<div><strong>Body:</strong> ${char.body_type}</div>` : ''}
-              ${char.primary_outfit ? `<div><strong>Outfit:</strong> ${char.primary_outfit}</div>` : ''}
-              ${char.distinguishing_features ? `<div><strong>Features:</strong> ${char.distinguishing_features}</div>` : ''}
-              ${char.personality_note ? `<div><strong>Personality:</strong> ${char.personality_note}</div>` : ''}
-            </div>
+          <div class="char-top-accent"></div>
+          <div class="char-card-header">
+            <span class="char-name">${char.name}</span>
+            <span class="char-style-badge" ${initialBadgeStyle}>${initialBadgeText}</span>
           </div>
-          <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.5rem; border-top: 1px solid #222; padding-top: 0.5rem;">
-            <button class="step edit-btn" style="cursor: pointer; padding: 0.2rem 0.5rem; font-size: 0.7rem; background: transparent; color: var(--text-primary);">Edit</button>
-            <button class="step delete-btn" style="cursor: pointer; padding: 0.2rem 0.5rem; font-size: 0.7rem; border-color: rgba(232, 50, 74, 0.4); color: #fff; background: var(--accent-color);">Delete</button>
+          <div class="char-card-attrs">
+            ${attrsHTML || '<span style="font-size:0.75rem;color:var(--text-secondary);padding:0.25rem 0.5rem;">No traits specified</span>'}
+          </div>
+          <div class="char-card-footer">
+            <button type="button" class="char-action-btn edit-btn">✏️ Edit</button>
+            <button type="button" class="char-action-btn danger delete-btn">🗑️ Delete</button>
           </div>
         `;
         
-        card.querySelector('.edit-btn').onclick = () => openEditModal(char);
-        card.querySelector('.delete-btn').onclick = () => deleteCharacter(char.name);
+        card.onclick = () => {
+          char.selected = !char.selected;
+          card.className = 'character-card char-card-selectable' + (char.selected ? ' selected' : '');
+          const badge = card.querySelector('.char-style-badge');
+          if (char.selected) {
+            badge.className = 'char-style-badge';
+            badge.textContent = 'Selected ✓';
+            badge.style.background = '';
+            badge.style.color = '';
+          } else {
+            badge.className = 'char-style-badge';
+            badge.textContent = 'Excluded';
+            badge.style.background = '#222';
+            badge.style.color = '#888';
+          }
+          updateSelectedCount();
+        };
+
+        card.querySelector('.edit-btn').onclick = (e) => { e.stopPropagation(); openEditModal(char); };
+        card.querySelector('.delete-btn').onclick = (e) => { e.stopPropagation(); deleteCharacter(char.name); };
         charListContainer.appendChild(card);
       });
     }
@@ -956,12 +2251,22 @@
       charForm.reset();
       charModal.classList.remove('hidden');
     }
+
+    function openAddModalPreFilled(name, gender) {
+      modalTitle.textContent = `Define Missing Character: ${name}`;
+      charOriginalName.value = '';
+      charForm.reset();
+      document.getElementById('char-name').value = name;
+      document.getElementById('char-gender').value = gender || 'male';
+      charModal.classList.remove('hidden');
+    }
     
     async function deleteCharacter(name) {
       if (!confirm(`Are you sure you want to delete '${name}'?`)) return;
       
-      const state = authStore.getState();
-      if (state.token && state.user) {
+      const token = authStore.getToken();
+      const user = authStore.getUser();
+      if (token && user) {
         try {
           const res = await apiFetch(`/api/characters/${encodeURIComponent(name)}`, {
             method: 'DELETE'
@@ -1003,10 +2308,11 @@
         personality_note: document.getElementById('char-personality').value.trim()
       };
       
-      const state = authStore.getState();
+      const token = authStore.getToken();
+      const user = authStore.getUser();
       const isEdit = charOriginalName.value !== '';
       
-      if (state.token && state.user) {
+      if (token && user) {
         try {
           if (isEdit && charOriginalName.value.toLowerCase() !== name.toLowerCase()) {
             await apiFetch(`/api/characters/${encodeURIComponent(charOriginalName.value)}`, {
@@ -1022,6 +2328,9 @@
           if (res.ok) {
             charModal.classList.add('hidden');
             await loadCharacters();
+            if (typeof onCharacterSavedCallback === 'function') {
+              onCharacterSavedCallback();
+            }
             return;
           } else {
             const err = await res.json();
@@ -1046,6 +2355,9 @@
       localStorage.setItem('inkraft_characters', JSON.stringify(localCharacters));
       charModal.classList.add('hidden');
       renderCharacters();
+      if (typeof onCharacterSavedCallback === 'function') {
+        onCharacterSavedCallback();
+      }
     };
 
     // Initialize character list
@@ -1054,10 +2366,89 @@
     });
     loadCharacters();
 
+    // ── Legal Modals Integration ──
+    function showLegalModal(title, content) {
+      let modal = document.getElementById('legal-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'legal-modal';
+        modal.className = 'modal-overlay';
+        modal.style.position = 'fixed';
+        modal.style.inset = '0';
+        modal.style.background = 'rgba(0,0,0,0.85)';
+        modal.style.zIndex = '9999';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.padding = '1rem';
+        
+        modal.innerHTML = `
+          <div class="modal-content glass-panel" style="width: 100%; max-width: 500px; padding: 2rem; background: #111; border: 3px solid #000; box-shadow: 6px 6px 0 #000; position: relative; border-radius: 0px;">
+            <button id="close-legal-btn" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; padding: 0;">&times;</button>
+            <h3 id="legal-modal-title" style="margin-top: 0; color: var(--accent-color); font-family: 'Bangers', cursive; font-size: 1.8rem; letter-spacing: 0.5px; border-bottom: 2px solid #222; padding-bottom: 0.5rem; text-transform: uppercase;"></h3>
+            <div id="legal-modal-text" style="color: #d0d0d0; font-size: 0.9rem; line-height: 1.6; margin-top: 1rem; max-height: 300px; overflow-y: auto; text-align: left; padding-right: 0.5rem;"></div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        modal.querySelector('#close-legal-btn').addEventListener('click', () => {
+          modal.style.display = 'none';
+        });
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) modal.style.display = 'none';
+        });
+      }
+      
+      modal.querySelector('#legal-modal-title').textContent = title;
+      modal.querySelector('#legal-modal-text').innerHTML = content;
+      modal.style.display = 'flex';
+    }
+
+    const tosContent = `
+      <p><strong>Inkraft is currently in Open Beta.</strong> Formal Terms of Service will be published prior to our official general launch. In the meantime, please review our beta participation guidelines:</p>
+      <ul>
+        <li style="margin-bottom: 0.5rem;">This service is provided "as is" for creative testing and feedback collection.</li>
+        <li style="margin-bottom: 0.5rem;">Registration gifts you 10 welcome credits. There are no paid options during this beta phase.</li>
+        <li style="margin-bottom: 0.5rem;">All comic layouts and images generated by you belong to you, but please avoid generating offensive, abusive, or explicitly harmful prompts.</li>
+        <li style="margin-bottom: 0.5rem;">We reserve the right to suspend accounts attempting to abuse the credits ledger or bypass queue protections.</li>
+      </ul>
+    `;
+
+    const privacyContent = `
+      <p><strong>Inkraft is currently in Open Beta.</strong> A formal Privacy Policy will be published prior to our official general launch. Here is a plain-language summary of what data is collected and how we use it:</p>
+      <ul>
+        <li style="margin-bottom: 0.5rem;"><strong>Account Data:</strong> We collect your email address during registration to manage your account session and secure your saved comics. We do not sell or share this data.</li>
+        <li style="margin-bottom: 0.5rem;"><strong>Creative Inputs:</strong> Your story prompts and character descriptors are processed by the backend and sent securely to fal.ai to generate your comic images.</li>
+        <li style="margin-bottom: 0.5rem;"><strong>Local Storage:</strong> We use your browser's localStorage to preserve your local credit balance representation and minor UI states (like onboarding dismissal).</li>
+        <li style="margin-bottom: 0.5rem;"><strong>Usage Limits:</strong> We log generation activities on our database simply to prevent anti-abuse and monitor queue load.</li>
+      </ul>
+    `;
+
+    document.getElementById('tos-footer-link')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      showLegalModal('Terms of Service', tosContent);
+    });
+
+    document.getElementById('privacy-footer-link')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      showLegalModal('Privacy Policy', privacyContent);
+    });
+
+    // Initialize wizard step
+    showStep(1);
+
     window.addEventListener('unload', () => {
       unsubscribe();
       unsubscribeAuth();
     });
   </script>
+
+<!-- Comic Reveal Overlay -->
+<div id="reveal-overlay" class="reveal-overlay" aria-hidden="true">
+  <div class="reveal-overlay-title">ASSEMBLING FINAL PAGE</div>
+  <div class="reveal-overlay-dots">
+    <span></span><span></span><span></span>
+  </div>
+</div>
+
 </body>
 </html>

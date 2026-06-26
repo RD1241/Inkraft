@@ -1,0 +1,691 @@
+/* ============================================================
+   characters.css — Inkraft Character Vault
+   Manga/RPG-style character roster page
+   ============================================================ */
+
+/* ── CSS Variables ────────────────────────────────────────── */
+:root {
+  --card-accent: #e8324a;
+}
+
+/* ── Page Layout ──────────────────────────────────────────── */
+.vault-main {
+  flex: 1;
+  padding: 2rem 2.5rem 4rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Page Header ──────────────────────────────────────────── */
+.vault-page-header {
+  margin-bottom: 2rem;
+}
+
+.vault-header-content {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.vault-title-block {
+  flex: 1;
+}
+
+.vault-title {
+  font-family: 'Bangers', cursive;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 400;
+  letter-spacing: 3px;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  text-shadow: 3px 3px 0 #000, 5px 5px 0 rgba(232, 50, 74, 0.3);
+  margin: 0 0 0.4rem 0;
+  line-height: 1;
+}
+
+.vault-subtitle {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0;
+  font-weight: 600;
+}
+
+/* ── Stats Bar ────────────────────────────────────────────── */
+.vault-stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #000000;
+  border: 3px solid #000000;
+  box-shadow: 5px 5px 0 var(--accent-color);
+  padding: 0;
+  flex-shrink: 0;
+  transform: skewX(-4deg);
+}
+
+.vault-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.7rem 1.5rem;
+  transform: skewX(4deg);
+}
+
+.vault-stat-value {
+  font-family: 'Bangers', cursive;
+  font-size: 1.8rem;
+  color: var(--accent-color);
+  line-height: 1;
+  letter-spacing: 1px;
+}
+
+.vault-stat-label {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.vault-stat-divider {
+  width: 3px;
+  height: 3rem;
+  background: #1a1a1a;
+  flex-shrink: 0;
+  transform: skewX(4deg);
+}
+
+/* ── Toolbar ──────────────────────────────────────────────── */
+.vault-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 2rem;
+  border-radius: 0 !important;
+  border: 3px solid #000 !important;
+  box-shadow: 5px 5px 0 #000 !important;
+  flex-wrap: wrap;
+}
+
+/* Search */
+.vault-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid #222;
+  padding: 0.45rem 0.75rem;
+  flex: 1;
+  min-width: 180px;
+  max-width: 320px;
+  transition: border-color 0.2s;
+}
+
+.vault-search-wrap:focus-within {
+  border-color: var(--accent-color);
+  box-shadow: 3px 3px 0 var(--accent-color);
+}
+
+.vault-search-icon {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.vault-search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  width: 100%;
+  caret-color: var(--accent-color);
+}
+
+.vault-search-input::placeholder {
+  color: #444;
+  font-weight: 600;
+}
+
+/* Style filter chips */
+.vault-filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.style-chip {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.3rem 0.75rem;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 2px solid #222;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-radius: 0 !important;
+  white-space: nowrap;
+}
+
+.style-chip:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.style-chip.active {
+  background: var(--accent-color);
+  color: #fff;
+  border-color: #000;
+  box-shadow: 2px 2px 0 #000;
+  transform: skewX(-4deg);
+}
+
+/* ── Loading State ────────────────────────────────────────── */
+.vault-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  gap: 1rem;
+  color: var(--text-secondary);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+}
+
+/* ── Error State ──────────────────────────────────────────── */
+.vault-error {
+  background: rgba(220, 38, 38, 0.1);
+  border: 3px solid #dc2626;
+  box-shadow: 4px 4px 0 #000;
+  padding: 1rem 1.5rem;
+  color: #f87171;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  border-radius: 0 !important;
+}
+
+/* ── Character Card Grid ──────────────────────────────────── */
+.char-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .char-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .char-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Character Card ───────────────────────────────────────── */
+.character-card {
+  border-radius: 0 !important;
+  border: 3px solid #000 !important;
+  box-shadow: 6px 6px 0 #000 !important;
+  background: var(--glass-bg) !important;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  cursor: default;
+}
+
+.character-card:hover {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 3px rgba(232, 50, 74, 0.3), 8px 8px 0 #000 !important;
+  transform: translateY(-4px) scale(1.02);
+}
+
+/* Top accent stripe using the style color */
+.card-top-accent {
+  height: 4px;
+  background: var(--card-accent, var(--accent-color));
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.card-body {
+  padding: 1rem 1.1rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+/* Card header: name + style badges */
+.card-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.char-name {
+  font-family: 'Bangers', cursive;
+  font-size: 1.6rem;
+  font-weight: 400;
+  letter-spacing: 1.5px;
+  color: var(--text-primary);
+  text-shadow: 1px 1px 0 #000;
+  margin: 0;
+  line-height: 1.1;
+  word-break: break-word;
+}
+
+/* Style badges */
+.char-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
+.char-style-badge {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.18rem 0.55rem;
+  color: #fff;
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0 #000;
+  transform: skewX(-6deg);
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Attribute chips row */
+.char-attrs-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.char-attr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid #222;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-family: 'Nunito', sans-serif;
+  border-radius: 0 !important;
+}
+
+.chip-label {
+  color: #9ca3af;
+}
+
+.chip-sep {
+  color: #555;
+}
+
+.chip-value {
+  color: var(--text-primary);
+}
+
+.char-attr-empty {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.75rem;
+  color: #71717a;
+  font-style: italic;
+}
+
+/* Card footer: date + actions */
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  border-top: 2px solid #111;
+  padding-top: 0.7rem;
+  margin-top: auto;
+}
+
+.char-date {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.7rem;
+  color: #444;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Action buttons */
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.card-action-btn {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.2rem 0.5rem;
+  background: transparent;
+  border: 1.5px solid #222;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-radius: 0 !important;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.card-action-btn:not(:disabled):hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  background: rgba(232, 50, 74, 0.08);
+}
+
+.card-action-btn.btn-delete:hover {
+  border-color: #dc2626;
+  color: #f87171;
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.card-action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Card remove animation (optimistic delete) */
+.card-removing {
+  opacity: 0;
+  transform: scale(0.95) translateY(-8px);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* ── Empty / No Results State ─────────────────────────────── */
+.vault-empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem 1rem;
+}
+
+.vault-empty-box {
+  border-radius: 0 !important;
+  border: 4px solid #000 !important;
+  box-shadow: 8px 8px 0 #000 !important;
+  background: var(--glass-bg) !important;
+  padding: 3rem 2.5rem;
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.vault-empty-emoji {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.vault-empty-title {
+  font-family: 'Bangers', cursive;
+  font-size: 1.8rem;
+  letter-spacing: 3px;
+  color: var(--text-primary);
+  text-shadow: 2px 2px 0 #000;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.vault-empty-sub {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 700;
+  margin: 0;
+}
+
+.vault-empty-desc {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.88rem;
+  color: #555;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.vault-empty-cta {
+  margin-top: 0.75rem;
+  background: linear-gradient(135deg, #e8324a, #c41e3a) !important;
+  border: 3px solid #000 !important;
+  box-shadow: 4px 4px 0 #000 !important;
+  border-radius: 0 !important;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 900;
+  font-size: 0.88rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.65rem 1.5rem;
+  text-decoration: none;
+  color: #fff;
+  display: inline-block;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.vault-empty-cta:hover {
+  box-shadow: 6px 6px 0 #000 !important;
+  transform: translate(-1px, -1px);
+}
+
+/* ── Delete Modal ─────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  backdrop-filter: blur(4px);
+  overflow-y: auto;
+}
+
+.modal-overlay.hidden {
+  display: none;
+}
+
+.modal-box {
+  border-radius: 0 !important;
+  border: 4px solid #000 !important;
+  box-shadow: 8px 8px 0 #000 !important;
+  background: #121212 !important;
+  padding: 2rem 2.25rem;
+  max-width: 440px;
+  width: 100%;
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-title {
+  font-family: 'Bangers', cursive;
+  font-size: 1.6rem;
+  letter-spacing: 2px;
+  color: #f87171;
+  text-shadow: 2px 2px 0 #000;
+  margin: 0 0 1rem 0;
+}
+
+.modal-body {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 1.5rem 0;
+}
+
+.modal-body strong {
+  color: var(--text-primary);
+  font-weight: 900;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.modal-cancel-btn {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  border: 2px solid #333 !important;
+  box-shadow: 3px 3px 0 #000 !important;
+  border-radius: 0 !important;
+  font-family: 'Nunito', sans-serif !important;
+  font-weight: 800 !important;
+  font-size: 0.85rem !important;
+  padding: 0.5rem 1.2rem !important;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.modal-cancel-btn:hover {
+  border-color: var(--accent-color) !important;
+  color: var(--accent-color) !important;
+}
+
+.modal-delete-btn {
+  background: linear-gradient(135deg, #dc2626, #991b1b) !important;
+  color: #fff !important;
+  border: 2px solid #000 !important;
+  box-shadow: 4px 4px 0 #000 !important;
+  border-radius: 0 !important;
+  font-family: 'Nunito', sans-serif !important;
+  font-weight: 900 !important;
+  font-size: 0.85rem !important;
+  padding: 0.5rem 1.2rem !important;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.modal-delete-btn:hover {
+  box-shadow: 5px 5px 0 #000 !important;
+  transform: translate(-1px, -1px);
+}
+
+/* ── Utility: hidden ─────────────────────────────────────── */
+.hidden {
+  display: none !important;
+}
+
+/* ── Spinner (reuse from global style) ──────────────────── */
+/* .spinner is already defined in style.css */
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .vault-main {
+    padding: 1.5rem 1.5rem 3rem;
+  }
+
+  .vault-header-content {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .vault-stats-bar {
+    transform: none;
+    align-self: flex-start;
+  }
+
+  .vault-stat {
+    transform: none;
+  }
+
+  .vault-stat-divider {
+    transform: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .vault-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .vault-search-wrap {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .vault-filter-chips {
+    width: 100%;
+  }
+
+  .char-grid {
+    gap: 1rem;
+  }
+
+  .vault-empty-box {
+    padding: 2rem 1.25rem;
+  }
+
+  .modal-box {
+    padding: 1.5rem 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .vault-main {
+    padding: 1rem 1rem 3rem;
+  }
+
+  .vault-title {
+    font-size: 2.2rem;
+  }
+
+  .card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .card-actions {
+    justify-content: flex-start;
+  }
+}

@@ -141,7 +141,7 @@ class HistoryService:
             "apikey": self.supabase_key,
             "Authorization": f"Bearer {self.supabase_key}",
             "Content-Type": "application/json",
-            "Prefer": "return=minimal"
+            "Prefer": "resolution=merge-duplicates,return=minimal"
         }
         payload = {
             "id": comic_data["id"],
