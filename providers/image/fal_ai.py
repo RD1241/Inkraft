@@ -124,7 +124,10 @@ STYLE_MODEL_MAP = {
     },
     "manhwa": {
         "endpoint": "fal-ai/fast-sdxl",
-        "model_name": os.environ.get("FAL_MANHWA_MODEL", "Linaqruf/noobai-xl-v1.0")
+        # Default aligned with the proven .env value. The previous default
+        # (Linaqruf/noobai-xl-v1.0) returns solid-black/safety-blocked frames on
+        # fal-ai/fast-sdxl — verified 2026-06-26 — so it must not be the fallback.
+        "model_name": os.environ.get("FAL_MANHWA_MODEL", "cagliostrolab/animagine-xl-3.1")
     },
     "anime": {
         "endpoint": "fal-ai/fast-sdxl",

@@ -72,7 +72,7 @@ class CreditsService:
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS credits (
                 user_id TEXT PRIMARY KEY,
-                balance INTEGER NOT NULL DEFAULT 10,
+                balance INTEGER NOT NULL DEFAULT 3,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             )
@@ -92,7 +92,7 @@ class CreditsService:
     def get_balance(self, user_id: str) -> int:
         """
         Retrieves the user's current credit balance.
-        If the user does not exist, registers them with 10 starting credits.
+        If the user does not exist, registers them with 3 starting credits.
         """
         u_id = clean_uuid(user_id)
         now = datetime.utcnow().isoformat()
@@ -175,9 +175,9 @@ class CreditsService:
             return self._register_user(u_id)
 
     def _register_user(self, user_id: str) -> int:
-        """Registers a new user with 10 starting credits."""
+        """Registers a new user with 3 starting credits."""
         now = datetime.utcnow().isoformat()
-        starting_balance = 10
+        starting_balance = 3
         txn_id = str(uuid.uuid4())
 
         # 1. SQLite registration
