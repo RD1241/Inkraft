@@ -28,10 +28,10 @@ class ComicRenderer:
                 current_line.append(word)
                 bbox = draw.textbbox((0, 0), " ".join(current_line), font=font)
                 if bbox[2] - bbox[0] > max_width:
-                    current_line.pop()
-                    if current_line:
+                    if len(current_line) > 1:
+                        current_line.pop()
                         lines.append(" ".join(current_line))
-                    current_line = [word]
+                        current_line = [word]
             if current_line:
                 lines.append(" ".join(current_line))
         return lines
@@ -60,6 +60,13 @@ class ComicRenderer:
                 index = 1
 
         dialogues_list = dialogues if dialogues else []
+        # Sort so narration boxes are processed first to prevent them being pushed down by top speech bubbles
+        def is_narration_box(d):
+            dlg_type = str(d.get("type", "speech")).lower()
+            speaker = str(d.get("speaker", "")).lower()
+            return dlg_type == "narration" or speaker == "narrator"
+        dialogues_list = sorted(dialogues_list, key=lambda d: 0 if is_narration_box(d) else 1)
+
         print(f"[Renderer] Panel {index}: {len(dialogues_list)} dialogue bubbles to render")
 
         if (index == 0 or index == 1) and total_panels >= 3 and dialogues_list:
@@ -133,12 +140,15 @@ class ComicRenderer:
             start_pos_idx = (index - 1) % 4
             
             y_offset = 20
+            bottom_y_offset = 30
             used_corners = []
+            rendered_rects = []
 
             active_dialogues_count = 0
             for i, dialogue in enumerate(dialogues_list):
                 speaker = str(dialogue.get("speaker", "Unknown")).strip()
                 dlg_type = str(dialogue.get("type", "speech")).lower()
+                is_narration = (dlg_type == "narration" or speaker.lower() == "narrator")
                 
                 # Format and clean text
                 raw_text = dialogue.get('text', '').strip()
@@ -176,11 +186,13 @@ class ComicRenderer:
                     self._rendered_dialogues[job_dir].add(dialogue_key)
 
                 # Now determine position since we are definitely rendering this bubble
-                pos = positions[(start_pos_idx + active_dialogues_count) % len(positions)]
-                used_corners.append(pos)
-                active_dialogues_count += 1
+                if is_narration:
+                    pos = "top-center"
+                else:
+                    pos = positions[(start_pos_idx + active_dialogues_count) % len(positions)]
+                    used_corners.append(pos)
+                    active_dialogues_count += 1
 
-                is_narration = (dlg_type == "narration" or speaker.lower() == "narrator")
                 text = raw_text
 
                 # Text Case transformation
@@ -204,7 +216,14 @@ class ComicRenderer:
                     max_width = int(img.width * 0.70)
                 else:
                     max_width = int(img.width * 0.50)
+
+                # Setup fonts and scale down font size if text is very long relative to panel size
                 active_font = narration_font if is_narration else speech_font
+                if not is_narration and self.font_path:
+                    if text_len > 200:
+                        active_font = ImageFont.truetype(self.font_path, max(12, int(font_size * 0.6)))
+                    elif text_len > 100:
+                        active_font = ImageFont.truetype(self.font_path, max(12, int(font_size * 0.75)))
 
                 lines = self._wrap_text(text, active_font, max_width, draw)
                 if not lines:
@@ -227,7 +246,8 @@ class ComicRenderer:
                         y = y_offset
                         y_offset += bubble_height + 25
                     else:
-                        y = img.height - bubble_height - 30
+                        y = img.height - bubble_height - bottom_y_offset
+                        bottom_y_offset += bubble_height + 25
 
                     if pos.endswith('left'):
                         x = 20
@@ -237,6 +257,32 @@ class ComicRenderer:
                 # Bounds clamping
                 x = max(10, min(x, img.width - bubble_width - 10))
                 y = max(10, min(y, img.height - bubble_height - 10))
+
+                # Check and resolve overlaps with previously drawn bubbles
+                overlap = True
+                attempts = 0
+                while overlap and attempts < 10:
+                    overlap = False
+                    for rx1, ry1, rx2, ry2 in rendered_rects:
+                        # Check if current rect overlaps with this rendered rect
+                        if not (x + bubble_width < rx1 or x > rx2 or y + bubble_height < ry1 or y > ry2):
+                            overlap = True
+                            # Adjust y depending on position
+                            if is_narration:
+                                y = ry2 + 10
+                            elif pos.startswith('top'):
+                                y = ry2 + 10
+                            else:
+                                y = ry1 - bubble_height - 10
+                            
+                            # Re-clamp coordinates
+                            x = max(10, min(x, img.width - bubble_width - 10))
+                            y = max(10, min(y, img.height - bubble_height - 10))
+                            break
+                    attempts += 1
+
+                # Add to rendered rects
+                rendered_rects.append((x, y, x + bubble_width, y + bubble_height))
 
                 if is_narration:
                     # Narration Box
