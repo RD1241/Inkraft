@@ -73,6 +73,12 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-26 — Antigravity — Daily limit removal, UI regression, & output look polish
+- **Daily Limit Removal:** Stripped all residual daily-limit scaffolding from frontend (`auth.js`, `index.html`, `dashboard.html`, `history.html`, `characters.html`). Matches pure credits-only billing model.
+- **UI Regression Pass:** Verified Phase 1/2 UI fixes using a programmatic Puppeteer suite. Confirmed PDF download works (no 401, returned `200 OK`), character creation/deletion in Vault functions correctly, and no placeholders exist. Report and screenshots saved in `regression_pass_results.md`.
+- **Output Look Polish:** Updated `core/comic_renderer.py` to use Comic Sans MS by default on Windows. Added dynamic font sizing based on panel width, proportional padding to prevent text clipping, centered narration boxes, and fixed the narration text color legibility bug (changed black text on dark background to white text). Verified visually via rendering tests.
+- **Next:** Claude Code to implement reference portrait validation and Vault-mandatory scene character descriptions.
+
 ### 2026-06-26 — Claude Code — Initial audit + handoff setup
 - Verified the tiered-routing pipeline against real images/DB. Confirmed the 3 critical/high bugs in §5 and the blockers in §6. No code changed yet.
 - Confirmed security: `.env` gitignored, FAL key never committed.
