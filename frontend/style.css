@@ -3795,3 +3795,365 @@ input:checked + .slider:before {
     padding: 1.5rem 1rem !important;
   }
 }
+
+/* ============================================================
+   Premium UI Upgrade (Task B - Antigravity)
+   ============================================================ */
+
+/* 1. Hero Comic Showcase & Layout */
+.hero-comic-frame {
+  position: relative;
+  background: #ffffff !important;
+  padding: 14px !important;
+  border: 4px solid #000000 !important;
+  outline: 2px solid #000000 !important;
+  outline-offset: -8px !important;
+  box-shadow: 14px 14px 0px #000000 !important;
+  max-width: 440px;
+  width: 100%;
+  margin: 0 auto;
+  transform: rotate(2deg);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  user-select: none;
+}
+
+.hero-comic-frame:hover {
+  transform: rotate(0deg) translateY(-8px) scale(1.03) !important;
+  box-shadow: 20px 20px 0px var(--accent-color) !important;
+  outline-color: var(--accent-color) !important;
+}
+
+.hero-comic-img {
+  display: block !important;
+  width: 100% !important;
+  border: 2px solid #000000 !important;
+}
+
+.hero-zoom-badge {
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #000;
+  color: #fff;
+  border: 2px solid #fff;
+  padding: 0.3rem 0.8rem;
+  font-family: 'Bangers', cursive !important;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  box-shadow: 3px 3px 0 #000;
+}
+
+.stamp-badge {
+  position: absolute;
+  top: -15px;
+  left: -15px;
+  transform: rotate(-12deg);
+  background: var(--accent-color);
+  color: #fff;
+  border: 3px solid #000;
+  padding: 0.4rem 1rem;
+  font-family: 'Bangers', cursive !important;
+  font-size: 1.1rem;
+  letter-spacing: 1.5px;
+  box-shadow: 3px 3px 0 #000;
+  z-index: 5;
+}
+
+/* 2. Before/After visual on Hero */
+.before-after-box {
+  display: flex;
+  align-items: center;
+  background: #111218;
+  border: 2.5px solid #000;
+  box-shadow: 5px 5px 0px #000;
+  margin-top: 2rem;
+  max-width: 600px;
+  width: 100%;
+  padding: 0.85rem;
+  gap: 0.85rem;
+  position: relative;
+}
+
+.ba-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ba-label {
+  font-family: 'Bangers', cursive !important;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  display: inline-block;
+}
+
+.ba-text .ba-content {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--text-primary);
+  background: rgba(0,0,0,0.4);
+  border: 1px solid #222;
+  padding: 0.5rem;
+  height: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ba-arrow {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--accent-color);
+  text-shadow: 2px 2px 0px #000;
+  user-select: none;
+  animation: pulseArrow 1.5s infinite ease-in-out;
+}
+
+@keyframes pulseArrow {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.ba-comic .ba-content {
+  height: 70px;
+  border: 1.5px solid #000;
+  background-size: cover;
+  background-position: top center;
+}
+
+/* 3. Results Reveal & Frame */
+@keyframes comicRevealIn {
+  0%   { opacity: 0; transform: translateY(40px) scale(0.96); filter: blur(8px) contrast(0.8); }
+  60%  { filter: blur(3px) contrast(1.1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0) contrast(1); }
+}
+
+.comic-reveal-animate {
+  animation: comicRevealIn 0.85s cubic-bezier(0.19, 1, 0.22, 1) forwards !important;
+}
+
+.comic-created-badge {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  transform: rotate(12deg);
+  z-index: 10;
+  background: #ffa502 !important; /* Vivid Amber-Yellow */
+  color: #000 !important;
+  font-family: 'Bangers', cursive !important;
+  font-size: 1.5rem !important;
+  letter-spacing: 2px !important;
+  padding: 0.5rem 1.5rem !important;
+  border: 3px solid #000 !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  border-radius: 0 !important;
+  text-transform: uppercase !important;
+  pointer-events: none;
+  user-select: none;
+  animation: stampReveal 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.3) forwards !important;
+  opacity: 0;
+}
+
+@keyframes stampReveal {
+  0% { opacity: 0; transform: rotate(35deg) scale(2.2) translateY(-20px); filter: blur(4px); }
+  80% { transform: rotate(12deg) scale(0.95); opacity: 1; }
+  100% { opacity: 1; transform: rotate(12deg) scale(1); filter: none; }
+}
+
+.final-comic-img-wrapper {
+  max-width: 800px !important;
+  background: #ffffff !important;
+  padding: 20px !important;
+  border: 4px solid #000000 !important;
+  outline: 2.5px solid #000000 !important;
+  outline-offset: -10px !important;
+  box-shadow: 14px 14px 0px #000000 !important;
+  margin: 3rem auto !important;
+  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1) !important;
+}
+
+.final-comic-img-wrapper:hover {
+  transform: translateY(-6px) scale(1.005) !important;
+  box-shadow: 20px 20px 0px var(--accent-color) !important;
+  outline-color: var(--accent-color) !important;
+}
+
+/* 4. Results Toolbar Actions */
+.result-actions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin: 2.5rem 0;
+  width: 100%;
+}
+
+.primary-actions-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.primary-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.1rem 1.8rem !important;
+  font-family: 'Bangers', cursive !important;
+  font-size: 1.5rem !important;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border: 3px solid #000 !important;
+  box-shadow: 5px 5px 0px #000 !important;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  border-radius: 0px !important;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  user-select: none;
+}
+
+.primary-action-btn.png-download {
+  background: #ffa502 !important; /* Amber-Yellow */
+  color: #000 !important;
+}
+
+.primary-action-btn.gallery-share {
+  background: #00a8ff !important; /* Neon Blue */
+  color: #fff !important;
+}
+
+.primary-action-btn:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 8px 8px 0px #000 !important;
+}
+
+.primary-action-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 2px 2px 0px #000 !important;
+}
+
+.secondary-actions-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.8rem;
+  width: 100%;
+}
+
+.secondary-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem !important;
+  font-family: 'Nunito', sans-serif !important;
+  font-weight: 800 !important;
+  font-size: 0.85rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 2px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  cursor: pointer;
+  background: #1e1f29 !important;
+  color: #fff !important;
+  border-radius: 0px !important;
+  transition: all 0.15s ease;
+}
+
+.secondary-action-btn.outline-variant {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+  border-color: #222 !important;
+}
+
+.secondary-action-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px #000 !important;
+  background: #252632 !important;
+}
+
+.secondary-action-btn.outline-variant:hover {
+  border-color: var(--accent-color) !important;
+  background: rgba(255, 63, 86, 0.1) !important;
+}
+
+.secondary-action-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #000 !important;
+}
+
+.btn-subtext {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  letter-spacing: 0.5px;
+  font-family: 'Nunito', sans-serif !important;
+  font-weight: 800;
+}
+
+/* 5. Responsive Adapters */
+@media (max-width: 768px) {
+  .hero-comic-frame {
+    transform: rotate(0deg);
+    margin-top: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .before-after-box {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+  
+  .ba-arrow {
+    transform: rotate(90deg);
+    animation: pulseArrowVert 1.5s infinite ease-in-out;
+  }
+  
+  @keyframes pulseArrowVert {
+    0%, 100% { transform: rotate(90deg) scale(1); }
+    50% { transform: rotate(90deg) scale(1.2); }
+  }
+  
+  .ba-text .ba-content {
+    height: 50px;
+  }
+  
+  .ba-comic .ba-content {
+    height: 50px;
+  }
+
+  .primary-actions-group {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+  
+  .secondary-actions-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+  
+  .primary-action-btn {
+    padding: 0.9rem 1.2rem !important;
+    font-size: 1.25rem !important;
+  }
+  
+  .secondary-action-btn {
+    font-size: 0.75rem !important;
+    padding: 0.5rem 0.8rem !important;
+    justify-content: center;
+  }
+
+  .comic-created-badge {
+    top: -15px;
+    right: -10px;
+    font-size: 1.1rem !important;
+    padding: 0.3rem 1rem !important;
+  }
+}
+

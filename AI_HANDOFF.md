@@ -77,6 +77,20 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-27 — Antigravity — Tasks B Redesign (Landing Hero & Comic Results Upgrade)
+- **Redesigned Landing Hero (frontend/index.html + frontend/style.css):**
+  - Updated headline to a benefit-driven statement (*"Turn your story into a manga page in under a minute"*).
+  - Streamlined CTA to a single primary button leading straight to the generator workspace.
+  - Replaced busy style card collage with a prominent tilted double-bordered display of the Kaito/Mei showcase page (`assets/sample_comic.png`).
+  - Added a retro "your text -> comic" before/after preview box to make the pipeline obvious.
+- **Redesigned Comic Results View (frontend/index.html + frontend/style.css):**
+  - Added a spring-stamped, slanted Neo-Brutalist stamp (*"🔥 DONE!"*) on page creation.
+  - Implemented a premium "develop-in" scale, fade, and blur reveal animation on the page frame.
+  - Styled the final comic page with a large centered layout, a 4px black frame, and a bold 14px flat shadow.
+  - Grouped toolbar controls into primary visual CTAs (Download PNG, Share to Gallery with custom color themes) and secondary smaller actions (PDF, Regenerate, Save Character, New Story).
+- **Responsive Layout:** Added responsive stack adapters for the before/after preview box, showcase frame, and grouped toolbar items on 375px/480px widths.
+- **Verification:** Ran backend diagnostic checks. Launched headless chrome server to capture layout screenshots (`landing_hero_after.png` and `results_view_after.png`) saved to the artifacts directory. Logged details in [ui_redesign_report.md](file:///C:/Users/dell/.gemini/antigravity/brain/9a7ec11a-f0f4-43da-baca-fb7c86f6b5f6/ui_redesign_report.md).
+
 ### 2026-06-27 — Claude Code — Task C cleanup + full live e2e
 - **Cleanup (c1c25ca):** removed dead `check_daily_limit()` + its call in `deduct_credit`, and stale daily_limit/remaining_generations lines from the `get_daily_usage` docstring.
 - **Verified Antigravity's work:** speech bubbles render clearly (narration top, no overlaps, long text auto-scaled — confirmed via test_outputs/bubble_verification); daily-limit fields gone from responses; credits=3 preserved; it stayed in its lane. UI pass (Task B) is modest/incremental polish (hover/click micro-animations + spacing), NOT a redesign — before/after screenshots are ~95% identical; one screenshot mislabeled (auth_login shows dashboard).

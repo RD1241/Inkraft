@@ -33,105 +33,35 @@
     <div class="speed-lines-bg"></div>
     <div class="hero-grid">
       <div class="hero-content">
-        <h1 class="hero-title">Turn Stories Into<br>Manga, Manhwa &<br>Comics with AI</h1>
+        <h1 class="hero-title">Turn your story into a manga page in under a minute</h1>
         <p class="hero-subtitle">
-          Generate complete visual stories from plain text.
+          Input your script or novel passage, and watch our AI instantly plan, draw, and stitch a complete comic page with speech bubbles.
         </p>
         <div class="hero-ctas">
           <button class="glow-button hero-cta-btn" onclick="document.getElementById('generator-workspace').scrollIntoView({behavior: 'smooth'})">
-            Generate Now
+            Create Your Comic Page Now! →
           </button>
-          <a href="/gallery.html" class="glow-button hero-cta-btn secondary-btn">
-            View Gallery
-          </a>
+        </div>
+        <!-- Before/after Visual -->
+        <div class="before-after-box">
+          <div class="ba-side ba-text">
+            <span class="ba-label">1. PASTE SCENE</span>
+            <div class="ba-content">
+              "Kaito runs through the library, gasping. 'Mei, look out!' he yells as the shelves begin to tilt..."
+            </div>
+          </div>
+          <div class="ba-arrow">⚡</div>
+          <div class="ba-side ba-comic">
+            <span class="ba-label">2. GET MANGA</span>
+            <div class="ba-content ba-comic-preview" style="background-image: url('assets/sample_comic.png');"></div>
+          </div>
         </div>
       </div>
       <div class="hero-showcase">
-        <div class="showcase-grid-collage">
-          <!-- Card 1: Manga style preview -->
-          <div class="showcase-card style-manga">
-            <div class="showcase-header">
-              <span class="showcase-tag">MANGA</span>
-              <h3 class="showcase-title">SHADOW BLADE</h3>
-            </div>
-            <div class="showcase-body">
-              <div style="position: absolute; bottom: 8px; left: 8px; background: #000; border: 2px solid #fff; padding: 0.2rem 0.5rem; font-family: 'Bangers', cursive; font-size: 0.75rem; transform: rotate(-3deg); color: #fff;">
-                "THIS ENDS NOW!"
-              </div>
-            </div>
-            <div class="showcase-footer">
-              <span>VOL. 01</span>
-              <span>MANGA SHADE</span>
-            </div>
-          </div>
-
-          <!-- Card 2: Manhwa style preview -->
-          <div class="showcase-card style-manhwa">
-            <div class="showcase-header">
-              <span class="showcase-tag" style="background-color: #3b82f6;">MANHWA</span>
-              <h3 class="showcase-title">SOLO ASCENT</h3>
-            </div>
-            <div class="showcase-body">
-              <div style="position: absolute; bottom: 8px; right: 8px; background: #000; border: 2px solid #3b82f6; padding: 0.2rem 0.5rem; font-family: 'Bangers', cursive; font-size: 0.75rem; transform: rotate(2deg); color: #3b82f6; box-shadow: 0 0 6px rgba(59, 130, 246, 0.4);">
-                "LEVEL UP!"
-              </div>
-            </div>
-            <div class="showcase-footer">
-              <span>CHAP. 42</span>
-              <span>SYSTEM ACTIVE</span>
-            </div>
-          </div>
-
-          <!-- Card 3: Anime style preview -->
-          <div class="showcase-card style-anime">
-            <div class="showcase-header">
-              <span class="showcase-tag" style="background-color: #ec4899;">ANIME</span>
-              <h3 class="showcase-title">CHRONO GEAR</h3>
-            </div>
-            <div class="showcase-body">
-              <div style="position: absolute; top: 8px; left: 8px; background: #fff; border: 2px solid #000; padding: 0.2rem 0.5rem; font-family: 'Bangers', cursive; font-size: 0.7rem; transform: rotate(-1deg); color: #000; border-radius: 6px;">
-                "CHRONO DRIVE!"
-              </div>
-            </div>
-            <div class="showcase-footer">
-              <span>EP. 01</span>
-              <span>CEL SHADED</span>
-            </div>
-          </div>
-
-          <!-- Card 4: Cinematic style preview -->
-          <div class="showcase-card style-cinematic">
-            <div class="showcase-header">
-              <span class="showcase-tag" style="background-color: #10b981;">CINEMATIC</span>
-              <h3 class="showcase-title">NEON RUNNERS</h3>
-            </div>
-            <div class="showcase-body">
-              <div style="position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.2); padding: 0.1rem 0.5rem; font-family: 'Nunito', sans-serif; font-size: 0.65rem; color: #fff; letter-spacing: 0.5px; white-space: nowrap;">
-                [NEON GLARE IN THE RAIN]
-              </div>
-            </div>
-            <div class="showcase-footer">
-              <span>SCENE 3</span>
-              <span>CINE-SHOT</span>
-            </div>
-          </div>
-
-          <!-- Card 5: Realistic style preview -->
-          <div class="showcase-card style-realistic">
-            <div class="showcase-header">
-              <span class="showcase-tag" style="background-color: #f59e0b;">REALISTIC</span>
-              <h3 class="showcase-title">LOST TEMPLE</h3>
-            </div>
-            <div class="showcase-body">
-              <div style="position: absolute; top: 8px; right: 8px; background: #0a0a0a; border: 2px solid #f59e0b; padding: 0.2rem 0.5rem; font-family: 'Bangers', cursive; font-size: 0.7rem; transform: rotate(3deg); color: #f59e0b;">
-                "THE RUNES GLOW..."
-              </div>
-            </div>
-            <div class="showcase-footer">
-              <span>VOL. 05</span>
-              <span>REAL-RENDER</span>
-            </div>
-          </div>
+        <div class="hero-comic-frame">
+          <div class="stamp-badge">PRO PREVIEW</div>
+          <img src="assets/sample_comic.png" alt="Inkraft AI Manga Sample Page" class="hero-comic-img">
+          <div class="hero-zoom-badge">⚡ LIVE GENERATION PREVIEW</div>
         </div>
       </div>
     </div>
@@ -531,18 +461,37 @@
 
           <div id="results-state" class="hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem;">
-              <h3 style="margin: 0;">Final Comic Page</h3>
-              <button id="copy-story-btn" class="step" style="cursor: pointer; font-size: 0.75rem; padding: 0.4rem 0.8rem; background: #111; border-color: var(--accent-color);">📋 Copy Story Text</button>
+              <h3 style="margin: 0; font-size: 2rem;">🎉 Your Manga Page is Ready!</h3>
+              <button id="copy-story-btn" class="step" style="cursor: pointer; font-size: 0.85rem; padding: 0.5rem 1rem; background: #111; border-color: var(--accent-color);">📋 Copy Story Text</button>
             </div>
 
             <!-- Sticky Action Toolbar above the fold -->
-            <div class="result-actions-toolbar">
-              <a id="download-png-btn" href="#" class="glow-button result-btn" target="_blank" style="text-align: center;">⬇ PNG (Free)</a>
-              <button id="download-pdf-btn" class="glow-button result-btn">📄 PDF (1 Credit)</button>
-              <button id="share-gallery-btn" class="glow-button result-btn">🌐 Share</button>
-              <button id="generate-again-btn" class="glow-button result-btn">🔄 Regenerate</button>
-              <button id="new-story-btn" class="glow-button result-btn result-btn-outline">✍ New Story</button>
-              <button id="save-character-action-btn" class="glow-button result-btn result-btn-outline">👤 Save Character</button>
+            <div class="result-actions-container">
+              <div class="primary-actions-group">
+                <a id="download-png-btn" href="#" class="primary-action-btn png-download" target="_blank">
+                  <span class="btn-icon">⬇️</span>
+                  <span class="btn-text">Download PNG <small class="btn-subtext">(FREE)</small></span>
+                </a>
+                <button id="share-gallery-btn" class="primary-action-btn gallery-share">
+                  <span class="btn-icon">🌐</span>
+                  <span class="btn-text">Share to Gallery</span>
+                </button>
+              </div>
+              
+              <div class="secondary-actions-group">
+                <button id="download-pdf-btn" class="secondary-action-btn pdf-download">
+                  <span class="btn-icon">📄</span> PDF <small class="btn-subtext">(1 Credit)</small>
+                </button>
+                <button id="generate-again-btn" class="secondary-action-btn">
+                  <span class="btn-icon">🔄</span> Regenerate
+                </button>
+                <button id="save-character-action-btn" class="secondary-action-btn">
+                  <span class="btn-icon">👤</span> Save Character
+                </button>
+                <button id="new-story-btn" class="secondary-action-btn outline-variant">
+                  <span class="btn-icon">✍️</span> New Story
+                </button>
+              </div>
             </div>
 
             <!-- Generation Summary Card -->
@@ -578,7 +527,8 @@
             </div>
 
             <!-- Stitched final page image wrapper for lightbox zoom -->
-            <div id="final-comic-wrapper" class="final-comic-img-wrapper" style="cursor: zoom-in;">
+            <div id="final-comic-wrapper" class="final-comic-img-wrapper" style="cursor: zoom-in; position: relative;">
+              <div id="comic-created-badge" class="comic-created-badge">🔥 DONE!</div>
               <img id="final-comic-img" src="" alt="Final Comic Page">
               <div class="zoom-hint">🔍 Click to enlarge</div>
             </div>
