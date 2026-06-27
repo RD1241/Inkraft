@@ -162,6 +162,32 @@
             </select>
           </div>
 
+          <!-- Panel Count Chips (credits scale with panels) -->
+          <div class="form-group">
+            <span class="qg-chips-label">Panel Count <small style="opacity:0.6">(more panels = more credits)</small></span>
+            <div class="qg-layout-chips" id="qg-panel-chips">
+              <button type="button" class="layout-chip-sm active" data-value="0">✨ AI · 2cr</button>
+              <button type="button" class="layout-chip-sm" data-value="1">1 · 1cr</button>
+              <button type="button" class="layout-chip-sm" data-value="2">2 · 1cr</button>
+              <button type="button" class="layout-chip-sm" data-value="3">3 · 2cr</button>
+              <button type="button" class="layout-chip-sm" data-value="4">4 · 2cr</button>
+              <button type="button" class="layout-chip-sm" data-value="5">5 · 3cr</button>
+              <button type="button" class="layout-chip-sm" data-value="6">6 · 3cr</button>
+            </div>
+            <input type="hidden" id="qg-panel-count" value="0">
+          </div>
+
+          <!-- Colour Mode Chips -->
+          <div class="form-group">
+            <span class="qg-chips-label">Colour Mode</span>
+            <div class="qg-layout-chips" id="qg-color-chips">
+              <button type="button" class="layout-chip-sm active" data-value="auto">✨ Auto</button>
+              <button type="button" class="layout-chip-sm" data-value="color">🎨 Colour</button>
+              <button type="button" class="layout-chip-sm" data-value="bw">⬛ B&amp;W</button>
+            </div>
+            <input type="hidden" id="qg-color-mode" value="auto">
+          </div>
+
           <div id="qg-error" class="auth-error hidden"></div>
 
           <button type="submit" class="qg-generate-btn" id="qg-btn">
@@ -439,6 +465,28 @@
       layoutSelect.value = chip.dataset.value;
     });
 
+    // ── Panel count chips sync ──
+    const panelChipsContainer = document.getElementById('qg-panel-chips');
+    const panelCountInput     = document.getElementById('qg-panel-count');
+    panelChipsContainer?.addEventListener('click', (e) => {
+      const chip = e.target.closest('.layout-chip-sm');
+      if (!chip) return;
+      panelChipsContainer.querySelectorAll('.layout-chip-sm').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      panelCountInput.value = chip.dataset.value;
+    });
+
+    // ── Colour mode chips sync ──
+    const colorChipsContainer = document.getElementById('qg-color-chips');
+    const colorModeInput      = document.getElementById('qg-color-mode');
+    colorChipsContainer?.addEventListener('click', (e) => {
+      const chip = e.target.closest('.layout-chip-sm');
+      if (!chip) return;
+      colorChipsContainer.querySelectorAll('.layout-chip-sm').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      colorModeInput.value = chip.dataset.value;
+    });
+
     // ── Quick Generate form ──
     const qgText    = document.getElementById('qg-text');
     const qgCounter = document.getElementById('qg-counter');
@@ -475,11 +523,19 @@
 
       const style  = document.getElementById('qg-style').value;
       const layout = document.getElementById('qg-layout').value;
+      const panelCount = parseInt(document.getElementById('qg-panel-count')?.value || '0');
+      const colorMode  = document.getElementById('qg-color-mode')?.value || 'auto';
 
       try {
         const submitRes = await apiFetch('/api/generate_comic', {
           method: 'POST',
-          body: JSON.stringify({ text, style: style || undefined, layout_type: layout || undefined }),
+          body: JSON.stringify({
+            text,
+            style: style || undefined,
+            layout_type: layout || undefined,
+            panel_count: panelCount > 0 ? panelCount : undefined,
+            color_mode: colorMode
+          }),
         });
         const submitData = await submitRes.json();
         if (!submitRes.ok) throw new Error(submitData.detail || submitData.message || 'Generation failed');

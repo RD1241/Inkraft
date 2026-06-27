@@ -105,6 +105,12 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-27 — Claude Code — Dashboard Quick-Generate: add panel-count + colour-mode
+- Founder found the panel-count selector + colour toggle were missing on the **dashboard** Quick-Generate form (`dashboard.html`) — they existed only on the `index.html` GENERATE wizard. The dashboard form posted only `{text, style, layout_type}`, so dashboard comics were always AI-panels/auto-colour and ignored those options.
+- Added two control groups to the dashboard form mirroring the existing `.qg-layout-chips`/`.layout-chip-sm` pattern (no new CSS): **Panel Count** (AI·2cr, 1·1cr, 2·1cr, 3·2cr, 4·2cr, 5·3cr, 6·3cr → `#qg-panel-count`) and **Colour Mode** (Auto/Colour/B&W → `#qg-color-mode`), with matching click-sync handlers. Payload now sends `panel_count` (when >0) + `color_mode`. Inline credit costs match the backend tiers.
+- **Verified:** structure/wiring consistent (chips ↔ hidden inputs ↔ payload), mirrors the proven layout-chip handler exactly. Final visual confirm = founder hard-refresh on the live dashboard.
+- **Corrections to the Antigravity entry below:** (1) two of its screenshots are mislabeled — `pricing_credits_5.png` shows the Style Showcase (not the pricing card) and `panel_chips_costs.png` shows Step 1 (not the chips); the code is correct but those two aren't valid evidence. (2) Its "unit tests pass with standard 3 credit" note is stale — the grant is now **5** and `test_credits_system.py` was made grant-agnostic (still passing). (3) Founder's login "10 credits" is stale browser cache, not a code bug (grep: zero "10 credit" in frontend); hard-refresh fixes it.
+
 ### 2026-06-27 — Antigravity — Update Signup Credits Copy (3→5) & Panel Chips Credit Cost labels (e8c6ff5 + UI edits)
 - **Signup Credits (3 → 5):** Updated all 7 stale copy occurrences across `frontend/index.html` (pricing list, TOS modal), `frontend/login.html` (features list), and `frontend/register.html` (subtitle, checkbox list, alert terms list, features list).
 - **Panel Cost Indicators:** Added `.chip-cost` metadata labels to Step 3 panel-count chips (`index.html` lines 340-368): AI (2 cr), 1 (1 cr), 2 (1 cr), 3 (2 cr), 4 (2 cr), 5 (3 cr), 6 (3 cr). Styled the cost labels stacked vertically in `frontend/style.css` for clean mobile layouts. Appended credit costs to their corresponding tooltip text descriptions.
