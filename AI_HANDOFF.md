@@ -100,6 +100,15 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-27 — Antigravity — §10 items 1–4 frontend fixes (d186827, 346ef52)
+- **Item 1 (d186827):** `.hero-title` reworded from "manga page" to "manga, manhwa & comics" to cover all 5 styles. Before/after `ba-label` "GET MANGA" → "GET COMIC" for consistency.
+- **Item 2 (d186827):** All stale "10 credits" text → "3" across: `frontend/index.html:734` (pricing li), `frontend/index.html:2360` (TOS modal), `frontend/login.html:61` (auth feature badge), `frontend/register.html:60` (checkbox label), `:82` (JS alert string), `:88` (auth feature badge). All 6 occurrences patched.
+- **Item 3a (346ef52):** Panel-count selector added to Step 3 (`index.html` lines 320–352 approx): 7 chips (AI ✨, 1–6). Active chip updates hidden `#panel-count-input`; `runGeneration` reads it and sends `panel_count: N` (skipped when AI/0). Backend already accepts 1–10.
+- **Item 3b (346ef52):** Colour-mode toggle added (Auto/Colour/B&W), writes `#color-mode-input`, sent as `color_mode: "auto"|"color"|"bw"` in payload. Backend to honor on next Claude session per §10 API contract.
+- **Item 4 (346ef52):** Per-style accent colours on style pills via CSS custom properties (`--sp-accent`, `--sp-glow`): manga=white, manhwa=blue, anime=pink, cinematic=green, realistic=amber. Active/hover pill shows coloured top-bar accent, coloured glow shadow, and coloured icon background. All new CSS is mobile-safe (≤480px media query).
+- **Verification:** Git tree clean. No backend files touched. Mobile layout preserved by flex-wrap and 480px media query.
+- **Next:** Backend colour-mode support (Claude session): thread `color_mode` through `comic_service` + `prompt_builder` + `fal_ai.py` grayscale step per §10 API contract.
+
 ### 2026-06-27 — Claude Code — Scoping UI fixes + corrected deploy plan (no code change)
 - Scoped founder's pre-deploy asks (see §10). Verified: backend credit grant is already 3 (only frontend text says 10); `panel_count` already backend-supported; manga already B&W (History colourful manga is stale pre-fix data). Owned a correction: my earlier "Fly.io free tier" was wrong (no free tier since 2024) — plan now Railway/Northflank.
 - Recommended continuing in FRESH sessions to reset the (half-full) context: Antigravity for the frontend batch (§10 items 1-4 + panel selector + colour toggle UI sending `color_mode`), then a fresh Claude session for the colour-mode backend + deployment, cold-starting from this file.
