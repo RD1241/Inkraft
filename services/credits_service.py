@@ -298,22 +298,12 @@ class CreditsService:
             })
         return history
 
-    def check_daily_limit(self, user_id: str) -> bool:
-        """
-        Bypassed - Always returns True.
-        """
-        return True
-
     def deduct_credit(self, user_id: str, re_generate: bool = False) -> bool:
         """
-        Checks daily limit and balance, then deducts 1 credit from user balance
-        and registers a transaction of -1 with reason 'generation' or 'regeneration'.
+        Checks balance, then deducts 1 credit from user balance and registers a
+        transaction of -1 with reason 'generation' or 'regeneration'.
         """
         u_id = clean_uuid(user_id)
-        
-        # Check free daily limit of 3 generations unless bypassing via re_generate
-        if not re_generate and not self.check_daily_limit(u_id):
-            raise ValueError("Daily limit of 3 generations reached.")
 
         # Get current balance
         balance = self.get_balance(u_id)
@@ -446,8 +436,6 @@ class CreditsService:
         Returns a dictionary summarizing:
           - balance: user's current credit balance
           - usage_today: number of generations today
-          - daily_limit: daily limit of generations (3)
-          - remaining_generations: max(0, 3 - usage_today)
           - reset_countdown_seconds: seconds until the next UTC day starts
         """
         u_id = clean_uuid(user_id)
