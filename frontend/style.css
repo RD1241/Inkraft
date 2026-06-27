@@ -2825,6 +2825,16 @@ input:checked + .slider:before {
 .style-chip { display:inline-flex; align-items:center; gap:.3rem; padding:.35rem .75rem; font-size:.78rem; font-weight:700; font-family:'Nunito',sans-serif; background:rgba(255,255,255,.04); border:2px solid #222; color:var(--text-secondary); cursor:pointer; transition:all .15s; border-radius:0!important; text-transform:uppercase; letter-spacing:.03em; white-space:nowrap; }
 .style-chip:hover { background:rgba(232,50,74,.1); border-color:rgba(232,50,74,.4); color:var(--text-primary); }
 .style-chip.active { background:rgba(232,50,74,.2); border:2px solid var(--accent-color); box-shadow:2px 2px 0 #000; color:#fff; }
+/* #4 — per-style colour identity + tactile motion for the Art Style chips */
+.style-chip { transition: transform .18s cubic-bezier(0.175,0.885,0.32,1.275), background .15s, border-color .15s, box-shadow .15s !important; }
+.style-chip:hover { transform: translateY(-2px); }
+.style-chip:active { transform: translate(2px,2px); }
+.style-chip[data-value=""].active        { background:linear-gradient(90deg,#e8324a,#f59e0b)!important; color:#fff!important; border-color:#000!important; box-shadow:3px 3px 0 #000!important; }
+.style-chip[data-value="manga"].active   { background:#f5f5f5!important; color:#111!important; border-color:#111!important; box-shadow:3px 3px 0 #111!important; }
+.style-chip[data-value="manhwa"].active  { background:#3b82f6!important; color:#fff!important; border-color:#1e3a8a!important; box-shadow:3px 3px 0 #1e3a8a!important; }
+.style-chip[data-value="anime"].active   { background:#ec4899!important; color:#fff!important; border-color:#831843!important; box-shadow:3px 3px 0 #831843!important; }
+.style-chip[data-value="cinematic"].active { background:#10b981!important; color:#06281f!important; border-color:#064e3b!important; box-shadow:3px 3px 0 #064e3b!important; }
+.style-chip[data-value="realistic"].active { background:#f59e0b!important; color:#3b2600!important; border-color:#92400e!important; box-shadow:3px 3px 0 #92400e!important; }
 .layout-chip-sm { padding:.25rem .6rem; font-size:.72rem; font-weight:700; font-family:'Nunito',sans-serif; background:rgba(255,255,255,.04); border:1.5px solid #222; color:var(--text-secondary); cursor:pointer; transition:all .15s; border-radius:0!important; text-transform:uppercase; }
 .layout-chip-sm:hover { background:rgba(232,50,74,.1); border-color:rgba(232,50,74,.4); color:var(--text-primary); }
 .layout-chip-sm.active { background:rgba(232,50,74,.15); border-color:var(--accent-color); color:#fff; }
@@ -3826,6 +3836,9 @@ input:checked + .slider:before {
 .hero-comic-img {
   display: block !important;
   width: 100% !important;
+  height: 520px !important;
+  object-fit: cover !important;
+  object-position: center top !important;
   border: 2px solid #000000 !important;
 }
 
