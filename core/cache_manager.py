@@ -6,7 +6,7 @@ from config import settings
 
 class CacheManager:
     def __init__(self, db_path=None):
-        self.db_path = db_path or os.path.join(settings.BASE_DIR, "core", "cache.db")
+        self.db_path = db_path or os.path.join(settings.DB_DIR, "cache.db")
         self._init_db()
 
     def _init_db(self):

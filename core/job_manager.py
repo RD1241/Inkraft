@@ -10,7 +10,7 @@ class JobManager:
     """
     def __init__(self, db_path=None):
         # Resolve base DB path
-        resolved_db_path = db_path or os.path.join(settings.BASE_DIR, "core", "jobs.db")
+        resolved_db_path = db_path or os.path.join(settings.DB_DIR, "jobs.db")
         # Delegate to the newly created JobService
         self.job_service = JobService(resolved_db_path)
 

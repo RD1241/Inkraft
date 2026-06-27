@@ -27,8 +27,23 @@ MAX_COST_PER_JOB = float(os.environ.get("MAX_COST_PER_JOB", "0.60"))
 
 # --- BASE DIRECTORIES ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUTPUTS_DIR = os.path.join(BASE_DIR, "outputs")
-DB_PATH = os.path.join(BASE_DIR, "core", "character_memory.db")
+
+# DATA_DIR: persistent-storage root. On a host with a mounted volume (e.g. Railway
+# at /data) set DATA_DIR=/data so ALL SQLite DBs + generated outputs live on the
+# volume and survive container restarts/redeploys. Unset (local dev) keeps the
+# existing in-repo locations so nothing moves and existing data is untouched.
+DATA_DIR = os.environ.get("DATA_DIR")
+if DATA_DIR:
+    DB_DIR = os.path.join(DATA_DIR, "db")
+    OUTPUTS_DIR = os.path.join(DATA_DIR, "outputs")
+else:
+    DB_DIR = os.path.join(BASE_DIR, "core")
+    OUTPUTS_DIR = os.path.join(BASE_DIR, "outputs")
+
+# SQLite will not create missing parent dirs — ensure the DB dir exists up front.
+os.makedirs(DB_DIR, exist_ok=True)
+
+DB_PATH = os.path.join(DB_DIR, "character_memory.db")
 
 
 # --- ENVIRONMENT & HARDWARE ---

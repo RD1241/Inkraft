@@ -5,6 +5,7 @@ import json
 import re
 import httpx
 from datetime import datetime
+from config import settings
 
 def load_env_var(key: str, default: str = "") -> str:
     """
@@ -53,11 +54,7 @@ class JobService:
     );
     """
     def __init__(self, db_path: str = None):
-        self.db_path = db_path or os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "core",
-            "jobs.db"
-        )
+        self.db_path = db_path or os.path.join(settings.DB_DIR, "jobs.db")
         self.supabase_url = load_env_var("SUPABASE_URL")
         self.supabase_key = load_env_var("SUPABASE_SECRET_KEY")
         self.supabase_enabled = bool(self.supabase_url and self.supabase_key)

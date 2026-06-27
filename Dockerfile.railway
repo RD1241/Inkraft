@@ -1,0 +1,29 @@
+# Slim cloud image for Railway/Northflank — runs the FastAPI monolith on
+# Groq (LLM) + fal.ai (images). No torch/diffusers/Ollama in the container.
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Cloud-only deps (see requirements-railway.txt for why torch et al are excluded).
+COPY requirements-railway.txt .
+RUN pip install --no-cache-dir -r requirements-railway.txt
+
+# Copy project source.
+COPY . .
+
+# Defaults; override the secrets/config on the host. DATA_DIR points at the
+# mounted persistent volume so SQLite DBs + outputs/ survive restarts.
+ENV LLM_PROVIDER=groq \
+    STORAGE_PROVIDER=local \
+    DATA_DIR=/data \
+    PYTHONUNBUFFERED=1
+
+# Create the volume mount point (Railway mounts the real volume here at runtime).
+RUN mkdir -p /data/db /data/outputs
+
+EXPOSE 8000
+
+# JSON/exec form: ${PORT} (provided by the host) is expanded by sh, and `exec`
+# replaces sh with uvicorn so SIGTERM reaches the server for clean shutdowns.
+# Falls back to 8000 locally. (Railway also overrides this via railway.json startCommand.)
+CMD ["sh", "-c", "exec uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

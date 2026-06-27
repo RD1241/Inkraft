@@ -1,0 +1,18 @@
+# Slim cloud requirements for the Railway/Northflank container.
+# The app runs LLM on Groq and image generation on fal.ai, so the heavy local
+# Stable-Diffusion stack (torch, diffusers, transformers, accelerate, xformers,
+# torchvision, opencv, controlnet-aux) is intentionally excluded — that path is
+# imported lazily and only used for local GPU dev. Keeping it out drops the image
+# from multiple GB to a few hundred MB so it builds and fits cloud limits.
+fastapi
+uvicorn
+pydantic
+pillow
+ollama
+groq>=1.5.0
+httpx
+python-multipart
+reportlab
+fal-client>=0.4.0
+supabase
+python-dotenv

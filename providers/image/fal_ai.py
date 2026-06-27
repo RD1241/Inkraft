@@ -14,7 +14,7 @@ def get_character_sheet(name: str, job_id: str) -> dict:
     
     # 1. Lookup user_id from jobs database
     user_id = None
-    jobs_db_path = os.path.join(settings.BASE_DIR, "core", "jobs.db")
+    jobs_db_path = os.path.join(settings.DB_DIR, "jobs.db")
     if os.path.exists(jobs_db_path):
         try:
             conn = sqlite3.connect(jobs_db_path)
@@ -31,7 +31,7 @@ def get_character_sheet(name: str, job_id: str) -> dict:
         user_id = "00000000-0000-0000-0000-000000000000"  # fallback
 
     # 2. Query character_design_sheets from character_memory.db
-    char_db_path = os.path.join(settings.BASE_DIR, "core", "character_memory.db")
+    char_db_path = settings.DB_PATH
     if os.path.exists(char_db_path):
         try:
             conn = sqlite3.connect(char_db_path)
@@ -868,9 +868,16 @@ class FalAIImageProvider(ImageProvider):
             if "Safety filter" in str(error):
                 print(f"[FalAI Critical] Safety filter block: {error}")
                 raise error
-            # Fall back to local StableDiffusionImageProvider gracefully
+            # Fall back to local StableDiffusionImageProvider gracefully.
+            # In the cloud image torch/diffusers aren't installed (Groq+fal only),
+            # so this import can fail — surface the original fal error in that case
+            # rather than a confusing ImportError, so the job fails cleanly + refunds.
             print(f"[FalAI] API call failed: {error} — falling back to local SD")
-            from providers.image.stable_diffusion import StableDiffusionImageProvider
+            try:
+                from providers.image.stable_diffusion import StableDiffusionImageProvider
+            except Exception as import_err:
+                print(f"[FalAI] Local SD fallback unavailable ({import_err}); re-raising fal error.")
+                raise error
             local_provider = StableDiffusionImageProvider()
             return local_provider.generate_image(
                 positive_prompt=positive_prompt,

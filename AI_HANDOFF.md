@@ -105,6 +105,15 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-27 — Claude Code — Step 3: Railway deploy prep (slim image, volume, backup) — LOCALLY VERIFIED
+- **Slim cloud image.** `providers/factory.py` now imports `StableDiffusionImageProvider` lazily (only when `IMAGE_PROVIDER=stable_diffusion`), so the torch/diffusers stack never loads in the cloud Groq+fal path. `fal_ai.py` local-SD fallback guards the import and re-raises the original fal error if torch is absent (clean fail + refund instead of ImportError). New `requirements-railway.txt` (no torch/diffusers/transformers/accelerate/xformers/torchvision/opencv/controlnet-aux) + `Dockerfile.railway` + `railway.json`.
+- **Missing deps fixed.** `requirements.txt` was missing `supabase` + `python-dotenv` (both imported — a clean build would've crashed). Added to both requirements files.
+- **Persistent-volume data paths.** `config/settings.py` adds `DATA_DIR` (env): when set (Railway `/data`) all SQLite DBs → `/data/db` and outputs → `/data/outputs`; unset locally → existing in-repo `core/*.db` + `outputs/` unchanged. Routed every hardcoded `BASE_DIR/core/*.db` through `settings.DB_DIR`: `cache_manager`, `job_manager`, `monitoring`, `fal_ai`, and services `billing/credits/gallery/history/job` (added `settings` import to history+job service).
+- **Backup.** `tools/backup_sqlite.py` — consistent sqlite online-backup of every `*.db` → `/data/backups/<ts>/`, keeps newest 7.
+- **Docs.** `DEPLOY.md` — full Railway runbook (volume at `/data`, env-var table, deploy steps, Supabase redirect URLs, backup cron, local smoke test). `.dockerignore`/`.gitignore` updated.
+- **VERIFIED (no fal spend):** `import api.main` under `fal_ai` loads ZERO heavy modules (no torch/diffusers/cv2). `docker build -f Dockerfile.railway` → **342 MB** image (torch confirmed absent). Container boots on Groq with NO Ollama in ~2s: `/api/health`=200, `/`=200 (frontend 121 KB), `/api/characters`=200 returning **Kaito+Mei from Supabase** (Step 2 fix confirmed in-container). `/data/db` + `/data/outputs` created on the volume.
+- **REMAINING (needs founder's Railway account — dashboard actions, can't be scripted):** create Railway service from `RD1241/Inkraft` → attach `/data` volume → set host env vars (FAL_KEY, GROQ_API_KEY, LLM_PROVIDER=groq, SUPABASE_*, DATA_DIR=/data, IMAGE_ROUTING_MODE, PREMIUM_IMAGE_MODEL, MAX_COST_PER_JOB) → generate subdomain → add live URL to Supabase Auth redirect URLs → schedule `tools/backup_sqlite.py`. Then founder's manual prod smoke test (§10). Payments (Lemon Squeezy) still deferred.
+
 ### 2026-06-27 — Antigravity — Onboarding Explainer UI & Helper Tooltips (3f2433c, 7a21c45)
 - **Onboarding Guide (7a21c45):** Guide now auto-expands on first load (if not dismissed in localStorage) so step instructions are fully visible immediately. Collapsing/expanding rotates the toggle arrow (▲/▼) correctly.
 - **Custom Tooltips (7a21c45):** Added styled, neo-brutalist `.tooltip` + `.tooltiptext` descriptions to:

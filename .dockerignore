@@ -8,3 +8,10 @@ __pycache__/
 .env
 .idea/
 .vscode/
+.git/
+test_outputs/
+scratch/
+docs/
+*.md
+data/
+
