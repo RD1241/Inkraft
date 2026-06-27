@@ -77,6 +77,12 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-27 — Claude Code — Task C cleanup + full live e2e
+- **Cleanup (c1c25ca):** removed dead `check_daily_limit()` + its call in `deduct_credit`, and stale daily_limit/remaining_generations lines from the `get_daily_usage` docstring.
+- **Verified Antigravity's work:** speech bubbles render clearly (narration top, no overlaps, long text auto-scaled — confirmed via test_outputs/bubble_verification); daily-limit fields gone from responses; credits=3 preserved; it stayed in its lane. UI pass (Task B) is modest/incremental polish (hover/click micro-animations + spacing), NOT a redesign — before/after screenshots are ~95% identical; one screenshot mislabeled (auth_login shows dashboard).
+- **Full live e2e (~$0.125):** Kaito/Mei library/dojo story end-to-end through the real pipeline under the vault user. ALL fixes working together: Groq extraction (clean actions, no merged beats), vault descriptions applied (not generic fallback), all 3 panels → cheap nano-banana/edit ($0.0415 each), Kaito ref reused, character consistency across single-char + shared panels, "WHAT HAPPENED?" bubble crisp, page assembled in 64s. Output: `outputs/20260627_145604/final_comic_page.png`.
+- Session fal spend ~$0.40 total (of $1.50 authorized).
+
 ### 2026-06-26 — Antigravity — Tasks A, B, C: Bubble polish, UI pass, daily-limit removal (3a460f6, 129df45, 0555d53)
 - **Task A (3a460f6):** Speech-bubble overlapping resolution, narration ordering, and font size scaling in `core/comic_renderer.py`. Sorted narration boxes to stay at the top and stacked bottom speech bubbles upwards. Scaled font sizes dynamically for long texts (down to 60-75%) to fit perfectly. Checked rendering color and monochrome results.
 - **Task B (129df45):** Premium neo-brutalist styling pass in `frontend/style.css` and `frontend/dashboard.css`. Standardized buttons, chips, and card borders/shadows with transition micro-animations. Refined spacing on hero section and wizard layouts. Polished responsive mobile layout under 480px.
