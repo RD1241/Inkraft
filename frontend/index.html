@@ -89,7 +89,7 @@
           <h3>🎨 Welcome to Inkraft Creator!</h3>
           <div style="display:flex;gap:0.5rem;align-items:center;">
             <button type="button" id="onboarding-toggle-btn" class="onboarding-toggle-btn">
-              Quick Guide <span class="onboarding-toggle-arrow">▲</span>
+              Quick Guide <span class="onboarding-toggle-arrow">▼</span>
             </button>
             <button type="button" id="close-onboarding-btn" class="close-onboarding-btn">×</button>
           </div>
@@ -181,42 +181,48 @@
             
             <div class="style-selector-wrap">
               <div class="style-pills-container">
-                <button type="button" class="style-pill active" data-value="">
+                <button type="button" class="style-pill active tooltip" data-value="">
+                  <span class="tooltiptext">Let the AI evaluate your text to automatically select the most matching art style.</span>
                   <span class="style-icon-wrapper">✨</span>
                   <div class="style-card-content">
                     <span class="style-label">Auto-detect</span>
                     <span class="style-desc">Let AI determine the best match</span>
                   </div>
                 </button>
-                <button type="button" class="style-pill" data-value="manga">
+                <button type="button" class="style-pill tooltip" data-value="manga">
+                  <span class="tooltiptext">Classic Japanese manga: hand-drawn ink hatching, screen tones, and action speed lines. (Forced B&amp;W by default)</span>
                   <span class="style-icon-wrapper">🖌️</span>
                   <div class="style-card-content">
                     <span class="style-label">Manga</span>
                     <span class="style-desc">Traditional B&W screen tones & hatching</span>
                   </div>
                 </button>
-                <button type="button" class="style-pill" data-value="manhwa">
+                <button type="button" class="style-pill tooltip" data-value="manhwa">
+                  <span class="tooltiptext">Modern Korean webtoon look: rich digital coloring, status window overlays, and clean layouts.</span>
                   <span class="style-icon-wrapper">⚡</span>
                   <div class="style-card-content">
                     <span class="style-label">Manhwa</span>
                     <span class="style-desc">Vibrant webtoon colors & status layouts</span>
                   </div>
                 </button>
-                <button type="button" class="style-pill" data-value="anime">
+                <button type="button" class="style-pill tooltip" data-value="anime">
+                  <span class="tooltiptext">Classic anime film style: cel-shaded characters, vibrant environment art, and digital lens/glow effects.</span>
                   <span class="style-icon-wrapper">🌸</span>
                   <div class="style-card-content">
                     <span class="style-label">Anime</span>
                     <span class="style-desc">Cel-shaded scenes & digital light effects</span>
                   </div>
                 </button>
-                <button type="button" class="style-pill" data-value="cinematic">
+                <button type="button" class="style-pill tooltip" data-value="cinematic">
+                  <span class="tooltiptext">High-concept movie frames: dramatic lighting, realistic textures, cinematic wide shots, and atmospheric shadows.</span>
                   <span class="style-icon-wrapper">🎬</span>
                   <div class="style-card-content">
                     <span class="style-label">Cinematic</span>
                     <span class="style-desc">Moody shadow mapping & scenic aspect ratios</span>
                   </div>
                 </button>
-                <button type="button" class="style-pill" data-value="realistic">
+                <button type="button" class="style-pill tooltip" data-value="realistic">
+                  <span class="tooltiptext">Photorealistic illustration: detailed facial features, realistic clothing materials, and natural real-world lighting.</span>
                   <span class="style-icon-wrapper">📷</span>
                   <div class="style-card-content">
                     <span class="style-label">Realistic</span>
@@ -331,25 +337,32 @@
             <div class="panel-count-wrap" style="margin-top: 1rem; margin-bottom: 1rem;">
               <span class="selector-label">Panel Count</span>
               <div class="panel-count-chips" id="panel-count-chips">
-                <button type="button" class="panel-count-chip active" data-value="0" title="AI decides the ideal panel count for your story">
+                <button type="button" class="panel-count-chip active tooltip" data-value="0">
+                  <span class="tooltiptext">Let the AI automatically structure the panel count (1-6) dynamically matching your story pacing.</span>
                   <span class="chip-icon">✨</span><span class="chip-label">AI</span>
                 </button>
-                <button type="button" class="panel-count-chip" data-value="1" title="Single-panel cinematic page">
+                <button type="button" class="panel-count-chip tooltip" data-value="1">
+                  <span class="tooltiptext">Generates exactly 1 panel. Great for cover pages or high-impact splash scenes.</span>
                   <span class="chip-num">1</span>
                 </button>
-                <button type="button" class="panel-count-chip" data-value="2" title="2 panels">
+                <button type="button" class="panel-count-chip tooltip" data-value="2">
+                  <span class="tooltiptext">Generates exactly 2 panels. Best for short back-and-forth action or setups.</span>
                   <span class="chip-num">2</span>
                 </button>
-                <button type="button" class="panel-count-chip" data-value="3" title="3 panels">
+                <button type="button" class="panel-count-chip tooltip" data-value="3">
+                  <span class="tooltiptext">Generates exactly 3 panels. Standard comic strip format. Recommended.</span>
                   <span class="chip-num">3</span>
                 </button>
-                <button type="button" class="panel-count-chip" data-value="4" title="4 panels">
+                <button type="button" class="panel-count-chip tooltip" data-value="4">
+                  <span class="tooltiptext">Generates exactly 4 panels. Traditional 4-koma style sequence.</span>
                   <span class="chip-num">4</span>
                 </button>
-                <button type="button" class="panel-count-chip" data-value="5" title="5 panels">
+                <button type="button" class="panel-count-chip tooltip" data-value="5">
+                  <span class="tooltiptext">Generates exactly 5 panels. Detailed progression layout.</span>
                   <span class="chip-num">5</span>
                 </button>
-                <button type="button" class="panel-count-chip" data-value="6" title="6 panels">
+                <button type="button" class="panel-count-chip tooltip" data-value="6">
+                  <span class="tooltiptext">Generates exactly 6 panels. Maximum density grid layout.</span>
                   <span class="chip-num">6</span>
                 </button>
               </div>
@@ -361,13 +374,16 @@
             <div class="color-mode-wrap" style="margin-top: 1rem; margin-bottom: 1.5rem;">
               <span class="selector-label">Colour Mode</span>
               <div class="color-mode-toggle" id="color-mode-toggle">
-                <button type="button" class="color-mode-btn active" data-value="auto" title="AI decides colour based on style (manga = B&W, others = colour)">
+                <button type="button" class="color-mode-btn active tooltip" data-value="auto">
+                  <span class="tooltiptext">Manga renders in B&amp;W, and all other styles render in full color automatically.</span>
                   <span class="cm-icon">✨</span><span class="cm-label">Auto</span>
                 </button>
-                <button type="button" class="color-mode-btn" data-value="color" title="Force full colour output for all panels">
+                <button type="button" class="color-mode-btn tooltip" data-value="color">
+                  <span class="tooltiptext">Force full color rendering across all styles (including manga).</span>
                   <span class="cm-icon">🎨</span><span class="cm-label">Colour</span>
                 </button>
-                <button type="button" class="color-mode-btn" data-value="bw" title="Force black &amp; white / monochrome output">
+                <button type="button" class="color-mode-btn tooltip" data-value="bw">
+                  <span class="tooltiptext">Force traditional monochrome ink / greyscale rendering for all styles.</span>
                   <span class="cm-icon">⬛</span><span class="cm-label">B&amp;W</span>
                 </button>
               </div>
@@ -991,11 +1007,20 @@
     // ── Onboarding Flow ──
     const onboardingGuide = document.getElementById('onboarding-guide');
     const closeOnboardingBtn = document.getElementById('close-onboarding-btn');
+    const onboardingToggleBtn = document.getElementById('onboarding-toggle-btn');
+    
     if (onboardingGuide) {
       if (localStorage.getItem('inkraft_onboarding_dismissed') === 'true') {
         onboardingGuide.classList.add('hidden');
       } else {
         onboardingGuide.classList.remove('hidden');
+        onboardingGuide.classList.remove('collapsed');
+        const body = document.getElementById('onboarding-body');
+        if (body) body.classList.remove('hidden');
+        if (onboardingToggleBtn) {
+          const arrow = onboardingToggleBtn.querySelector('.onboarding-toggle-arrow');
+          if (arrow) arrow.textContent = '▲';
+        }
       }
     }
     if (closeOnboardingBtn) {
@@ -1006,12 +1031,17 @@
     }
 
     // Onboarding collapsible toggle
-    const onboardingToggleBtn = document.getElementById('onboarding-toggle-btn');
     if (onboardingToggleBtn && onboardingGuide) {
       onboardingToggleBtn.addEventListener('click', () => {
         const body = document.getElementById('onboarding-body');
-        if (body) body.classList.toggle('hidden');
-        onboardingGuide.classList.toggle('collapsed');
+        if (body) {
+          const isCollapsed = onboardingGuide.classList.toggle('collapsed');
+          body.classList.toggle('hidden');
+          const arrow = onboardingToggleBtn.querySelector('.onboarding-toggle-arrow');
+          if (arrow) {
+            arrow.textContent = isCollapsed ? '▼' : '▲';
+          }
+        }
       });
     }
 
