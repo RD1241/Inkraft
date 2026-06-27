@@ -314,6 +314,53 @@
                 <option value="dialogue">Dialogue</option>
               </select>
             </div>
+
+            <!-- Panel Count Selector -->
+            <div class="panel-count-wrap" style="margin-top: 1rem; margin-bottom: 1rem;">
+              <span class="selector-label">Panel Count</span>
+              <div class="panel-count-chips" id="panel-count-chips">
+                <button type="button" class="panel-count-chip active" data-value="0" title="AI decides the ideal panel count for your story">
+                  <span class="chip-icon">✨</span><span class="chip-label">AI</span>
+                </button>
+                <button type="button" class="panel-count-chip" data-value="1" title="Single-panel cinematic page">
+                  <span class="chip-num">1</span>
+                </button>
+                <button type="button" class="panel-count-chip" data-value="2" title="2 panels">
+                  <span class="chip-num">2</span>
+                </button>
+                <button type="button" class="panel-count-chip" data-value="3" title="3 panels">
+                  <span class="chip-num">3</span>
+                </button>
+                <button type="button" class="panel-count-chip" data-value="4" title="4 panels">
+                  <span class="chip-num">4</span>
+                </button>
+                <button type="button" class="panel-count-chip" data-value="5" title="5 panels">
+                  <span class="chip-num">5</span>
+                </button>
+                <button type="button" class="panel-count-chip" data-value="6" title="6 panels">
+                  <span class="chip-num">6</span>
+                </button>
+              </div>
+              <!-- Hidden input keeps JS-readable value -->
+              <input type="hidden" id="panel-count-input" value="0">
+            </div>
+
+            <!-- Colour / B&W Toggle -->
+            <div class="color-mode-wrap" style="margin-top: 1rem; margin-bottom: 1.5rem;">
+              <span class="selector-label">Colour Mode</span>
+              <div class="color-mode-toggle" id="color-mode-toggle">
+                <button type="button" class="color-mode-btn active" data-value="auto" title="AI decides colour based on style (manga = B&W, others = colour)">
+                  <span class="cm-icon">✨</span><span class="cm-label">Auto</span>
+                </button>
+                <button type="button" class="color-mode-btn" data-value="color" title="Force full colour output for all panels">
+                  <span class="cm-icon">🎨</span><span class="cm-label">Colour</span>
+                </button>
+                <button type="button" class="color-mode-btn" data-value="bw" title="Force black &amp; white / monochrome output">
+                  <span class="cm-icon">⬛</span><span class="cm-label">B&amp;W</span>
+                </button>
+              </div>
+              <input type="hidden" id="color-mode-input" value="auto">
+            </div>
           </div>
 
           <!-- STEP 4: Character Selection -->
@@ -1231,6 +1278,24 @@
       });
     });
 
+    // ── Panel Count Chips ──
+    document.querySelectorAll('.panel-count-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.panel-count-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        document.getElementById('panel-count-input').value = chip.getAttribute('data-value');
+      });
+    });
+
+    // ── Colour Mode Toggle ──
+    document.querySelectorAll('.color-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.color-mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('color-mode-input').value = btn.getAttribute('data-value');
+      });
+    });
+
     // ── Style Showcase Cards Integration ──
     document.querySelectorAll('.showcase-style-card').forEach(card => {
       card.addEventListener('click', () => {
@@ -1756,11 +1821,15 @@
       setStep('step-llm');
 
       try {
+        const panelCountVal = parseInt(document.getElementById('panel-count-input')?.value || '0');
+        const colorModeVal  = document.getElementById('color-mode-input')?.value || 'auto';
         const body = { 
           text, 
           style: style || undefined, 
           layout_type: layout || undefined,
           generation_format: format || null,
+          panel_count: panelCountVal > 0 ? panelCountVal : undefined,
+          color_mode: colorModeVal,
           characters: localCharacters.filter(c => c.selected !== false).length > 0 ? localCharacters.filter(c => c.selected !== false) : undefined,
           re_generate: reGenerate
         };

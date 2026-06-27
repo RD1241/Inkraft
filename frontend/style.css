@@ -4157,3 +4157,177 @@ input:checked + .slider:before {
   }
 }
 
+
+/* ============================================================
+   Task 3a/3b/4 – Panel Count, Colour Mode, Style Pills Upgrade
+   ============================================================ */
+
+/* ── Per-style accent colours on style pills ── */
+.style-pill[data-value="manga"]     { --sp-accent: #e8e8e8; --sp-glow: rgba(232,232,232,0.15); }
+.style-pill[data-value="manhwa"]    { --sp-accent: #3b82f6; --sp-glow: rgba(59,130,246,0.18); }
+.style-pill[data-value="anime"]     { --sp-accent: #ec4899; --sp-glow: rgba(236,72,153,0.18); }
+.style-pill[data-value="cinematic"] { --sp-accent: #10b981; --sp-glow: rgba(16,185,129,0.18); }
+.style-pill[data-value="realistic"] { --sp-accent: #f59e0b; --sp-glow: rgba(245,158,11,0.18); }
+.style-pill[data-value=""]          { --sp-accent: var(--accent-color); --sp-glow: rgba(232,50,74,0.15); }
+
+.style-pill:hover {
+  border-color: var(--sp-accent, var(--accent-color)) !important;
+  box-shadow: 6px 6px 0 var(--sp-glow, rgba(232,50,74,0.15)) !important;
+  background: var(--sp-glow, rgba(232,50,74,0.05)) !important;
+}
+
+.style-pill.active {
+  border-color: var(--sp-accent, var(--accent-color)) !important;
+  background: var(--sp-glow, rgba(232,50,74,0.08)) !important;
+  box-shadow: 6px 6px 0 var(--sp-glow, rgba(232,50,74,0.1)) !important;
+}
+
+.style-pill:hover .style-icon-wrapper,
+.style-pill.active .style-icon-wrapper {
+  background: var(--sp-accent, var(--accent-color)) !important;
+  border-color: #000 !important;
+}
+
+/* Small coloured accent bar at top of each active/hovered style card */
+.style-pill::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--sp-accent, var(--accent-color));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.style-pill { position: relative; }
+.style-pill:hover::before,
+.style-pill.active::before {
+  opacity: 1;
+}
+
+/* ── Panel Count Chips ── */
+.panel-count-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.panel-count-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.panel-count-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-width: 52px;
+  height: 44px;
+  padding: 0 0.75rem;
+  border: 2px solid #222;
+  background: #111;
+  color: var(--text-primary);
+  font-family: 'Bangers', cursive;
+  font-size: 1.1rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  border-radius: 0 !important;
+  box-shadow: 3px 3px 0 #000;
+  transition: all 0.15s ease;
+}
+
+.panel-count-chip:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: 4px 4px 0 var(--accent-color);
+  background: rgba(232,50,74,0.08);
+}
+
+.panel-count-chip.active {
+  background: var(--accent-color) !important;
+  border-color: #000 !important;
+  color: #fff !important;
+  box-shadow: 4px 4px 0 #000 !important;
+  transform: translateY(-2px);
+}
+
+.chip-icon { font-size: 1rem; }
+.chip-label { font-size: 0.9rem; font-family: 'Nunito', sans-serif; font-weight: 800; }
+.chip-num   { font-size: 1.15rem; font-weight: bold; }
+
+/* ── Colour Mode Toggle ── */
+.color-mode-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.color-mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.color-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.1rem;
+  border: 2px solid #222;
+  background: #111;
+  color: var(--text-primary);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: 0 !important;
+  box-shadow: 3px 3px 0 #000;
+  transition: all 0.15s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.color-mode-btn:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: 4px 4px 0 var(--accent-color);
+}
+
+.color-mode-btn.active {
+  border-color: #000 !important;
+  box-shadow: 4px 4px 0 #000 !important;
+  transform: translateY(-2px);
+}
+
+.color-mode-btn[data-value="auto"].active   { background: var(--accent-color) !important; color: #fff !important; }
+.color-mode-btn[data-value="color"].active  { background: #ffa502 !important; color: #000 !important; }
+.color-mode-btn[data-value="bw"].active     { background: #222 !important; color: #fff !important; border-color: #aaa !important; }
+
+.cm-icon  { font-size: 1rem; }
+.cm-label { }
+
+/* ── Mobile responsiveness for new controls ── */
+@media (max-width: 480px) {
+  .panel-count-chips {
+    gap: 0.35rem;
+  }
+  .panel-count-chip {
+    min-width: 44px;
+    height: 40px;
+    padding: 0 0.55rem;
+    font-size: 1rem;
+  }
+  .color-mode-toggle {
+    flex-direction: row;
+    gap: 0.4rem;
+  }
+  .color-mode-btn {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.8rem;
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+
