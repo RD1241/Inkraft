@@ -4232,12 +4232,13 @@ input:checked + .slider:before {
 
 .panel-count-chip {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.3rem;
+  gap: 1px;
   min-width: 52px;
   height: 44px;
-  padding: 0 0.75rem;
+  padding: 0.2rem 0.5rem;
   border: 2px solid #222;
   background: #111;
   color: var(--text-primary);
@@ -4248,6 +4249,7 @@ input:checked + .slider:before {
   border-radius: 0 !important;
   box-shadow: 3px 3px 0 #000;
   transition: all 0.15s ease;
+  line-height: 1.15;
 }
 
 .panel-count-chip:hover {
@@ -4263,6 +4265,19 @@ input:checked + .slider:before {
   color: #fff !important;
   box-shadow: 4px 4px 0 #000 !important;
   transform: translateY(-2px);
+}
+
+.chip-cost {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #888;
+  text-transform: lowercase;
+  line-height: 1;
+}
+
+.panel-count-chip.active .chip-cost {
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 
 .chip-icon { font-size: 1rem; }
