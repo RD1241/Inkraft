@@ -2,6 +2,7 @@ import sys
 import os
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import Response, FileResponse
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -20,6 +21,14 @@ app.include_router(gallery.router, prefix="/api")
 app.include_router(credits.router, prefix="/api")
 app.include_router(history.router, prefix="/api")
 app.include_router(characters.router, prefix="/api")
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    """Serve a favicon if present, else 204 so browsers stop logging 404s."""
+    ico = os.path.join(settings.BASE_DIR, "frontend", "favicon.ico")
+    if os.path.exists(ico):
+        return FileResponse(ico)
+    return Response(status_code=204)
 
 # Startup check and static mounts
 os.makedirs(settings.OUTPUTS_DIR, exist_ok=True)

@@ -1,10 +1,30 @@
 import os
 import logging
+import threading
 from typing import Optional, Dict, Any
 from supabase import create_client, Client
 from config import settings
 
 logger = logging.getLogger(__name__)
+
+# Cache Supabase clients by (url, key) so we create ONE client per credential set
+# for the whole process instead of a fresh one (with a "Connected" log line) on
+# every request — SupabaseAuth() is instantiated per-request in many routes.
+_client_cache: Dict[tuple, Client] = {}
+_client_cache_lock = threading.Lock()
+
+
+def _get_cached_client(url: str, key: str) -> Client:
+    cache_key = (url, key)
+    client = _client_cache.get(cache_key)
+    if client is None:
+        with _client_cache_lock:
+            client = _client_cache.get(cache_key)
+            if client is None:
+                client = create_client(url, key)
+                _client_cache[cache_key] = client
+                print(f"[SupabaseAuth] Connected to {url}")
+    return client
 
 
 def _to_dict(obj) -> Optional[Dict[str, Any]]:
@@ -46,8 +66,8 @@ class SupabaseAuth:
         self.enabled = bool(self.url and self.key)
         if self.enabled:
             try:
-                self.client: Client = create_client(self.url, self.key)
-                print(f"[SupabaseAuth] Connected to {self.url}")
+                # Reuse the process-wide cached client (created + logged once).
+                self.client: Client = _get_cached_client(self.url, self.key)
             except Exception as e:
                 print(f"[SupabaseAuth] Failed to initialize: {e}. Falling back to mock auth.")
                 self.enabled = False

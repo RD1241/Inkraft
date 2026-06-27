@@ -105,6 +105,13 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-28 — Claude Code — Backend log/perf cleanup from runtime logs
+- Founder reported noisy backend output. Diagnosed from the logs (most requests were 200 OK):
+  - **`[SupabaseAuth] Connected` on nearly every request** — `SupabaseAuth()` is instantiated per-request in 13 places and each `__init__` called `create_client` + printed "Connected". Fixed: process-wide `(url,key)`-keyed client cache (`_get_cached_client`, thread-safe) in `providers/auth/supabase_auth.py`; the client is now created/logged ONCE and reused. Verified: 5 instances → 1 "Connected", all share one client. (Real perf win on the deployed box, not just log noise.)
+  - **`/favicon.ico 404`** — added a `/favicon.ico` route in `api/main.py` (serves `frontend/favicon.ico` if present, else 204). Verified 204.
+  - **`/outputs/20260623_.../final_comic_page.png 404`** — NOT a code bug: old history/gallery rows point at comic images deleted in a past `outputs/` cleanup. The persistent `/data/outputs` volume on Railway prevents this for real users; only the founder's stale test history shows broken thumbnails. Left as-is (optional: a frontend `onerror` placeholder, or clear old test history rows).
+  - `[CREDITS] Existing balance synced.` per balance check is harmless info logging, not an error — left alone.
+
 ### 2026-06-27 — Claude Code — Dashboard Quick-Generate: add panel-count + colour-mode
 - Founder found the panel-count selector + colour toggle were missing on the **dashboard** Quick-Generate form (`dashboard.html`) — they existed only on the `index.html` GENERATE wizard. The dashboard form posted only `{text, style, layout_type}`, so dashboard comics were always AI-panels/auto-colour and ignored those options.
 - Added two control groups to the dashboard form mirroring the existing `.qg-layout-chips`/`.layout-chip-sm` pattern (no new CSS): **Panel Count** (AI·2cr, 1·1cr, 2·1cr, 3·2cr, 4·2cr, 5·3cr, 6·3cr → `#qg-panel-count`) and **Colour Mode** (Auto/Colour/B&W → `#qg-color-mode`), with matching click-sync handlers. Payload now sends `panel_count` (when >0) + `color_mode`. Inline credit costs match the backend tiers.
