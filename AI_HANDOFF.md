@@ -75,7 +75,34 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 - Ollama llama3: local only, models on `D:\AI_Models`.
 - **NEEDED for deploy:** Groq API key (free tier), Render/Railway account, Vercel account. Set secrets as host env vars — never commit them.
 
+## 10. Pending before deploy + corrected deployment plan (2026-06-27)
+
+**Product/UI fixes requested (mostly frontend = Antigravity):**
+1. Landing headline says "manga page" only — should reflect ALL styles (manga, manhwa, anime, cinematic, realistic). `frontend/index.html` hero `.hero-title`.
+2. "10 credits" is stale frontend text (backend grant is correctly **3**). Fix → "3": `frontend/index.html:734` and `:2360`, `frontend/login.html:61`, `frontend/register.html:60,82,88`, and the pricing card "10 Welcome Credits on signup".
+3. Add a **panel-count selector** (1–N). Backend ALREADY accepts `panel_count` (1–10, validated in `api/routes/generate.py` NovelInput) and has a single-page path for count=1 — frontend control only.
+4. Add a **colour / B&W toggle** + make the style buttons cooler/stylish. NOTE manga already defaults to B&W correctly (current pipeline is monochrome); colourful manga in History is OLD data. The toggle is an enhancement.
+
+**Colour-mode API contract (frontend sends, backend to honor — backend = next Claude session):**
+- Add `color_mode: "auto" | "color" | "bw"` to the `/api/generate_comic` payload (NovelInput), default `"auto"` (manga→bw, others→color = current behavior).
+- Backend TODO (scoped, ~3-4 files): thread `color_mode` through `comic_service` (BOTH the single_page path ~`:172` and the multi-panel path); in `prompt_builder.build_prompt` add/strip monochrome tokens by mode; in `fal_ai.generate_image` the grayscale step (`:798`) keys off resolved mode (for nano, monochrome comes from the prompt; for SDXL, PIL grayscale). Verify both generation paths — easy to miss a call site.
+
+**Corrected deployment plan (founder's research — supersedes §7 line 7):**
+- ❌ NOT Fly.io: it has NO free tier since 2024 (free *trial* only); ~$5-10/mo for an always-on app + volume.
+- ❌ NOT Render free: free web services CANNOT attach a persistent disk → dead end for our SQLite-on-disk data layer. Render paid path = Starter $7/mo + disk $0.25/GB.
+- ✅ **Railway** (recommended): Hobby $5/mo incl. $5 usage credit, persistent volumes, git-push deploys. Good fit for a single-region monolith.
+- ✅ **Northflank** free Developer tier: genuine $0 (2 services, 1 vCPU/1GB, 0.5GB volume). Workable for early beta IF old generated images are periodically cleared (0.5GB fills fast).
+- It's a single FastAPI **monolith** (serves frontend + API + `/outputs` images) → ONE service to deploy, not Vercel+backend.
+
+**Deploy sequence:** pick host → `docker build` + local run to confirm the container works on Groq (no Ollama) → mount persistent volume at the path holding the SQLite DBs + `outputs/` BEFORE first deploy → set env vars on host (GROQ_API_KEY, FAL_KEY, SUPABASE_*, IMAGE_ROUTING_MODE, PREMIUM_IMAGE_MODEL, MAX_COST_PER_JOB) → add a simple scheduled SQLite backup to durable storage → free subdomain for now → update Supabase auth redirect URLs to the live domain.
+
+**Manual prod smoke test (founder does personally as a fresh signup, not scripted):** register → credit balance correct (3) → generate 1 single-char comic → generate 1 shared-frame multi-char comic → Vault enforcement fires for an undefined character → download a PDF → log out/in → confirm credits+characters+history SURVIVE a real service restart (not just same-session).
+
 ## 9. Task Log (append newest at top)
+
+### 2026-06-27 — Claude Code — Scoping UI fixes + corrected deploy plan (no code change)
+- Scoped founder's pre-deploy asks (see §10). Verified: backend credit grant is already 3 (only frontend text says 10); `panel_count` already backend-supported; manga already B&W (History colourful manga is stale pre-fix data). Owned a correction: my earlier "Fly.io free tier" was wrong (no free tier since 2024) — plan now Railway/Northflank.
+- Recommended continuing in FRESH sessions to reset the (half-full) context: Antigravity for the frontend batch (§10 items 1-4 + panel selector + colour toggle UI sending `color_mode`), then a fresh Claude session for the colour-mode backend + deployment, cold-starting from this file.
 
 ### 2026-06-27 — Antigravity — Tasks B Redesign (Landing Hero & Comic Results Upgrade)
 - **Redesigned Landing Hero (frontend/index.html + frontend/style.css):**
