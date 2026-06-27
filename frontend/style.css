@@ -4330,4 +4330,83 @@ input:checked + .slider:before {
   }
 }
 
+/* ── Interactive Hero Showcase Style Switcher ── */
+.hero-switcher-wrap {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.switcher-label {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+}
+
+.hero-switcher-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 440px;
+}
+
+.hero-switch-btn {
+  padding: 0.45rem 0.95rem;
+  border: 2px solid #000000;
+  background: #111111;
+  color: #a0a0a0;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: 2px 2px 0px #000000;
+  transition: all 0.15s cubic-bezier(0.165, 0.84, 0.44, 1);
+  border-radius: 0px !important;
+}
+
+.hero-switch-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 3px 3px 0px #000000;
+  color: var(--text-primary);
+  border-color: var(--accent-color);
+}
+
+.hero-switch-btn.active {
+  color: #000000;
+  box-shadow: 3px 3px 0px #000000;
+  border-color: #000000 !important;
+  transform: translateY(-1px);
+}
+
+/* Specific active colours for each style preview tab button */
+.hero-switch-btn[data-style="manga"].active { background: #ffffff !important; color: #000000 !important; }
+.hero-switch-btn[data-style="manhwa"].active { background: #3b82f6 !important; color: #ffffff !important; }
+.hero-switch-btn[data-style="anime"].active { background: #ec4899 !important; color: #ffffff !important; }
+.hero-switch-btn[data-style="cinematic"].active { background: #10b981 !important; color: #ffffff !important; }
+.hero-switch-btn[data-style="realistic"].active { background: #f59e0b !important; color: #000000 !important; }
+
+#hero-showcase-img {
+  transition: opacity 0.15s ease-in-out;
+}
+
+/* Adjust layout spacing for hero showcase on mobile */
+@media (max-width: 480px) {
+  .hero-switcher-buttons {
+    gap: 0.35rem;
+  }
+  .hero-switch-btn {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.75rem;
+  }
+}
+
+
 

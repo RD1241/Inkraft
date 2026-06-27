@@ -59,9 +59,21 @@
       </div>
       <div class="hero-showcase">
         <div class="hero-comic-frame">
-          <div class="stamp-badge">PRO PREVIEW</div>
-          <img src="assets/sample_comic.png" alt="Inkraft AI Manga Sample Page" class="hero-comic-img">
+          <div class="stamp-badge" id="hero-stamp-badge">MANGA STYLE</div>
+          <img src="assets/sample_comic.png" alt="Inkraft AI Manga Sample Page" class="hero-comic-img" id="hero-showcase-img">
           <div class="hero-zoom-badge">⚡ LIVE GENERATION PREVIEW</div>
+        </div>
+        
+        <!-- Interactive Style Switcher -->
+        <div class="hero-switcher-wrap">
+          <span class="switcher-label">Preview Styles:</span>
+          <div class="hero-switcher-buttons">
+            <button type="button" class="hero-switch-btn active" data-style="manga" data-src="assets/sample_comic.png" data-theme="#ffffff" data-text="#000000" data-label="MANGA STYLE">Manga</button>
+            <button type="button" class="hero-switch-btn" data-style="manhwa" data-src="assets/Manhwa.png" data-theme="#3b82f6" data-text="#ffffff" data-label="MANHWA STYLE">Manhwa</button>
+            <button type="button" class="hero-switch-btn" data-style="anime" data-src="assets/anime_style_example.png" data-theme="#ec4899" data-text="#ffffff" data-label="ANIME STYLE">Anime</button>
+            <button type="button" class="hero-switch-btn" data-style="cinematic" data-src="assets/Cinematic.png" data-theme="#10b981" data-text="#ffffff" data-label="CINE STYLE">Cinematic</button>
+            <button type="button" class="hero-switch-btn" data-style="realistic" data-src="assets/realistic_style_example.png" data-theme="#f59e0b" data-text="#000000" data-label="REAL STYLE">Realistic</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1297,6 +1309,36 @@
     });
 
     // ── Style Showcase Cards Integration ──
+    // ── Hero Style Showcase Switcher ──
+    const heroShowcaseImg = document.getElementById('hero-showcase-img');
+    const heroStampBadge = document.getElementById('hero-stamp-badge');
+    
+    document.querySelectorAll('.hero-switch-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.hero-switch-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const src = btn.getAttribute('data-src');
+        const theme = btn.getAttribute('data-theme');
+        const textColor = btn.getAttribute('data-text');
+        const label = btn.getAttribute('data-label');
+        
+        if (heroShowcaseImg) {
+          heroShowcaseImg.style.opacity = '0.4';
+          setTimeout(() => {
+            heroShowcaseImg.src = src;
+            heroShowcaseImg.style.opacity = '1';
+          }, 100);
+        }
+        
+        if (heroStampBadge) {
+          heroStampBadge.textContent = label;
+          heroStampBadge.style.backgroundColor = theme;
+          heroStampBadge.style.color = textColor;
+        }
+      });
+    });
+
     document.querySelectorAll('.showcase-style-card').forEach(card => {
       card.addEventListener('click', () => {
         const styleVal = card.getAttribute('data-style');
