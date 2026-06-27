@@ -55,7 +55,7 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 ## 6. Launch blockers / risks beyond bugs
 
 - **[RESOLVED 2026-06-26 · 88f6723] LLM was local Ollama.** Pipeline now runs on Groq cloud (`providers/llm/chat_client.py` adapter, `LLM_PROVIDER=groq`, `GROQ_API_KEY` in `.env`). No local Ollama needed in a container. Live-verified Kaito/Mei: 2 clean scenes, correct characters, coherent panels (also cleaner than llama3-local — fewer ghosts/merged beats). Set `LLM_PROVIDER=groq` + `GROQ_API_KEY` (+ optional `GROQ_MODEL`) as host env vars on deploy.
-- **Free-credit runway.** New users get 10 credits (`credits_service.py:180`), flat 1/comic, while multi-char comics cost $0.15-$0.45. Cut free tier to ~2-3 and recompute before any beta invite. Consider defaulting beta to SDXL-only (cheap ~$0.01) and gating the $0.15 premium path behind a flag.
+- **[ADDRESSED 2026-06-27] Free-credit runway.** Free tier is 3 credits (1/comic). Real cost recomputed: `nano_all` routing = $0.039/panel, so a comic ≈ panels × $0.039 → ~$0.04 (1 panel) to ~$0.24 (6 panels). UI maxes at 6 panels and the AI planner also caps at 6; the only leak was a direct API call requesting `panel_count` 7–10 (~$0.27–$0.39 on one credit). Closed with env-driven `MAX_PANELS_PER_COMIC` (default 6) enforced in `NovelInput` + `storyboard_director`. **Quality kept intact** (founder constraint): did NOT switch to hybrid/SDXL gating (that downgrades quality); kept `MAX_COST_PER_JOB=0.60` (lowering it would force SDXL mid-comic). Free-tier worst-case exposure now ~3 × $0.24 = $0.72/user via the UI. Monitor real spend: `tools/cost_report.py`. Still TODO: confirm nano's exact price from the fal dashboard delta; Standard/HQ paid toggle deferred to payments (plumbing in place via `PREMIUM_IMAGE_MODEL`).
 
 ## 7. Priorities (recommended order)
 
@@ -104,6 +104,13 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 **Manual prod smoke test (founder does personally as a fresh signup, not scripted):** register → credit balance correct (3) → generate 1 single-char comic → generate 1 shared-frame multi-char comic → Vault enforcement fires for an undefined character → download a PDF → log out/in → confirm credits+characters+history SURVIVE a real service restart (not just same-session).
 
 ## 9. Task Log (append newest at top)
+
+### 2026-06-27 — Claude Code — Free-credit runway: quality-neutral cost guard (§6)
+- Founder constraint: protect the fal.ai runway WITHOUT any quality decrease. So: kept `IMAGE_ROUTING_MODE=nano_all` + `PREMIUM_IMAGE_MODEL=fal-ai/nano-banana/edit` + `MAX_COST_PER_JOB=0.60` unchanged (switching to hybrid/SDXL or lowering the cap would downgrade panels to cheap SDXL = visible quality loss).
+- **Recomputed real economics:** $0.039/panel (nano) → comic ≈ $0.04–$0.24 (1–6 panels). UI maxes at 6, AI planner caps at 6 (`storyboard_director.py:829/831`); the ONLY leak was a direct API call with `panel_count` 7–10.
+- **Closed it quality-neutrally:** new env `settings.MAX_PANELS_PER_COMIC` (default 6) enforced in `NovelInput` validator + explicit check (`api/routes/generate.py`) and clamped in `storyboard_director.plan` (was hardcoded 10). Limits panel COUNT only — zero impact on UI users, AI-decided comics, or per-panel render quality; env-tunable so a paid tier can raise it.
+- **New `tools/cost_report.py`:** reads `logs/generation_metadata.jsonl` → total/avg spend, per-model breakdown, free-tier exposure + runway vs `--balance`. Ran it: 44 comics logged, $0.552 total (mostly old SDXL runs).
+- **Verified:** panel_count 7/10 rejected, ≤6 + AI(None) accepted; `MAX_PANELS_PER_COMIC=10` env override re-allows 10. `DEPLOY.md` env table + beta-budget note updated.
 
 ### 2026-06-27 — Claude Code — Step 3: Railway deploy prep (slim image, volume, backup) — LOCALLY VERIFIED
 - **Slim cloud image.** `providers/factory.py` now imports `StableDiffusionImageProvider` lazily (only when `IMAGE_PROVIDER=stable_diffusion`), so the torch/diffusers stack never loads in the cloud Groq+fal path. `fal_ai.py` local-SD fallback guards the import and re-raises the original fal error if torch is absent (clean fail + refund instead of ImportError). New `requirements-railway.txt` (no torch/diffusers/transformers/accelerate/xformers/torchvision/opencv/controlnet-aux) + `Dockerfile.railway` + `railway.json`.

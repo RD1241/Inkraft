@@ -23,7 +23,17 @@ IMAGE_ROUTING_MODE = os.environ.get("IMAGE_ROUTING_MODE", "nano_all")
 PREMIUM_IMAGE_MODEL = os.environ.get("PREMIUM_IMAGE_MODEL", "fal-ai/nano-banana/edit")
 # Soft per-job spend guardrail: once a job's estimated fal.ai cost reaches this,
 # remaining panels fall back to cheap SDXL so one comic can't runaway-spend.
+# NOTE: keep this ABOVE the cost of a full-quality comic (≈ MAX_PANELS_PER_COMIC ×
+# $0.039 + overhead) so it never downgrades a legitimate comic to SDXL — it is a
+# runaway/abuse guard, not a quality knob. Lowering it trades quality, not just cost.
 MAX_COST_PER_JOB = float(os.environ.get("MAX_COST_PER_JOB", "0.60"))
+
+# Hard cap on panels per comic. The UI only offers up to 6 and the AI-decided
+# planner also tops out at 6, so this purely closes the one runway leak: a direct
+# API call requesting panel_count 7–10 (≈ $0.27–$0.39 on a single credit). Bounding
+# it is quality-neutral (limits panel COUNT, never per-panel render quality) and is
+# env-tunable so a future paid tier can raise it.
+MAX_PANELS_PER_COMIC = int(os.environ.get("MAX_PANELS_PER_COMIC", "6"))
 
 # --- BASE DIRECTORIES ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

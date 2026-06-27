@@ -828,7 +828,7 @@ class StoryboardDirector:
             else:
                 target_panel_count = 6
 
-        target_panel_count = min(max(target_panel_count, 1), 10)
+        target_panel_count = min(max(target_panel_count, 1), getattr(settings, "MAX_PANELS_PER_COMIC", 6))
         target_layout = layout_type or "standard"
 
         # 2. Wait for Ollama to be available

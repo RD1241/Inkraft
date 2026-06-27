@@ -42,13 +42,17 @@ users, credits, and history. (Northflank: same idea, attach a 0.5 GB+ volume at 
 | `DATA_DIR` | `/data` | matches the mounted volume |
 | `IMAGE_ROUTING_MODE` | `nano_all` | tiered routing (default) |
 | `PREMIUM_IMAGE_MODEL` | `fal-ai/nano-banana/edit` | cheap reference model (default) |
-| `MAX_COST_PER_JOB` | `0.60` | per-comic fal.ai spend cap |
+| `MAX_COST_PER_JOB` | `0.60` | per-comic fal.ai runaway guard (keep above a full comic's cost) |
+| `MAX_PANELS_PER_COMIC` | `6` | hard panel cap (UI already maxes at 6); raise for a paid tier |
 
 `IMAGE_PROVIDER` does **not** need setting — the app auto-selects `fal_ai` whenever a
 real `FAL_KEY` is present. `PORT` is provided by Railway automatically.
 
-> Optional but recommended for the beta budget: lower `MAX_COST_PER_JOB` (e.g. `0.20`)
-> and/or set `IMAGE_ROUTING_MODE=hybrid` so only multi-character frames use the premium model.
+> **Beta budget, without losing quality:** keep `IMAGE_ROUTING_MODE=nano_all` and
+> `MAX_COST_PER_JOB=0.60` as-is. Lowering the cap or switching to `hybrid` would push
+> panels onto cheap SDXL = visibly worse output. The quality-neutral lever is
+> `MAX_PANELS_PER_COMIC` (panel COUNT, not per-panel quality). Monitor real spend with
+> `python tools/cost_report.py --balance <your_fal_balance>`.
 
 ## 3. Deploy
 

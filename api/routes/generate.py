@@ -34,8 +34,9 @@ class NovelInput(BaseModel):
     @field_validator("panel_count")
     @classmethod
     def validate_panel_count(cls, v):
-        if v is not None and (v < 1 or v > 10):
-            raise ValueError("panel_count must be between 1 and 10")
+        max_panels = getattr(settings, "MAX_PANELS_PER_COMIC", 6)
+        if v is not None and (v < 1 or v > max_panels):
+            raise ValueError(f"panel_count must be between 1 and {max_panels}")
         return v
 
 def fail(message: str, detail: str = None) -> JSONResponse:
@@ -76,11 +77,13 @@ def generate_comic(
             f"Got {len(text)} characters."
         )
 
-    # Validate panel_count
+    # Validate panel_count (capped at MAX_PANELS_PER_COMIC — a quality-neutral
+    # runway guard; the UI already maxes at 6).
+    max_panels = getattr(settings, "MAX_PANELS_PER_COMIC", 6)
     if novel_input.panel_count is not None:
-        if novel_input.panel_count < 1 or novel_input.panel_count > 10:
+        if novel_input.panel_count < 1 or novel_input.panel_count > max_panels:
             return fail(
-                "Invalid panel count. panel_count must be between 1 and 10.",
+                f"Invalid panel count. panel_count must be between 1 and {max_panels}.",
                 f"Got panel_count={novel_input.panel_count}"
             )
 
