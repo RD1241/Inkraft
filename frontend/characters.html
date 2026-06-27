@@ -73,6 +73,25 @@
       </div>
     </section>
 
+    <!-- Vault Explainer Card -->
+    <section class="vault-explainer-section">
+      <div class="vault-explainer-card glass-panel">
+        <div class="explainer-icon">💡</div>
+        <div class="explainer-content">
+          <h3>What is the Character Vault?</h3>
+          <p class="explainer-desc">
+            The Vault stores your characters' core visual traits (hair color, outfit, facial features). 
+            When generating a comic, check their profiles under <strong>Active Cast</strong> to force the AI consistency engine to keep them looking identical panel-to-panel!
+          </p>
+          <div class="explainer-steps">
+            <span class="explainer-step"><strong>1. Create:</strong> Define a character name and visual description here.</span>
+            <span class="explainer-step"><strong>2. Activate:</strong> Check their profiles under <b>Step 4 (Active Cast)</b> in the generator workspace.</span>
+            <span class="explainer-step"><strong>3. Render:</strong> The AI automatically overrides scene extraction descriptions with your Vault sheets!</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Toolbar: Search + Style Filters -->
     <section class="vault-toolbar glass-panel">
       <div class="vault-search-wrap">
@@ -114,10 +133,9 @@
         <h2 class="vault-empty-title">CHARACTER VAULT EMPTY</h2>
         <p class="vault-empty-sub">No characters saved yet.</p>
         <p class="vault-empty-desc">
-          Create your first character and lock them into<br>
-          future comics for a consistent look across stories.
+          Save your recurring characters so they look identical across every comic — define once, reuse everywhere.
         </p>
-        <a href="/" class="glow-button vault-empty-cta">→ Go to Generator to Create a Character</a>
+        <button type="button" id="vault-empty-create-btn" class="glow-button vault-empty-cta">+ Create Your First Character</button>
       </div>
     </div>
 
@@ -552,6 +570,7 @@
     }
 
     document.getElementById('create-char-btn').addEventListener('click', openAddModal);
+    document.getElementById('vault-empty-create-btn').addEventListener('click', openAddModal);
     document.getElementById('close-modal-btn').addEventListener('click', () => charModal.classList.add('hidden'));
     document.getElementById('cancel-char-btn').addEventListener('click', () => charModal.classList.add('hidden'));
 
