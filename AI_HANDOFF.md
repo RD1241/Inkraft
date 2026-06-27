@@ -100,6 +100,11 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-27 — Antigravity — Hero Switcher for Style Previews (c68cdaf)
+- **Style Showcase Previews (c68cdaf):** Added interactive preview switcher under the landing hero's showframe. Users can click style tabs (Manga, Manhwa, Anime, Cinematic, Realistic) to instantly swap the preview image (using `assets/sample_comic.png`, `Manhwa.png`, `anime_style_example.png`, `Cinematic.png`, `realistic_style_example.png` respectively) and update the stamp badge text/accent color. Mobile-friendly and handles image load opacity transitions gracefully.
+- **Credits Verification:** Exhaustively scanned repository for any remaining "10 credits" strings. Confirmed that only `AI_HANDOFF.md` and test scripts contain it. File `login.html` was verified to contain `3 Welcome Credits` on disk; any remaining "10" on user's machine is from a cached browser session. Reminded user to hard-refresh (Ctrl+F5) to clear cache.
+- **Next:** Backend colour-mode support (Claude session): thread `color_mode` through `comic_service` + `prompt_builder` + `fal_ai.py` grayscale step per §10 API contract.
+
 ### 2026-06-27 — Antigravity — §10 items 1–4 frontend fixes (d186827, 346ef52)
 - **Item 1 (d186827):** `.hero-title` reworded from "manga page" to "manga, manhwa & comics" to cover all 5 styles. Before/after `ba-label` "GET MANGA" → "GET COMIC" for consistency.
 - **Item 2 (d186827):** All stale "10 credits" text → "3" across: `frontend/index.html:734` (pricing li), `frontend/index.html:2360` (TOS modal), `frontend/login.html:61` (auth feature badge), `frontend/register.html:60` (checkbox label), `:82` (JS alert string), `:88` (auth feature badge). All 6 occurrences patched.
