@@ -139,21 +139,25 @@ class MemoryManager:
         auth = SupabaseAuth()
         if auth.enabled and auth.client:
             try:
-                res = auth.client.table("characters").select("*").eq("user_id", user_id).execute()
+                # Vault sheets live in the `character_design_sheets` table (same table
+                # the /characters save/list/get/delete routes use). The old query hit a
+                # nonexistent `characters` table with no `user_id` column → 42703 on every
+                # call, so a Supabase-only prod box would NEVER load the Vault. Match the
+                # save schema exactly.
+                res = auth.client.table("character_design_sheets").select("*").eq("user_id", user_id).execute()
                 data = getattr(res, "data", []) or []
                 for row in data:
-                    # Map possible Supabase column names to the local fields
                     sheets.append(CharacterDesignSheet(
                         name=row.get("name"),
                         gender=row.get("gender"),
                         age_range=row.get("age_range"),
-                        hair_style=row.get("hair_style") or row.get("hair_description", ""),
+                        hair_style=row.get("hair_style") or "",
                         hair_color=row.get("hair_color") or "",
                         eye_color=row.get("eye_color") or "",
                         body_type=row.get("body_type") or "",
-                        primary_outfit=row.get("primary_outfit") or row.get("outfit", ""),
-                        distinguishing_features=row.get("distinguishing_features") or row.get("features", ""),
-                        personality_note=row.get("personality_note") or row.get("personality", "")
+                        primary_outfit=row.get("primary_outfit") or "",
+                        distinguishing_features=row.get("distinguishing_features") or "",
+                        personality_note=row.get("personality_note") or ""
                     ))
                 # Only treat Supabase as authoritative when it actually returned rows.
                 # An empty result must fall through to the local SQLite Vault, otherwise

@@ -49,7 +49,7 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 - **[FIXED 2026-06-26 · b872980] Vault is not the single source of truth.** `memory_manager.process_scene_characters` now overrides the extractor description with the Vault sheet's `to_prompt_tokens()` and reconciles the scene dict (metadata). Also fixed Vault loading: empty Supabase result now falls through to the SQLite Vault. Verified: Mei "ponytail, casual outfit" → "school uniform, red hair clip".
 - **[HIGH] Merged/contradictory action text.** A single panel action contained two mutually exclusive placements ("together at the desk" + "alone by the window"). LLM extraction emits fused beats; `storyboard_director.py:362-369` env-lock prepend compounds it. Needs a split/disambiguation step.
 - **[MED] Ghost characters not fully fixed.** 2+ occurrence rule helps but single-occurrence fallback (`llm_processor.py:632`) re-opens it; recent outputs still show `you_ref.png`, `two_ref.png`, `everything_ref.png`.
-- **[MED] Supabase character fetch is broken.** `memory_manager._fetch_design_sheets_for_user` queries a Supabase `characters` table that has no `user_id` column (`42703` error every call) — so the Vault has only ever loaded from local SQLite. Fine locally (SQLite fallback now reliable), but a Supabase-only prod box would have NO Vault. Fix the Supabase table/schema (or point at `character_design_sheets`) before deploy.
+- **[FIXED 2026-06-27] Supabase character fetch was broken.** `memory_manager._fetch_design_sheets_for_user` queried a Supabase `characters` table with no `user_id` column (`42703` every call) — so the Vault only ever loaded from local SQLite, and a Supabase-only prod box would have NO Vault. Repointed the query to `character_design_sheets` (the same table the `/characters` save/list/get/delete routes already use). Live-verified against prod Supabase: old `characters` → 42703, new `character_design_sheets` → loads Kaito + Mei with full canonical descriptions.
 - **[FIXED 2026-06-26 · 0555d53] Residual daily-limit scaffolding.** Stripped residual daily-limit scaffolding from `get_daily_usage` and API balance responses (frontend already cleaned up). Matches credits-only billing model.
 
 ## 6. Launch blockers / risks beyond bugs
@@ -104,6 +104,15 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 **Manual prod smoke test (founder does personally as a fresh signup, not scripted):** register → credit balance correct (3) → generate 1 single-char comic → generate 1 shared-frame multi-char comic → Vault enforcement fires for an undefined character → download a PDF → log out/in → confirm credits+characters+history SURVIVE a real service restart (not just same-session).
 
 ## 9. Task Log (append newest at top)
+
+### 2026-06-27 — Antigravity — Onboarding Explainer UI & Helper Tooltips (3f2433c, 7a21c45)
+- **Onboarding Guide (7a21c45):** Guide now auto-expands on first load (if not dismissed in localStorage) so step instructions are fully visible immediately. Collapsing/expanding rotates the toggle arrow (▲/▼) correctly.
+- **Custom Tooltips (7a21c45):** Added styled, neo-brutalist `.tooltip` + `.tooltiptext` descriptions to:
+  - Art Style pills (Step 2): explains Auto-detect, Manga (ink & speeds), Manhwa (digital), Anime (cel shading), Cinematic (lighting & aspect), Realistic (textures).
+  - Panel Count chips (Step 3): explains AI decides, single-panel cover shot, 2/3/4/5/6 layout density.
+  - Colour Mode buttons (Step 3): explains Auto (manga=mono, others=color), Colour (forced color), B&W (forced mono).
+- **Character Vault Explainer (3f2433c):** Added a permanent, elegant inline explanation section (`.vault-explainer-card`) describing what the vault does and how to use it (Create -> Activate -> Render). Updated empty state text to reflect §10 benefit copy: *"Save your recurring characters so they look identical across every comic — define once, reuse everywhere"*. Wired empty-state CTA to open the character design modal.
+- **Verification:** Ran Puppeteer script `scratch/screenshot_tool/capture_onboarding.js` to capture 5 verification screenshots showing the login/register credit grant, expanded guide, Step 3 custom tooltips, and Vault explainer card. Saved reports to [onboarding_verification.md](file:///C:/Users/dell/.gemini/antigravity/brain/9a7ec11a-f0f4-43da-baca-fb7c86f6b5f6/onboarding_verification.md).
 
 ### 2026-06-27 — Claude Code — Step 1: Colour-mode backend (§10 contract)
 - Threaded `color_mode` ("auto"|"color"|"bw", default "auto") end-to-end per the §10 API contract.
