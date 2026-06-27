@@ -782,12 +782,14 @@ class ComicService:
             self.drift_monitor.log_job_metrics(job_id, text, [], gen_time, False, [])
             self.job_manager.update_job(job_id, status="failed", error=str(e))
             
-            # Refund credit on generation failure
+            # Refund credit on generation failure — refund the SAME amount that was
+            # charged (tiered by panel_count), so a failed N-credit comic returns N.
             if user_id:
                 try:
                     from services.credits_service import credits_service
-                    credits_service.refund_credit(user_id)
-                    print(f"[CreditsService] Refunded 1 credit to user {user_id} due to generation failure.")
+                    refund_amount = credits_service.credits_for_panels(panel_count)
+                    credits_service.refund_credit(user_id, amount=refund_amount)
+                    print(f"[CreditsService] Refunded {refund_amount} credit(s) to user {user_id} due to generation failure.")
                 except Exception as refund_err:
                     print(f"[Error] Failed to refund credit to user {user_id}: {refund_err}")
 

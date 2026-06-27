@@ -6,6 +6,9 @@ import unittest
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
 from services.credits_service import CreditsService, clean_uuid
+from config import settings
+
+GRANT = settings.NEW_USER_CREDITS  # configured new-user starting credits
 
 class TestCreditsSystem(unittest.TestCase):
     def setUp(self):
@@ -35,23 +38,23 @@ class TestCreditsSystem(unittest.TestCase):
     def test_starting_credits(self):
         user_id = "test_user_1"
         balance = self.service.get_balance(user_id)
-        self.assertEqual(balance, 3)
-        
+        self.assertEqual(balance, GRANT)
+
         # Verify transaction log
         history = self.service.get_history(user_id)
         self.assertEqual(len(history), 1)
-        self.assertEqual(history[0]["amount"], 3)
+        self.assertEqual(history[0]["amount"], GRANT)
         self.assertEqual(history[0]["reason"], "new_user_bonus")
 
     def test_deduction_and_refund(self):
         user_id = "test_user_2"
         # Triggers registration
-        self.assertEqual(self.service.get_balance(user_id), 3)
-        
+        self.assertEqual(self.service.get_balance(user_id), GRANT)
+
         # Deduct
         self.service.deduct_credit(user_id)
-        self.assertEqual(self.service.get_balance(user_id), 2)
-        
+        self.assertEqual(self.service.get_balance(user_id), GRANT - 1)
+
         # Verify transaction history
         history = self.service.get_history(user_id)
         self.assertEqual(len(history), 2)
@@ -60,26 +63,45 @@ class TestCreditsSystem(unittest.TestCase):
 
         # Refund
         self.service.refund_credit(user_id)
-        self.assertEqual(self.service.get_balance(user_id), 3)
-        
+        self.assertEqual(self.service.get_balance(user_id), GRANT)
+
         # Verify transaction history again
         history = self.service.get_history(user_id)
         self.assertEqual(len(history), 3)
         self.assertEqual(history[0]["amount"], 1)
         self.assertEqual(history[0]["reason"], "refund")
 
+    def test_tiered_pricing(self):
+        # credits_for_panels: AI(None/0)=default; tiers 1-2=1, 3-4=2, 5-6=3.
+        self.assertEqual(self.service.credits_for_panels(None), settings.CREDITS_AI_DEFAULT)
+        self.assertEqual(self.service.credits_for_panels(1), 1)
+        self.assertEqual(self.service.credits_for_panels(2), 1)
+        self.assertEqual(self.service.credits_for_panels(3), 2)
+        self.assertEqual(self.service.credits_for_panels(6), 3)
+        # Above the top tier pays the top rate (no free overflow).
+        self.assertEqual(self.service.credits_for_panels(99), settings.CREDIT_PANEL_TIERS[-1][1])
+
+    def test_tiered_deduct_refund_amount(self):
+        user_id = "test_user_tier"
+        self.assertEqual(self.service.get_balance(user_id), GRANT)
+        # A 6-panel comic costs 3 credits.
+        self.service.deduct_credit(user_id, amount=self.service.credits_for_panels(6))
+        self.assertEqual(self.service.get_balance(user_id), GRANT - 3)
+        # Failure refunds the same 3 credits.
+        self.service.refund_credit(user_id, amount=3)
+        self.assertEqual(self.service.get_balance(user_id), GRANT)
+
     def test_deduction_limit(self):
         user_id = "test_user_3"
-        # Registers user (starts with 3 credits)
+        # Registers user (starts with GRANT credits)
         self.service.get_balance(user_id)
 
-        # Deduct all 3 credits
-        self.assertTrue(self.service.deduct_credit(user_id))
-        self.assertTrue(self.service.deduct_credit(user_id))
-        self.assertTrue(self.service.deduct_credit(user_id))
+        # Deduct all GRANT credits (1 at a time)
+        for _ in range(GRANT):
+            self.assertTrue(self.service.deduct_credit(user_id))
         self.assertEqual(self.service.get_balance(user_id), 0)
 
-        # Attempting a 4th deduction must raise a ValueError (insufficient credits)
+        # Attempting one more deduction must raise a ValueError (insufficient credits)
         with self.assertRaises(ValueError) as ctx:
             self.service.deduct_credit(user_id)
         self.assertIn("Insufficient credits", str(ctx.exception))

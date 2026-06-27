@@ -105,6 +105,12 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-27 — Claude Code — Tiered credit pricing (panels → credits) + grant 3→5
+- Founder's idea: charge more credits for bigger comics so credits track real cost while quality stays full. Implemented tiered pricing (decided with founder): **1–2 panels = 1 credit, 3–4 = 2, 5–6 = 3; AI-decided = 2 credits; new-user grant 3 → 5.** All env-tunable (`settings.NEW_USER_CREDITS`, `CREDIT_PANEL_TIERS="2:1,4:2,6:3"`, `CREDITS_AI_DEFAULT`).
+- `credits_service.credits_for_panels(panel_count)` returns the tier cost; `deduct_credit`/`refund_credit` now take `amount` (default 1, backward-compatible). `_register_user` grants `NEW_USER_CREDITS`. Route (`generate.py`) charges `credits_for_panels(panel_count)` (regeneration stays net-zero; queue-failure refunds the same N). Worker (`comic_service.py`) refunds the same N on generation failure. `storyboard_director`/`MAX_PANELS_PER_COMIC` already cap panels at 6.
+- **Verified:** `scratch/test_credits_system.py` (7 tests incl. 2 new tiered ones) pass; isolated round-trip confirmed grant=5, 6-panel comic=−3, refund=+3, insufficient-credit guard fires with a clear "needs N credit(s)" message. `tools/cost_report.py` now reports worst-case $/user from the tiers; `DEPLOY.md` env table updated.
+- **⚠️ FRONTEND FOLLOW-UP (Antigravity):** (1) marketing copy now says "3 credits" but the grant is **5** — update the static text (`index.html` pricing card/TOS, `login.html`, `register.html`). (2) Show per-option credit cost on the panel-count chips ("1–2 = 1 credit … 5–6 = 3"; AI = 2) so users see the price before generating. (3) The insufficient-credit API error now reads "This comic needs N credit(s); balance: X" — surface it. Balance display already auto-updates from the API; only static copy + chip labels need work.
+
 ### 2026-06-27 — Claude Code — Free-credit runway: quality-neutral cost guard (§6)
 - Founder constraint: protect the fal.ai runway WITHOUT any quality decrease. So: kept `IMAGE_ROUTING_MODE=nano_all` + `PREMIUM_IMAGE_MODEL=fal-ai/nano-banana/edit` + `MAX_COST_PER_JOB=0.60` unchanged (switching to hybrid/SDXL or lowering the cap would downgrade panels to cheap SDXL = visible quality loss).
 - **Recomputed real economics:** $0.039/panel (nano) → comic ≈ $0.04–$0.24 (1–6 panels). UI maxes at 6, AI planner caps at 6 (`storyboard_director.py:829/831`); the ONLY leak was a direct API call with `panel_count` 7–10.

@@ -68,11 +68,17 @@ def main() -> int:
     for m, (cnt, cost) in sorted(by_model.items(), key=lambda kv: -kv[1][1]):
         print(f"  {m:<36} {cnt:>4} comics  ${cost:.3f}")
 
-    free_credits = 3  # current new-user grant (credits_service.starting_balance)
-    print(f"\nFree-tier exposure: {free_credits} credits/user × ${avg:.3f} avg ≈ ${free_credits * avg:.2f}/user")
-    if args.balance is not None and avg > 0:
-        print(f"Runway @ ${args.balance:.2f} balance: ~{int(args.balance / avg)} more comics "
-              f"(~{int(args.balance / (free_credits * avg))} fresh free users)")
+    # Tiered pricing: worst-case $/credit is the priciest tier (most panels per credit).
+    free_credits = getattr(settings, "NEW_USER_CREDITS", 5)
+    tiers = getattr(settings, "CREDIT_PANEL_TIERS", [(2, 1), (4, 2), (6, 3)])
+    panel_cost = 0.039
+    worst_cost_per_credit = max((mp * panel_cost) / c for mp, c in tiers) if tiers else panel_cost
+    worst_user = free_credits * worst_cost_per_credit
+    print(f"\nFree tier: {free_credits} credits/user. Tiered pricing caps worst-case spend at "
+          f"~${worst_user:.2f}/user (${worst_cost_per_credit:.3f}/credit).")
+    if args.balance is not None and worst_user > 0:
+        print(f"Runway @ ${args.balance:.2f}: ~{int(args.balance / worst_user)} fresh free users (worst case); "
+              f"~{int(args.balance / avg) if avg else 0} more comics at the observed avg.")
 
     if args.recent:
         print(f"\nLast {args.recent} comics:")

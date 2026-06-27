@@ -102,20 +102,24 @@ def generate_comic(
         if cached_res:
             is_cached = True
 
+    # Tiered pricing: credits scale with panel count (see settings.CREDIT_PANEL_TIERS).
+    credits_needed = credits_service.credits_for_panels(novel_input.panel_count)
+
     # Billing gate (only apply if not cached)
     if not is_cached:
         try:
             if getattr(novel_input, "re_generate", False):
-                # Refund old generation first to achieve net zero: refund +1, deduct -1
+                # Refund the prior charge first so a regeneration of the same comic
+                # is net-zero (refund +N, deduct -N).
                 try:
-                    credits_service.refund_credit(user_id)
+                    credits_service.refund_credit(user_id, amount=credits_needed)
                 except Exception as refund_err:
                     print(f"[Warning] Refund before regeneration failed: {refund_err}")
-                credits_service.deduct_credit(user_id, re_generate=True)
+                credits_service.deduct_credit(user_id, re_generate=True, amount=credits_needed)
             else:
-                credits_service.deduct_credit(user_id, re_generate=False)
+                credits_service.deduct_credit(user_id, re_generate=False, amount=credits_needed)
         except ValueError as e:
-            return fail(str(e), "Billing check failed. Please check credits balance and daily limit.")
+            return fail(str(e), "Billing check failed. Please check your credit balance.")
         except Exception as e:
             return fail("Credits system error.", str(e))
 
@@ -135,7 +139,7 @@ def generate_comic(
         # If queueing itself failed, refund immediately
         if not is_cached:
             try:
-                credits_service.refund_credit(user_id)
+                credits_service.refund_credit(user_id, amount=credits_needed)
             except Exception:
                 pass
         return fail("Failed to queue job.", str(e))

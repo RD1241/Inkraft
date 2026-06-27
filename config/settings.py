@@ -35,6 +35,32 @@ MAX_COST_PER_JOB = float(os.environ.get("MAX_COST_PER_JOB", "0.60"))
 # env-tunable so a future paid tier can raise it.
 MAX_PANELS_PER_COMIC = int(os.environ.get("MAX_PANELS_PER_COMIC", "6"))
 
+# --- CREDIT PRICING (panel-count tiers) ---
+# Credits charged per comic scale with panel count so credits track real fal.ai
+# cost (≈ $0.039/panel) without ever lowering render quality. Tiers are
+# "maxpanels:credits" pairs; a comic is charged the first tier whose maxpanels it
+# fits. AI-decided panel count (panel_count None/0) is charged CREDITS_AI_DEFAULT.
+# All env-tunable so pricing can change without a code edit.
+NEW_USER_CREDITS = int(os.environ.get("NEW_USER_CREDITS", "5"))
+CREDITS_AI_DEFAULT = int(os.environ.get("CREDITS_AI_DEFAULT", "2"))
+
+
+def _parse_credit_tiers(raw: str):
+    tiers = []
+    for part in (raw or "").split(","):
+        part = part.strip()
+        if ":" in part:
+            mp, c = part.split(":", 1)
+            try:
+                tiers.append((int(mp), int(c)))
+            except ValueError:
+                continue
+    return sorted(tiers) or [(2, 1), (4, 2), (6, 3)]
+
+
+# Default: 1-2 panels = 1 credit, 3-4 = 2, 5-6 = 3.
+CREDIT_PANEL_TIERS = _parse_credit_tiers(os.environ.get("CREDIT_PANEL_TIERS", "2:1,4:2,6:3"))
+
 # --- BASE DIRECTORIES ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

@@ -170,10 +170,24 @@ class CreditsService:
             print("[CREDITS] No balance found anywhere.")
             return self._register_user(u_id)
 
+    def credits_for_panels(self, panel_count) -> int:
+        """
+        Credits charged for a comic of `panel_count` panels (tiered pricing so
+        credits track real fal.ai cost without lowering quality). AI-decided
+        count (None/0) is charged the configured default. See settings.CREDIT_PANEL_TIERS.
+        """
+        tiers = getattr(settings, "CREDIT_PANEL_TIERS", [(2, 1), (4, 2), (6, 3)])
+        if not panel_count or panel_count <= 0:
+            return getattr(settings, "CREDITS_AI_DEFAULT", 2)
+        for max_p, cost in tiers:
+            if panel_count <= max_p:
+                return cost
+        return tiers[-1][1]  # anything above the top tier pays the top rate
+
     def _register_user(self, user_id: str) -> int:
-        """Registers a new user with 3 starting credits."""
+        """Registers a new user with the configured starting credits (settings.NEW_USER_CREDITS)."""
         now = datetime.utcnow().isoformat()
-        starting_balance = 3
+        starting_balance = getattr(settings, "NEW_USER_CREDITS", 5)
         txn_id = str(uuid.uuid4())
 
         # 1. SQLite registration
@@ -294,19 +308,22 @@ class CreditsService:
             })
         return history
 
-    def deduct_credit(self, user_id: str, re_generate: bool = False) -> bool:
+    def deduct_credit(self, user_id: str, re_generate: bool = False, amount: int = 1) -> bool:
         """
-        Checks balance, then deducts 1 credit from user balance and registers a
-        transaction of -1 with reason 'generation' or 'regeneration'.
+        Checks balance, then deducts `amount` credits from user balance and registers a
+        transaction of -amount with reason 'generation' or 'regeneration'.
         """
         u_id = clean_uuid(user_id)
+        amount = max(1, int(amount))
 
         # Get current balance
         balance = self.get_balance(u_id)
-        if balance < 1:
-            raise ValueError("Insufficient credits. Balance: {}".format(balance))
+        if balance < amount:
+            raise ValueError(
+                f"Insufficient credits. This comic needs {amount} credit(s); balance: {balance}."
+            )
 
-        new_balance = balance - 1
+        new_balance = balance - amount
         now = datetime.utcnow().isoformat()
         txn_id = str(uuid.uuid4())
         reason = "regeneration" if re_generate else "generation"
@@ -321,7 +338,7 @@ class CreditsService:
             cursor.execute('''
                 INSERT INTO credit_transactions (id, user_id, amount, reason, created_at)
                 VALUES (?, ?, ?, ?, ?)
-            ''', (txn_id, u_id, -1, reason, now))
+            ''', (txn_id, u_id, -amount, reason, now))
             conn.commit()
         except Exception as e:
             print(f"[Error] Local deduction failed: {e}")
@@ -354,7 +371,7 @@ class CreditsService:
                 httpx.post(txn_url, headers=headers, json={
                     "id": txn_id,
                     "user_id": u_id,
-                    "amount": -1,
+                    "amount": -amount,
                     "reason": reason,
                     "created_at": now
                 }, timeout=10.0)
@@ -364,14 +381,15 @@ class CreditsService:
         return True
 
 
-    def refund_credit(self, user_id: str) -> bool:
+    def refund_credit(self, user_id: str, amount: int = 1) -> bool:
         """
-        Refunds 1 credit back to user balance due to generation failure.
-        Registers a transaction of +1 with reason 'refund'.
+        Refunds `amount` credits back to user balance (e.g. generation failure).
+        Registers a transaction of +amount with reason 'refund'.
         """
         u_id = clean_uuid(user_id)
+        amount = max(1, int(amount))
         balance = self.get_balance(u_id)
-        new_balance = balance + 1
+        new_balance = balance + amount
         now = datetime.utcnow().isoformat()
         txn_id = str(uuid.uuid4())
 
@@ -385,7 +403,7 @@ class CreditsService:
             cursor.execute('''
                 INSERT INTO credit_transactions (id, user_id, amount, reason, created_at)
                 VALUES (?, ?, ?, ?, ?)
-            ''', (txn_id, u_id, 1, "refund", now))
+            ''', (txn_id, u_id, amount, "refund", now))
             conn.commit()
         except Exception as e:
             print(f"[Error] Local refund failed: {e}")
@@ -418,7 +436,7 @@ class CreditsService:
                 httpx.post(txn_url, headers=headers, json={
                     "id": txn_id,
                     "user_id": u_id,
-                    "amount": 1,
+                    "amount": amount,
                     "reason": "refund",
                     "created_at": now
                 }, timeout=10.0)

@@ -44,6 +44,9 @@ users, credits, and history. (Northflank: same idea, attach a 0.5 GB+ volume at 
 | `PREMIUM_IMAGE_MODEL` | `fal-ai/nano-banana/edit` | cheap reference model (default) |
 | `MAX_COST_PER_JOB` | `0.60` | per-comic fal.ai runaway guard (keep above a full comic's cost) |
 | `MAX_PANELS_PER_COMIC` | `6` | hard panel cap (UI already maxes at 6); raise for a paid tier |
+| `NEW_USER_CREDITS` | `5` | starting credits for new signups |
+| `CREDIT_PANEL_TIERS` | `2:1,4:2,6:3` | tiered credit pricing: ≤2 panels=1cr, ≤4=2cr, ≤6=3cr |
+| `CREDITS_AI_DEFAULT` | `2` | credits charged when panel count is AI-decided |
 
 `IMAGE_PROVIDER` does **not** need setting — the app auto-selects `fal_ai` whenever a
 real `FAL_KEY` is present. `PORT` is provided by Railway automatically.
