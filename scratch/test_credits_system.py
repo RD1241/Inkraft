@@ -35,22 +35,22 @@ class TestCreditsSystem(unittest.TestCase):
     def test_starting_credits(self):
         user_id = "test_user_1"
         balance = self.service.get_balance(user_id)
-        self.assertEqual(balance, 10)
+        self.assertEqual(balance, 3)
         
         # Verify transaction log
         history = self.service.get_history(user_id)
         self.assertEqual(len(history), 1)
-        self.assertEqual(history[0]["amount"], 10)
+        self.assertEqual(history[0]["amount"], 3)
         self.assertEqual(history[0]["reason"], "new_user_bonus")
 
     def test_deduction_and_refund(self):
         user_id = "test_user_2"
         # Triggers registration
-        self.assertEqual(self.service.get_balance(user_id), 10)
+        self.assertEqual(self.service.get_balance(user_id), 3)
         
         # Deduct
         self.service.deduct_credit(user_id)
-        self.assertEqual(self.service.get_balance(user_id), 9)
+        self.assertEqual(self.service.get_balance(user_id), 2)
         
         # Verify transaction history
         history = self.service.get_history(user_id)
@@ -60,7 +60,7 @@ class TestCreditsSystem(unittest.TestCase):
 
         # Refund
         self.service.refund_credit(user_id)
-        self.assertEqual(self.service.get_balance(user_id), 10)
+        self.assertEqual(self.service.get_balance(user_id), 3)
         
         # Verify transaction history again
         history = self.service.get_history(user_id)
@@ -68,21 +68,21 @@ class TestCreditsSystem(unittest.TestCase):
         self.assertEqual(history[0]["amount"], 1)
         self.assertEqual(history[0]["reason"], "refund")
 
-    def test_daily_limit(self):
+    def test_deduction_limit(self):
         user_id = "test_user_3"
-        # Registers user (starts with 10 credits)
+        # Registers user (starts with 3 credits)
         self.service.get_balance(user_id)
 
-        # Deduct 3 credits (the maximum daily limit allowed)
+        # Deduct all 3 credits
         self.assertTrue(self.service.deduct_credit(user_id))
         self.assertTrue(self.service.deduct_credit(user_id))
         self.assertTrue(self.service.deduct_credit(user_id))
-        self.assertEqual(self.service.get_balance(user_id), 7)
+        self.assertEqual(self.service.get_balance(user_id), 0)
 
-        # Attempting a 4th deduction must raise a ValueError (daily limit reached)
+        # Attempting a 4th deduction must raise a ValueError (insufficient credits)
         with self.assertRaises(ValueError) as ctx:
             self.service.deduct_credit(user_id)
-        self.assertIn("Daily limit of 3 generations reached.", str(ctx.exception))
+        self.assertIn("Insufficient credits", str(ctx.exception))
 
     def test_insufficient_credits(self):
         user_id = "test_user_4"
