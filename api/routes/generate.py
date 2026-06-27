@@ -19,6 +19,17 @@ class NovelInput(BaseModel):
     characters: Optional[list] = Field(None, description="Optional character design sheets list")
     re_generate: Optional[bool] = Field(False, description="Optional bypass daily limit and re-generate")
     generation_format: Optional[str] = Field(None, description="Optional generation format: single_page | panel_strip | None")
+    color_mode: Optional[str] = Field("auto", description="Colour mode: auto | color | bw")
+
+    @field_validator("color_mode")
+    @classmethod
+    def validate_color_mode(cls, v):
+        if v is None:
+            return "auto"
+        v = str(v).strip().lower()
+        if v not in ("auto", "color", "bw"):
+            raise ValueError("color_mode must be one of: auto, color, bw")
+        return v
 
     @field_validator("panel_count")
     @classmethod
@@ -114,7 +125,8 @@ def generate_comic(
             layout_type=novel_input.layout_type,
             user_id=user_id,
             characters=novel_input.characters,
-            generation_format=novel_input.generation_format
+            generation_format=novel_input.generation_format,
+            color_mode=novel_input.color_mode
         )
     except Exception as e:
         # If queueing itself failed, refund immediately

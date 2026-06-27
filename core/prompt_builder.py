@@ -15,6 +15,39 @@ _interaction_composer = InteractionComposer()
 CHARACTER_SEPARATOR_LABELS = ["CHARACTER_A", "CHARACTER_B", "CHARACTER_C"]
 BACKGROUND_LABEL = "BACKGROUND_SUPPORTING_CHARACTERS"
 
+# ----------------------------------------------------------------------
+# Colour-mode resolution (§10 contract: color_mode = auto | color | bw)
+# ----------------------------------------------------------------------
+# Positive tokens injected when a panel must be monochrome.
+MONOCHROME_TOKENS = ["monochrome", "greyscale", "black and white"]
+# Substrings that mark a positive token as monochrome/ink-art; stripped when
+# a panel must be in colour (e.g. manga forced to colour by the user).
+MONOCHROME_KEYWORDS = [
+    "monochrome", "greyscale", "grayscale", "black and white",
+    "screentone", "ink wash", "b&w", "high contrast ink",
+]
+# Negative tokens used to push the model away from the unwanted look.
+COLOUR_NEGATIVE = "color, colorful, digital coloring, cel shading, multicolored, chromatic, photo, photographic"
+MONOCHROME_NEGATIVE = "monochrome, greyscale, black and white, desaturated"
+
+
+def resolve_monochrome(color_mode: str, style: str) -> bool:
+    """
+    Resolve whether a panel should render in monochrome.
+
+    color_mode: "auto" | "color" | "bw" (default "auto").
+      - "bw"    → always monochrome
+      - "color" → always colour
+      - "auto"  → monochrome only for manga (current default behaviour)
+    """
+    mode = (color_mode or "auto").strip().lower()
+    if mode == "bw":
+        return True
+    if mode == "color":
+        return False
+    # "auto" (and any unknown value) → preserve legacy behaviour
+    return (style or "").strip().lower() == "manga"
+
 # Detailed style templates mapping prefix and lighting_override
 STYLE_TEMPLATES = {
     "anime": {
@@ -332,12 +365,33 @@ class PromptBuilder:
     # Public API
     # ------------------------------------------------------------------
 
+    def _apply_color_mode(self, prompt: str, monochrome: bool) -> str:
+        """
+        Normalise a finished positive prompt for the resolved colour mode.
+        Monochrome: prepend monochrome anchors (survive the 110-token cap).
+        Colour: strip any monochrome/ink-art tokens so a manga-styled prompt
+        forced to colour does not keep pulling the model toward greyscale.
+        """
+        tokens = self._to_tokens(prompt)
+        if monochrome:
+            existing = {t.lower() for t in tokens}
+            prepend = [mt for mt in MONOCHROME_TOKENS if mt not in existing]
+            tokens = prepend + tokens
+        else:
+            tokens = [
+                t for t in tokens
+                if not any(k in t.lower() for k in MONOCHROME_KEYWORDS)
+            ]
+        tokens = self._deduplicate_tokens(tokens)
+        return ", ".join(tokens[:110])
+
     def build_prompt(
         self,
         scene: dict,
         memory_manager,
         is_continuation: bool = False,
         style: str = None,
+        color_mode: str = "auto",
     ) -> tuple[str, str]:
         """
         Build (positive_prompt, negative_prompt) for a single panel.
@@ -352,6 +406,7 @@ class PromptBuilder:
         """
         active_style = style or self.style
         is_sdxl = getattr(settings, "IMAGE_PROVIDER", "stable_diffusion") == "fal_ai"
+        monochrome = resolve_monochrome(color_mode, active_style)
 
         # Resolve style template
         style_lower = active_style.lower() if active_style else "anime"
@@ -559,6 +614,10 @@ class PromptBuilder:
                 final_tokens = self._deduplicate_tokens(final_tokens)
                 candidate_prompt = ", ".join(final_tokens[:110])
 
+        # Apply resolved colour mode: inject monochrome anchors or strip them
+        # so the positive prompt matches auto/color/bw intent.
+        candidate_prompt = self._apply_color_mode(candidate_prompt, monochrome)
+
         # Save final prompt for future comparison
         self.last_positive_prompt = candidate_prompt
 
@@ -568,8 +627,13 @@ class PromptBuilder:
         else:
             neg_parts = [getattr(settings, "PROMPT_NEGATIVE", "")]
 
-        if style_lower == "manga":
-            neg_parts.append("color, colorful, digital coloring, cel shading, multicolored, chromatic, photo, photographic")
+        # Colour-mode negatives: push away from the unwanted look. In monochrome
+        # suppress colour; in colour mode (incl. manga forced to colour) suppress
+        # greyscale so the model doesn't fall back to ink/screentone.
+        if monochrome:
+            neg_parts.append(COLOUR_NEGATIVE)
+        elif style_lower == "manga":
+            neg_parts.append(MONOCHROME_NEGATIVE)
 
         pos_lower = candidate_prompt.lower()
         has_female_ref = any(w in pos_lower for w in ["1girl", "female", "she", "her", "mei", "woman", "girl"])

@@ -34,7 +34,7 @@ class ComicService:
         # Bumped to 4 workers: generation is API-bound (fal.ai), not GPU-bound — safe for concurrent users
         self.job_executor = ThreadPoolExecutor(max_workers=4)
 
-    def queue_comic_generation(self, text: str, style: str, panel_count: int = None, layout_type: str = None, user_id: str = None, characters: list = None, generation_format: str = None) -> tuple[str, bool]:
+    def queue_comic_generation(self, text: str, style: str, panel_count: int = None, layout_type: str = None, user_id: str = None, characters: list = None, generation_format: str = None, color_mode: str = "auto") -> tuple[str, bool]:
         """
         Queues a new job or returns a cached result.
         
@@ -92,10 +92,10 @@ class ComicService:
             generation_format=generation_format,
             user_id=user_id
         )
-        self.job_executor.submit(self.process_job_worker, job_id, text, style, panel_count, layout_type, user_id, characters, generation_format)
+        self.job_executor.submit(self.process_job_worker, job_id, text, style, panel_count, layout_type, user_id, characters, generation_format, color_mode)
         return job_id, False
 
-    def process_job_worker(self, job_id: str, text: str, style: str = "anime", panel_count: int = None, layout_type: str = None, user_id: str = None, characters: list = None, generation_format: str = None):
+    def process_job_worker(self, job_id: str, text: str, style: str = "anime", panel_count: int = None, layout_type: str = None, user_id: str = None, characters: list = None, generation_format: str = None, color_mode: str = "auto"):
         """Background worker that handles the heavy AI generation pipeline."""
         start_time = time.time()
         dominant_char = None
@@ -169,7 +169,7 @@ class ComicService:
 
                 style_prompt_builder = PromptBuilder(style=style)
                 pos_prompt, neg_prompt = style_prompt_builder.build_prompt(
-                    panel_scene, self.memory_manager, is_continuation=False, style=style
+                    panel_scene, self.memory_manager, is_continuation=False, style=style, color_mode=color_mode
                 )
 
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -209,6 +209,7 @@ class ComicService:
                     focus_character=single_panel.focus_character,
                     secondary_character=secondary_char,
                     job_id=job_id,
+                    color_mode=color_mode,
                 )
 
                 # Lock character anchor if dominant character exists
@@ -525,7 +526,7 @@ class ComicService:
 
                 # Build prompt using multi-layered PromptBuilder V2
                 pos_prompt, neg_prompt = thread_prompt_builder.build_prompt(
-                    panel_scene, self.memory_manager, is_continuation=(i > 0), style=style
+                    panel_scene, self.memory_manager, is_continuation=(i > 0), style=style, color_mode=color_mode
                 )
 
                 if use_reference:
@@ -558,6 +559,7 @@ class ComicService:
                             focus_character=panel.focus_character,
                             secondary_character=secondary_char,
                             job_id=job_id,
+                            color_mode=color_mode,
                         )
                         success = True
                         break

@@ -105,6 +105,15 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-27 — Claude Code — Step 1: Colour-mode backend (§10 contract)
+- Threaded `color_mode` ("auto"|"color"|"bw", default "auto") end-to-end per the §10 API contract.
+- **`core/prompt_builder.py`:** added module-level `resolve_monochrome(color_mode, style)` (auto→bw only for manga; bw→always mono; color→always colour), `MONOCHROME_TOKENS`/`MONOCHROME_KEYWORDS`/`COLOUR_NEGATIVE`/`MONOCHROME_NEGATIVE`. `build_prompt(...)` now takes `color_mode`; new `_apply_color_mode()` prepends monochrome anchors when mono and strips ink/screentone tokens when colour (so manga forced to colour stops pulling greyscale). Negatives: mono→suppress colour; manga-forced-colour→suppress greyscale.
+- **`providers/image/fal_ai.py`:** `generate_image(...)` takes `color_mode`; resolves `monochrome` via `resolve_monochrome`; the PIL grayscale step (was hard-keyed to `style=="manga"`) now keys off `monochrome` and still skips nano-banana edit panels (native monochrome from prompt tokens).
+- **`services/comic_service.py`:** `queue_comic_generation` + `process_job_worker` take `color_mode`; passed into BOTH paths — single_page (`build_prompt` + `generate_image`) and multi-panel `draw_panel` (`build_prompt` + `generate_image`).
+- **`api/routes/generate.py`:** `NovelInput.color_mode` added + validated (auto|color|bw), forwarded to `queue_comic_generation`. Frontend already sends it (`index.html` `color-mode-input`, currently uncommitted Antigravity WIP).
+- **Verified (offline, no fal spend):** resolver truth table (10 cases) + `build_prompt` across 6 style×mode combos all pass — manga/auto=bw, manga/color=colour (mono stripped, greyscale suppressed), manga/bw=bw, anime/auto=colour, anime/bw=bw (mono added, colour suppressed), anime/color=colour. All 4 files `py_compile` clean. Both generation paths confirmed wired.
+- **Next:** Step 2 — fix Vault Supabase schema mismatch (save→`character_design_sheets`, load→nonexistent `characters.user_id`).
+
 ### 2026-06-27 — Antigravity — Hero Switcher for Style Previews (c68cdaf)
 - **Style Showcase Previews (c68cdaf):** Added interactive preview switcher under the landing hero's showframe. Users can click style tabs (Manga, Manhwa, Anime, Cinematic, Realistic) to instantly swap the preview image (using `assets/sample_comic.png`, `Manhwa.png`, `anime_style_example.png`, `Cinematic.png`, `realistic_style_example.png` respectively) and update the stamp badge text/accent color. Mobile-friendly and handles image load opacity transitions gracefully.
 - **Credits Verification:** Exhaustively scanned repository for any remaining "10 credits" strings. Confirmed that only `AI_HANDOFF.md` and test scripts contain it. File `login.html` was verified to contain `3 Welcome Credits` on disk; any remaining "10" on user's machine is from a cached browser session. Reminded user to hard-refresh (Ctrl+F5) to clear cache.

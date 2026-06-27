@@ -322,11 +322,14 @@ class FalAIImageProvider(ImageProvider):
         focus_character: str = "",
         secondary_character: str = "",
         job_id: str = "",
+        color_mode: str = "auto",
     ) -> str:
         """
         Generates an image via the fal.ai API using fal_client.
         Falls back to local StableDiffusionImageProvider on any API error.
         """
+        from core.prompt_builder import resolve_monochrome
+        monochrome = resolve_monochrome(color_mode, style)
         actual_submissions = 0
         actual_request_ids = []
         actual_safety_retries = 0
@@ -792,15 +795,16 @@ class FalAIImageProvider(ImageProvider):
                 # If we reached here, the image is valid (not black)
                 break
 
-            # If style is manga, convert the image to greyscale/monochrome to override any model/IP-Adapter color bias.
-            # Skip PIL grayscale post-processing (stopgap) for nano-banana edit panels
-            # (they produce native monochrome).
-            if style and style.lower() == "manga" and not current_endpoint.startswith("fal-ai/nano-banana"):
+            # If the resolved colour mode is monochrome, convert the image to
+            # greyscale to override any model/IP-Adapter colour bias.
+            # Skip PIL grayscale post-processing (stopgap) for nano-banana edit
+            # panels — they produce native monochrome from the prompt tokens.
+            if monochrome and not current_endpoint.startswith("fal-ai/nano-banana"):
                 try:
                     with Image.open(output_path) as img:
                         grayscale_img = img.convert("L").convert("RGB")
                         grayscale_img.save(output_path)
-                    print(f"[FalAI] Successfully converted {output_path} to grayscale for manga style.")
+                    print(f"[FalAI] Successfully converted {output_path} to grayscale (color_mode={color_mode}).")
                 except Exception as grayscale_err:
                     print(f"[FalAI Warning] Failed to convert image to grayscale: {grayscale_err}")
 
