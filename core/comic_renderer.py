@@ -406,7 +406,15 @@ class ComicRenderer:
                 print(f"[Renderer] Panel {index}: tension={tension_level}, layout={layout_type}, SFX={sound_effect}")
                 print(f"[Renderer] Panel {index}: SFX={sound_effect}")
 
-                sfx_font_size = 48
+                # Scale SFX to the panel + tension so it reads with real manga impact
+                # (the old fixed 48px was tiny on a 1024px panel) — but keep the burst
+                # within the frame: shorter SFX get a touch bigger. [QA 2026-06-28]
+                _base = max(48, int(img.width * 0.075))
+                if tension_level >= 9:
+                    _base = int(_base * 1.15)
+                if len(sound_effect) <= 6:   # CLASH!, BOOM!, SLASH! — room to grow
+                    _base = int(_base * 1.15)
+                sfx_font_size = _base
                 sfx_font = None
                 sfx_font_path_used = "PIL default"
                 font_paths = [
@@ -474,23 +482,50 @@ class ComicRenderer:
                 sfx_x = max(15, min(sfx_x, img.width - sfx_w - 15))
                 sfx_y = max(15, min(sfx_y, img.height - sfx_h - 15))
 
-                pad = 40
+                # Manga impact effect: a jagged white starburst (black outline) behind
+                # bold black text with a white halo. Reads on any background and gives a
+                # real comic "impact" feel instead of plain floating text. [QA 2026-06-28]
+                import math
+                pad = int(max(sfx_w, sfx_h) * 0.42) + 28
                 temp_w = sfx_w + pad * 2
                 temp_h = sfx_h + pad * 2
                 text_img = Image.new("RGBA", (temp_w, temp_h), (0, 0, 0, 0))
                 t_draw = ImageDraw.Draw(text_img)
-                
-                # Draw white outline 4 times with 3px offset in each direction
-                offsets = [(-3, -3), (-3, 3), (3, -3), (3, 3)]
-                for ox, oy in offsets:
-                    t_draw.text((pad + ox, pad + oy), sound_effect, font=sfx_font, fill=(255, 255, 255, 255))
-                # Draw black text in center
-                t_draw.text((pad, pad), sound_effect, font=sfx_font, fill=(0, 0, 0, 255))
+
+                cx, cy = temp_w / 2, temp_h / 2
+                outer_r = max(sfx_w, sfx_h) / 2 + pad * 0.6
+                inner_r = outer_r * 0.66
+                spikes = 14
+                burst = []
+                for i in range(spikes * 2):
+                    r = outer_r if i % 2 == 0 else inner_r
+                    # slight per-spike jitter so the burst looks hand-inked, not geometric
+                    rr = r * random.uniform(0.9, 1.08)
+                    a = math.pi * i / spikes
+                    burst.append((cx + rr * math.cos(a), cy + rr * math.sin(a)))
+                # black outline burst, then white fill slightly inset
+                t_draw.polygon(burst, fill=(0, 0, 0, 255))
+                burst_in = [(cx + (px - cx) * 0.93, cy + (py - cy) * 0.93) for px, py in burst]
+                t_draw.polygon(burst_in, fill=(255, 255, 255, 255))
+
+                # Bold black text with a thick white halo, centred on the burst
+                tx = cx - sfx_w / 2 - sfx_bbox[0]
+                ty = cy - sfx_h / 2 - sfx_bbox[1]
+                halo = 5
+                for ox in range(-halo, halo + 1, 2):
+                    for oy in range(-halo, halo + 1, 2):
+                        if ox or oy:
+                            t_draw.text((tx + ox, ty + oy), sound_effect, font=sfx_font, fill=(255, 255, 255, 255))
+                t_draw.text((tx, ty), sound_effect, font=sfx_font, fill=(0, 0, 0, 255))
 
                 rotated_img = text_img.rotate(angle, expand=True, resample=Image.Resampling.BICUBIC)
-                
-                paste_x = sfx_x - pad
-                paste_y = sfx_y - pad
+
+                # Centre the (expanded) burst on the intended SFX point so the larger
+                # canvas + rotation don't drift it off-target.
+                paste_x = int(sfx_x + sfx_w / 2 - rotated_img.width / 2)
+                paste_y = int(sfx_y + sfx_h / 2 - rotated_img.height / 2)
+                paste_x = max(0, min(paste_x, img.width - rotated_img.width))
+                paste_y = max(0, min(paste_y, img.height - rotated_img.height))
                 overlay.paste(rotated_img, (paste_x, paste_y), rotated_img)
                 print(f"[Renderer] Sound effect '{sound_effect}' rendered at corner '{sfx_pos_type}' with angle {angle:.1f}°")
 
