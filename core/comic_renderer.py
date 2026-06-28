@@ -77,8 +77,10 @@ class ComicRenderer:
             overlay = Image.new("RGBA", img.size, (255, 255, 255, 0))
             draw = ImageDraw.Draw(overlay)
             
-            # Recalculate speech bubble parameters relative to actual panel dimensions
-            font_size = max(14, int(img.width * 0.024))
+            # Recalculate speech bubble parameters relative to actual panel dimensions.
+            # Bumped from 0.024 -> 0.040 (min 22) so bubble text stays legible once the
+            # finished page is displayed scaled-down in the UI.
+            font_size = max(22, int(img.width * 0.040))
             
             # Bubble Style configuration
             style_name = style.lower() if style else "anime"
@@ -211,19 +213,21 @@ class ComicRenderer:
                     padding_x = int(font_size * 1.4)
                     padding_y = int(font_size * 0.9)
 
-                # Maximum width limit (70% for narration, 50% for speech bubbles)
+                # Maximum width limit (75% for narration, 62% for speech bubbles —
+                # wider bubbles fit larger, more readable text with fewer cramped wraps)
                 if is_narration:
-                    max_width = int(img.width * 0.70)
+                    max_width = int(img.width * 0.75)
                 else:
-                    max_width = int(img.width * 0.50)
+                    max_width = int(img.width * 0.62)
 
                 # Setup fonts and scale down font size if text is very long relative to panel size
                 active_font = narration_font if is_narration else speech_font
                 if not is_narration and self.font_path:
+                    # Only gently shrink very long dialogue; keep it readable (min 18).
                     if text_len > 200:
-                        active_font = ImageFont.truetype(self.font_path, max(12, int(font_size * 0.6)))
+                        active_font = ImageFont.truetype(self.font_path, max(18, int(font_size * 0.8)))
                     elif text_len > 100:
-                        active_font = ImageFont.truetype(self.font_path, max(12, int(font_size * 0.75)))
+                        active_font = ImageFont.truetype(self.font_path, max(18, int(font_size * 0.9)))
 
                 lines = self._wrap_text(text, active_font, max_width, draw)
                 if not lines:
