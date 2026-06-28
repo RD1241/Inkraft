@@ -72,9 +72,11 @@ DATA_DIR = os.environ.get("DATA_DIR")
 if DATA_DIR:
     DB_DIR = os.path.join(DATA_DIR, "db")
     OUTPUTS_DIR = os.path.join(DATA_DIR, "outputs")
+    LOGS_DIR = os.path.join(DATA_DIR, "logs")
 else:
     DB_DIR = os.path.join(BASE_DIR, "core")
     OUTPUTS_DIR = os.path.join(BASE_DIR, "outputs")
+    LOGS_DIR = os.path.join(BASE_DIR, "logs")
 
 # SQLite will not create missing parent dirs — ensure the DB dir exists up front.
 os.makedirs(DB_DIR, exist_ok=True)
@@ -141,6 +143,9 @@ PROMPT_NEGATIVE = (
 )
 
 # --- SYSTEM & RELIABILITY ---
+# Concurrent comic jobs processed in parallel (generation is API-bound on fal.ai,
+# not GPU-bound). 4 is plenty for a small beta; bump via env for open beta.
+CONCURRENT_WORKERS = int(os.environ.get("CONCURRENT_WORKERS", "4"))
 MAX_RETRIES = 2
 ENABLE_CACHING = False
 MIN_INPUT_LENGTH = 20

@@ -27,7 +27,8 @@ def main() -> int:
     ap.add_argument("--recent", type=int, default=0, help="list the last N comics")
     args = ap.parse_args()
 
-    log_file = os.path.join(settings.BASE_DIR, "logs", "generation_metadata.jsonl")
+    logs_dir = getattr(settings, "LOGS_DIR", os.path.join(settings.BASE_DIR, "logs"))
+    log_file = os.path.join(logs_dir, "generation_metadata.jsonl")
     if not os.path.exists(log_file):
         print(f"No cost log yet at {log_file} (run a comic first).")
         return 0
@@ -67,6 +68,17 @@ def main() -> int:
     print("\nBy model/endpoint:")
     for m, (cnt, cost) in sorted(by_model.items(), key=lambda kv: -kv[1][1]):
         print(f"  {m:<36} {cnt:>4} comics  ${cost:.3f}")
+
+    # Per-user spend (user_id logged since 2026-06-28) — see which testers cost most.
+    by_user = defaultdict(lambda: [0, 0.0])
+    for e in entries:
+        uid = e.get("user_id") or "(unknown)"
+        by_user[uid][0] += 1
+        by_user[uid][1] += float(e.get("estimated_request_cost", 0.0) or 0.0)
+    if len(by_user) > 1 or "(unknown)" not in by_user:
+        print("\nBy user:")
+        for uid, (cnt, cost) in sorted(by_user.items(), key=lambda kv: -kv[1][1])[:15]:
+            print(f"  {str(uid)[:38]:<38} {cnt:>4} comics  ${cost:.3f}")
 
     # Tiered pricing: worst-case $/credit is the priciest tier (most panels per credit).
     free_credits = getattr(settings, "NEW_USER_CREDITS", 5)

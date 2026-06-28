@@ -14,3 +14,4 @@ test_outputs/
 node_modules/
 backups/
 data/
+logs/

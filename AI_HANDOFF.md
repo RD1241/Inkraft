@@ -105,6 +105,14 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-28 — Claude Code — Beta-prep: configurable workers + richer/persistent cost logging
+- Reviewed an external AI's pre-beta checklist against the real code: daily limit already removed, friendly insufficient-credit error already returned, generation logging already exists — so most of its "blockers" were done. Two cheap genuinely-missing items implemented (founder OK'd):
+  - **`CONCURRENT_WORKERS` env (default 4).** `comic_service` job pool was hardcoded `max_workers=4`; now `settings.CONCURRENT_WORKERS`. (Corrects the external AI's wrong "it's 1" premise.)
+  - **Enriched generation log.** `_log_generation_metadata` now records `user_id` + `panel_count` (was missing) alongside the existing style/cost/duration/status. `tools/cost_report.py` gained a **per-user spend** breakdown.
+- **Also fixed a real deploy gap:** the cost log wrote to `BASE_DIR/logs` → **wiped on every Railway redeploy**. Added volume-aware `settings.LOGS_DIR` (→ `/data/logs` when `DATA_DIR` set), used by the logger + cost report, so beta spend history persists. Untracked `logs/*.jsonl` from git (runtime data) + gitignored `logs/`.
+- **Verified:** compiles; `CONCURRENT_WORKERS` env override works; a logged entry includes `user_id`+`panel_count`; cost report reads `LOGS_DIR` and renders. `DEPLOY.md` env table updated.
+- **Context:** founder will enable Supabase email confirmation, run a private beta (2-3 Antigravity subagents-as-users + a few invitees), and top up fal.ai (+$10) after beta. **Budget caution logged:** current fal balance ~$6.80 ≈ the cost of a fully-active 20-user beta; subagents should test FREE flows exhaustively and do only a few real paid generations.
+
 ### 2026-06-28 — Claude Code — Backend log/perf cleanup from runtime logs
 - Founder reported noisy backend output. Diagnosed from the logs (most requests were 200 OK):
   - **`[SupabaseAuth] Connected` on nearly every request** — `SupabaseAuth()` is instantiated per-request in 13 places and each `__init__` called `create_client` + printed "Connected". Fixed: process-wide `(url,key)`-keyed client cache (`_get_cached_client`, thread-safe) in `providers/auth/supabase_auth.py`; the client is now created/logged ONCE and reused. Verified: 5 instances → 1 "Connected", all share one client. (Real perf win on the deployed box, not just log noise.)

@@ -31,8 +31,9 @@ class ComicService:
         self.expression_engine = ExpressionEngine()
         self.camera_director = CameraDirector()
         
-        # Bumped to 4 workers: generation is API-bound (fal.ai), not GPU-bound — safe for concurrent users
-        self.job_executor = ThreadPoolExecutor(max_workers=4)
+        # Generation is API-bound (fal.ai), not GPU-bound — safe for concurrent users.
+        # Env-configurable (settings.CONCURRENT_WORKERS, default 4) for open-beta scaling.
+        self.job_executor = ThreadPoolExecutor(max_workers=getattr(settings, "CONCURRENT_WORKERS", 4))
 
     def queue_comic_generation(self, text: str, style: str, panel_count: int = None, layout_type: str = None, user_id: str = None, characters: list = None, generation_format: str = None, color_mode: str = "auto") -> tuple[str, bool]:
         """
@@ -367,6 +368,8 @@ class ComicService:
                         safety_triggered=(total_safety_retries > 0 or total_reroutes > 0),
                         status="success",
                         credit_txn="deducted_1",
+                        user_id=user_id,
+                        panel_count=1,
                         actual_submissions=total_submissions,
                         actual_request_ids=all_request_ids,
                         actual_safety_retries=total_safety_retries,
@@ -763,6 +766,8 @@ class ComicService:
                     safety_triggered=(total_safety_retries > 0 or total_reroutes > 0),
                     status="success",
                     credit_txn="deducted_1",
+                    user_id=user_id,
+                    panel_count=total_panels,
                     actual_submissions=total_submissions,
                     actual_request_ids=all_request_ids,
                     actual_safety_retries=total_safety_retries,
@@ -826,6 +831,8 @@ class ComicService:
                     safety_triggered=("Safety filter" in str(e) or total_safety_retries > 0 or total_reroutes > 0),
                     status="failed",
                     credit_txn="refunded_1" if user_id else "none",
+                    user_id=user_id,
+                    panel_count=panel_count,
                     actual_submissions=total_submissions,
                     actual_request_ids=all_request_ids,
                     actual_safety_retries=total_safety_retries,
@@ -857,6 +864,8 @@ class ComicService:
         safety_triggered: bool,
         status: str,
         credit_txn: str = "deducted_1",
+        user_id: str = None,
+        panel_count: int = None,
         actual_submissions: int = 1,
         actual_request_ids: list = None,
         actual_safety_retries: int = 0,
@@ -868,7 +877,7 @@ class ComicService:
         estimated_request_cost: float = 0.0025
     ):
         try:
-            log_dir = os.path.join(settings.BASE_DIR, "logs")
+            log_dir = getattr(settings, "LOGS_DIR", os.path.join(settings.BASE_DIR, "logs"))
             os.makedirs(log_dir, exist_ok=True)
             log_file = os.path.join(log_dir, "generation_metadata.jsonl")
             
@@ -878,6 +887,8 @@ class ComicService:
 
             log_entry = {
                 "timestamp": timestamp,
+                "user_id": user_id,
+                "panel_count": panel_count,
                 "style": style,
                 "model": actual_model if actual_model != "unknown" else fallback_model,
                 "seed": seed,

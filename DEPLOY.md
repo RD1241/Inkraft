@@ -47,6 +47,7 @@ users, credits, and history. (Northflank: same idea, attach a 0.5 GB+ volume at 
 | `NEW_USER_CREDITS` | `5` | starting credits for new signups |
 | `CREDIT_PANEL_TIERS` | `2:1,4:2,6:3` | tiered credit pricing: ≤2 panels=1cr, ≤4=2cr, ≤6=3cr |
 | `CREDITS_AI_DEFAULT` | `2` | credits charged when panel count is AI-decided |
+| `CONCURRENT_WORKERS` | `4` | parallel comic jobs; raise for open beta |
 
 `IMAGE_PROVIDER` does **not** need setting — the app auto-selects `fal_ai` whenever a
 real `FAL_KEY` is present. `PORT` is provided by Railway automatically.
