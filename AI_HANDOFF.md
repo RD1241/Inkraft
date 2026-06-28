@@ -105,6 +105,19 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-28 — Claude Code — SESSION HANDOFF: prompt-quality cracked; full QA audit PENDING (→ new session)
+- **LIVE on Railway:** https://inkraft-production.up.railway.app — verified serving (frontend + API + Supabase). Trial plan → **NO persistent volume yet** (generated images + local SQLite reset on redeploy; Supabase persists auth/credits/vault/history). Upgrade to Hobby + attach `/data` volume before real beta (see DEPLOY.md). **Supabase email verification is DISABLED** for testing — RE-ENABLE before public launch. Repo RD1241/Inkraft, all work pushed to `main`.
+- **Fixed & deployed this session:** colour-mode backend; Vault Supabase fix; Railway deploy (slim 342MB image, no torch/Ollama); volume-aware `DATA_DIR`; sqlite backup; tiered credit pricing (grant 5; tiers 2:1,4:2,6:3); dashboard panel-count + colour controls; Supabase client caching; favicon; `CONCURRENT_WORKERS`; richer/persistent cost logging; cinematic/realistic now use proper SDXL models (dreamshaper-XL/RealVisXL) + honour panel_count + `IMAGE_ROUTING_MODE=sdxl_only`; bigger readable speech bubbles; **QUALITY ROOT CAUSE fix in `core/llm_processor.py`** (see entry below).
+- **KEY LEARNING (avoid the founder's lost month):** the image MODEL is rarely the problem — the PROMPT/extraction is. Always verify against REAL generated images and trace the ACTUAL pipeline prompt (free Groq trace: LLM extract → storyboard_director → prompt_builder).
+- **PENDING — founder's full QA + quality mega-task (NEW SESSION, $4 fal budget, ~$0.04 spent):**
+  1. **Model bake-off:** generate every model (SDXL animagine/dreamshaper/RealVisXL, nano-banana edit, FLUX schnell/dev/pro) × every style; VIEW images; pick best quality+cost per style and wire in. Harness: `fal_client.subscribe(endpoint, {"prompt":..,"image_size":{"width":1024,"height":1280}, ...})`.
+  2. **Prompt-engine + storyboard deep audit:** trace MANY genres (fantasy, romance, action, sci-fi, multi-char, ENVIRONMENT-ONLY, single-OBJECT e.g. a sword, FIGHT scenes) and fix every weakness like the noir fix.
+  3. **Full-comic story test (as a real user):** save characters in the Vault → generate a **5-page comic on 5 credits that follows a COHERENT story across all 5 pages**.
+  4. **Non-character content:** environment-only panels, single-object panels (a sword), and FIGHT scenes with real impact + **SFX** (CLANG/BOOM/clash/vibration lines) like real manga/manhwa.
+  5. **Dialogue boxes:** verify proper rendering everywhere (already enlarged — check positioning/overlap/SFX).
+  6. **UI audit + rebuild (desktop AND mobile — mobile has MANY issues):** fix mobile, add polish e.g. a rotating style-card animation (auto-cycle each style every 3–5s vs static buttons). Free hands to improve UI.
+  - Run multiple end-to-end scenarios like a real user. Commit per step; keep this Task Log current.
+
 ### 2026-06-28 — Claude Code — QUALITY ROOT CAUSE FIXED: prompt, not model (paid-verified ~$0.04)
 - Diagnosed the "every scene looks like anime schoolkids" problem by generating real images ($0.03): the SAME animagine model produces an EXCELLENT noir detective with a good prompt (and FLUX too) — so the **model was never the issue, the PROMPT was**. Traced the live pipeline's actual prompt for the noir scene and found 3 root causes in `core/llm_processor.py`:
   1. **Hardcoded positional outfit templates** — character slot 1 ALWAYS got "school uniform", slot 2 "casual outfit", etc., regardless of who they were (a detective → school uniform). Fixed: removed the forced outfits (both the LLM-enrich path ~:455 and rule-based path ~:640) → neutral hair-only fallback; the scene action + environment + style now drive clothing.
