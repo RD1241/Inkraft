@@ -368,7 +368,16 @@ class FalAIImageProvider(ImageProvider):
 
             # When panel is single page format
             if panel_count == 1:
-                w, h = 1024, 1450
+                # Environment/object-only single page (no characters in frame): FLUX's
+                # tall-portrait bias inserts a spurious lone figure into empty scenes. A
+                # landscape aspect fixes it cleanly — verified: a 1280x768 empty street
+                # rendered with zero people where 1024x1280 always added a person.
+                # [QA 2026-06-28]  (Only single-page — multi-panel dims are owned by the
+                # compositor's tiling and must not change.)
+                if not focus_character and not secondary_character:
+                    w, h = 1280, 832
+                else:
+                    w, h = 1024, 1450
             else:
                 # Fix 1: Round to nearest 64 pixels (SDXL requirement), clamping to [512, 1536]
                 w = int(round(panel_width / 64.0) * 64)
