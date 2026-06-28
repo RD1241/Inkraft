@@ -190,11 +190,11 @@ class LLMProcessor:
         self.system_prompt = """You are a comic storyboard extractor. Read the novel text and output ONLY valid JSON. No markdown, no explanation.
 
 Extract scenes into this exact structure:
-{"global_environment": "<where overall story happens, max 8 words>", "scenes": [{"scene_id": 1, "environment": "<location>", "focus_character": "<main char name>", "characters": [{"name": "<name>", "character_role": "main_character|secondary_character|enemy_character", "description": "<max 10 words, include male/female>"}], "action": "<what physically happens>", "emotion": "<mood>", "dialogue": [{"speaker": "<name or Narrator>", "type": "speech|narration", "text": "<words>"}]}]}
+{"global_environment": "<where overall story happens, max 8 words>", "scenes": [{"scene_id": 1, "environment": "<location>", "focus_character": "<main char name>", "characters": [{"name": "<name>", "character_role": "main_character|secondary_character|enemy_character", "description": "<male/female, approx age, hair, and CLOTHING that fits this character's role and the story setting>"}], "action": "<what physically happens>", "emotion": "<mood>", "dialogue": [{"speaker": "<name or Narrator>", "type": "speech|narration", "text": "<words>"}]}]}
 
 Rules:
 - Use as many scenes as the text has beats (do not force exactly 4).
-- Keep descriptions under 10 words. Include gender: male/female.
+- Each description MUST include gender (male/female) AND clothing that fits the character's role/title and the story's genre. Infer attire: a detective -> "adult male, short dark hair, long trench coat"; a knight/soldier -> "armor" or "uniform"; a king/queen -> "royal robes"; a modern professional -> "suit"; a wizard -> "robes". ONLY use "school uniform" when the scene is actually set in a school. Keep each description under 12 words.
 - Guards/soldiers = secondary_character. Enemies/monsters = enemy_character. Hero = main_character.
 - ALL scenes MUST be inside the single top-level "scenes" array. Never split scenes into multiple arrays or objects.
 - Output ONLY the single JSON object. Nothing before or after it. No trailing commas."""
@@ -452,41 +452,48 @@ Rules:
                     })
                     existing_names.add(char_name.lower())
 
+        # Neutral last-resort appearances: distinct hair for visual separation but NO
+        # forced outfit — a hardcoded "school uniform" used to override detectives,
+        # knights, etc. The scene action + environment + style drive the clothing.
         fallback_appearances = [
-            # Character 1: main character
-            {
-                "female": "female, short black hair, school uniform",
-                "male": "male, short black hair, school uniform"
-            },
-            # Character 2: secondary character
-            {
-                "female": "female, long brown hair, ponytail, casual outfit",
-                "male": "male, messy brown hair, casual outfit"
-            },
-            # Character 3: third character
-            {
-                "female": "female, blonde hair, twin tails, red sweater",
-                "male": "male, spiky blonde hair, jacket"
-            }
+            {"female": "female, dark hair", "male": "male, short dark hair"},
+            {"female": "female, brown hair", "male": "male, brown hair"},
+            {"female": "female, light hair", "male": "male, light hair"},
         ]
 
+        # Dedupe by title-stripped "core" name so "Detective Mori" and "Mori" (the
+        # same person) don't become two characters (a ghost 3rd person in the panel).
+        _TITLES = {"detective", "dr", "mr", "mrs", "ms", "miss", "captain", "capt",
+                   "sir", "lord", "lady", "king", "queen", "prince", "princess",
+                   "officer", "professor", "prof", "doctor", "general", "colonel",
+                   "sergeant", "sgt", "agent", "master", "madam"}
+
+        def _core_name(n):
+            ws = [w for w in re.sub(r"[^\w\s]", "", n.lower()).split() if w not in _TITLES]
+            return " ".join(ws) if ws else n.lower()
+
         seen = set()
+        seen_cores = set()
         normalized = []
         for j, char in enumerate(scene.get("characters", []) or []):
             char = dict(char)
             name = str(char.get("name", "")).strip()
             key = name.lower()
-            if key in blacklist or key in seen:
+            core = _core_name(name)
+            if key in blacklist or core in seen_cores or key in seen:
                 continue
             seen.add(key)
-            
-            # Enrich description if generic or lacks visual detail
+            seen_cores.add(core)
+
+            # Enrich description ONLY if it is essentially empty / name-only. Do NOT
+            # overwrite a real LLM description just because it lacks a hair keyword
+            # (that used to throw away "detective, dark coat" and force a uniform).
             desc = str(char.get("description", "")).strip()
             desc_lower = desc.lower()
             is_generic = False
-            if not desc_lower or desc_lower in ("character", key, f"{key} character", "unknown"):
+            if not desc_lower or desc_lower in ("character", key, f"{key} character", "unknown", f"{key} character, male", f"{key} character, female"):
                 is_generic = True
-            elif not any(w in desc_lower for w in ("hair", "eye", "wear", "outfit", "uniform", "shirt", "pant", "jacket", "suit", "dress", "cloth", "skirt", "robe", "cloak")):
+            elif not any(w in desc_lower for w in ("hair", "eye", "wear", "outfit", "uniform", "shirt", "pant", "jacket", "suit", "dress", "cloth", "skirt", "robe", "cloak", "coat", "trench", "armor", "armour", "gown", "cape", "hat", "glasses", "beard", "tie", "vest", "scarf", "boots", "hood", "kimono", "detective", "soldier", "knight", "king", "queen", "officer", "warrior", "ninja", "samurai")):
                 is_generic = True
                 
             if is_generic:
@@ -642,24 +649,14 @@ Rules:
         if not char_names:
             char_names = ["Character"]
 
-        # Build the characters list with generic-but-distinct visual descriptions
+        # Build the characters list with neutral-but-distinct visual descriptions.
+        # NO forced outfit (a hardcoded "school uniform" used to override the scene);
+        # distinct hair only, so the action + environment + style drive the clothing.
         characters = []
         fallback_appearances = [
-            # Character 1: main character
-            {
-                "female": "female, short black hair, school uniform",
-                "male": "male, short black hair, school uniform"
-            },
-            # Character 2: secondary character
-            {
-                "female": "female, long brown hair, ponytail, casual outfit",
-                "male": "male, messy brown hair, casual outfit"
-            },
-            # Character 3: third character
-            {
-                "female": "female, blonde hair, twin tails, red sweater",
-                "male": "male, spiky blonde hair, jacket"
-            }
+            {"female": "female, dark hair", "male": "male, short dark hair"},
+            {"female": "female, brown hair", "male": "male, brown hair"},
+            {"female": "female, light hair", "male": "male, light hair"},
         ]
 
         for j, name in enumerate(char_names):
