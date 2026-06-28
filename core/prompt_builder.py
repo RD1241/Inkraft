@@ -431,14 +431,26 @@ class PromptBuilder:
         # ----- Layer 1: Camera tokens ----------------------------------
         camera_input = scene.get("camera") or scene.get("camera_angle") or scene.get("shot_type") or ""
         if camera_input:
-            l1_camera_tokens.extend(self._to_tokens(camera_input))
+            cam_toks = self._to_tokens(camera_input)
+            # Object/environment-only panels: drop person-framing tokens (waist-up,
+            # full-body, head-and-shoulders, portrait) that imply a human subject.
+            if not scene.get("characters"):
+                _person_frame = ("waist-up", "full-body", "full body", "head and shoulders",
+                                 "upper body", "portrait", "close-up shot", "headshot")
+                cam_toks = [t for t in cam_toks if not any(pf in t.lower() for pf in _person_frame)]
+            l1_camera_tokens.extend(cam_toks)
 
         # ----- Layer 2: Emotion tokens ---------------------------------
+        # Emotion describes a person's face/body — only meaningful when a character
+        # is in frame. For object/environment-only panels (no characters) skip it,
+        # so a sword-on-an-altar or empty-street shot isn't pushed toward a face.
+        has_characters = bool(scene.get("characters"))
         emotion_input = scene.get("emotion") or ""
-        if emotion_input:
-            l2_emotion_tokens.extend(self._to_tokens(emotion_input))
-        else:
-            l2_emotion_tokens.append("calm expression")
+        if has_characters:
+            if emotion_input:
+                l2_emotion_tokens.extend(self._to_tokens(emotion_input))
+            else:
+                l2_emotion_tokens.append("calm expression")
 
         # ----- Layer 3: Lighting tokens (mapped to Layer 4 visually) ----
         scene_lighting = scene.get("lighting") or scene.get("lighting_setup") or ""
@@ -511,32 +523,46 @@ class PromptBuilder:
 
         # ----- Layer 5: Action & environment (V3 — ActionLibrary + InteractionComposer) ----
         env_input = scene.get("global_environment") or scene.get("environment") or ""
-        if env_input:
-            env_lower = env_input.lower().strip()
-            matched_anchors = []
-            for key, anchor in ENVIRONMENT_VISUAL_ANCHORS.items():
-                if key in env_lower:
-                    matched_anchors.append(anchor)
-            
-            if matched_anchors:
-                # Add concrete anchors to provide strong visual weight
-                for anchor in matched_anchors:
-                    l5_action_env_tokens.extend(self._to_tokens(anchor))
-            else:
-                l5_action_env_tokens.extend(self._to_tokens(env_input))
-
         action_input = scene.get("action") or ""
-        if action_input:
-            l5_action_env_tokens.extend(self._to_tokens(action_input))
-            # V3: Inject structured visual action tokens
-            action_visual_tokens = _action_library.get_action_tokens(action_input)
-            if action_visual_tokens:
-                l5_action_env_tokens.extend(action_visual_tokens)
-            # V3: Inject physical interaction tokens for multi-character scenes
-            char_count = len(characters)
-            interaction_tokens = _interaction_composer.detect_and_inject(action_input, char_count)
-            if interaction_tokens:
-                l5_action_env_tokens.extend(interaction_tokens)
+
+        def _env_tokens():
+            toks = []
+            if env_input:
+                env_lower = env_input.lower().strip()
+                matched = [a for k, a in ENVIRONMENT_VISUAL_ANCHORS.items() if k in env_lower]
+                if matched:
+                    for anchor in matched:
+                        toks.extend(self._to_tokens(anchor))
+                else:
+                    toks.extend(self._to_tokens(env_input))
+            return toks
+
+        def _action_tokens():
+            toks = []
+            if action_input:
+                toks.extend(self._to_tokens(action_input))
+                avt = _action_library.get_action_tokens(action_input)
+                if avt:
+                    toks.extend(avt)
+                it = _interaction_composer.detect_and_inject(action_input, len(characters))
+                if it:
+                    toks.extend(it)
+            return toks
+
+        if not has_characters:
+            # Object / environment-only panel. FLUX (the default model) ignores the
+            # negative prompt, so the "keep people out" constraint must live in the
+            # POSITIVE prompt — but diffusion models handle negation poorly: literal
+            # "no people" paradoxically summons the token "people". So we use positive
+            # desolation adjectives that contain NO person-nouns. Also lead with the
+            # action/subject (e.g. the sword) so a hero object isn't drowned out by the
+            # heavy environment anchors.
+            l5_action_env_tokens.append("completely deserted, abandoned, desolate, silent, empty, still, lifeless, uninhabited")
+            l5_action_env_tokens.extend(_action_tokens())
+            l5_action_env_tokens.extend(_env_tokens())
+        else:
+            l5_action_env_tokens.extend(_env_tokens())
+            l5_action_env_tokens.extend(_action_tokens())
 
         # ----- Layer 6: Style prefix templates -------------------------
         if template.get("prefix"):
@@ -692,6 +718,11 @@ class PromptBuilder:
         # Add crowd suppression for multi-character panels
         if len(characters) > 1:
             neg_parts.append("extra person, third character, background crowd, extra characters, duplicate characters")
+        elif len(characters) == 0:
+            # Object / environment-only panel (a sword on an altar, an empty street):
+            # the extraction found no characters, so actively keep people out of frame
+            # instead of letting the model default to inserting a person.
+            neg_parts.append("person, people, human, man, woman, crowd, figure, portrait, face, character")
 
         for char in characters:
             neg = self._gender_negative(char)

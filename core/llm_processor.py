@@ -398,6 +398,10 @@ Rules:
         blacklist = {
             "he", "she", "it", "they", "them", "him", "her", "his", "hers", "their", "theirs",
             "someone", "everyone", "nobody", "noone", "anybody", "somebody", "character",
+            # no-person tokens: an LLM "focus_character": "none" (or narrator/unknown)
+            # must never become a real character, or object/environment-only panels
+            # render a ghost man. [QA 2026-06-28]
+            "none", "unknown", "narrator", "nothing", "soul", "no", "n/a",
             "people", "man", "woman", "boy", "girl", "knight", "commander", "enemy", "the",
             "and", "but", "then", "this", "when", "after", "for", "with", "a", "an", "of"
         }
@@ -505,6 +509,15 @@ Rules:
             char = self._apply_gender_bias_fix(char)
             normalized.append(char)
         scene["characters"] = normalized
+
+        # Reconcile focus_character with the surviving cast. A no-person / blacklisted
+        # focus ("none", "narrator", ...) must NOT leak downstream as a fake lead —
+        # for an object/environment-only panel it stays empty so the prompt builder
+        # renders the scene, not a ghost person. [QA 2026-06-28]
+        focus = str(scene.get("focus_character", "")).strip()
+        norm_names = {c.get("name", "").strip().lower() for c in normalized}
+        if focus.lower() in blacklist or focus.lower() not in norm_names:
+            scene["focus_character"] = normalized[0]["name"] if normalized else ""
 
     def _normalize_storyboard(self, parsed: dict, source_text: str, panel_count: int = None, layout_type: str = None) -> dict:
         """
@@ -621,6 +634,10 @@ Rules:
             # pronouns / generic references
             "he", "she", "it", "they", "them", "him", "her", "his", "hers", "their", "theirs",
             "someone", "everyone", "nobody", "noone", "anybody", "somebody", "character",
+            # no-person tokens: an LLM "focus_character": "none" (or narrator/unknown)
+            # must never become a real character, or object/environment-only panels
+            # render a ghost man. [QA 2026-06-28]
+            "none", "unknown", "narrator", "nothing", "soul", "no", "n/a",
             "people", "man", "woman", "boy", "girl", "knight", "commander", "enemy",
             # common conjunctions / prepositions / articles
             "the", "and", "but", "then", "this", "when", "after", "for", "with", "a", "an", "of",
