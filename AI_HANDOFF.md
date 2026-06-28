@@ -160,9 +160,12 @@ Working through the founder's 6-part full-SaaS QA audit ($4 fal budget). Done so
   in the ACTION (sword clash, drew his katana); they're only dropped when an item lives only
   in a character's *held-item description*. Left as-is (lower priority than the above).
 - **Total fal spend this session ≈ $0.35** of $4 (bake-off + non-char + the real comic).
+- **[DONE · 43a14b5] Step-4/5 SFX upgrade.** The action SFX was small (fixed 48px) plain
+  floating text. Now `comic_renderer` draws a panel-scaled jagged white starburst (black
+  outline, hand-inked jitter) behind bold haloed text — a real manga impact effect, re-centred
+  + clamped so it never clips. Verified by rendering CLASH! onto a clean panel. Dialogue boxes
+  were already verified good in the real comic page (readable, positioned, no bad overlap).
 - **STILL PENDING for next session:**
-  - **Step 5 SFX polish (optional):** dialogue boxes render well; the "CLASH!" SFX works but
-    is plain — real manga SFX are huge/jagged/dramatic. Enhance `comic_renderer` SFX styling.
   - **Step 6 UI desktop+mobile** — per §1 division of labor this is **Antigravity's lane**
     (mobile has many issues; founder wants a rotating auto-cycling style-card animation). The
     mission asked Claude too, but the deep pipeline/quality work (Claude's lane) was the
