@@ -437,7 +437,14 @@ class FalAIImageProvider(ImageProvider):
             # setting/action. So they always bypass the premium nano edit.
             photoreal_style = style_key in ("cinematic", "realistic")
 
-            if routing_mode == "sdxl_only" or photoreal_style:
+            # "flux_all" (default) / "sdxl_only" / "text_to_image": never use the nano
+            # reference-editor — every panel is straight text-to-image on the style's
+            # model (FLUX dev), so the prompt drives the result. The 2026-06-28 QA found
+            # FLUX both follows the prompt far better AND keeps Vault characters
+            # consistent (strong identity tokens + seed-lock), at lower cost than nano —
+            # verified on a real Kael/Elena manga page. nano_all/hybrid/pro_shared remain
+            # available for reference-conditioned consistency if ever needed.
+            if routing_mode in ("flux_all", "sdxl_only", "text_to_image") or photoreal_style:
                 # No reference conditioning: straight text-to-image on the style's
                 # model, so the prompt (setting/action/style) drives the result.
                 use_premium = False

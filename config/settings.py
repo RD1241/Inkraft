@@ -13,13 +13,19 @@ os.environ["IMAGE_PROVIDER"] = IMAGE_PROVIDER
 
 # --- IMAGE ROUTING (tiered model selection) ---
 # IMAGE_ROUTING_MODE:
+#   "flux_all"   -> every panel is straight text-to-image on the style's model (FLUX
+#                   dev by default). The 2026-06-28 QA bake-off + a real Kael/Elena
+#                   manga page showed FLUX follows the prompt far better than the nano
+#                   reference-editor AND keeps Vault characters consistent (strong
+#                   identity tokens + seed-lock), at lower cost ($0.025 vs $0.039).
+#                   (default)  ["sdxl_only"/"text_to_image" are aliases.]
 #   "nano_all"   -> every panel with a named character uses the reference-conditioned
-#                   premium model (PREMIUM_IMAGE_MODEL). Best quality + consistency; SDXL
-#                   is only the automatic fallback. (default)
+#                   premium model (PREMIUM_IMAGE_MODEL). Reference-anchored consistency,
+#                   but the portrait is anime-biased and it ignores setting/action more.
 #   "hybrid"     -> only shared-frame (multi-character) panels use the premium model;
-#                   single-character panels stay on cheap SDXL.
+#                   single-character panels stay on cheap text-to-image.
 #   "pro_shared" -> only shared frames, forced onto nano-banana-pro (max quality).
-IMAGE_ROUTING_MODE = os.environ.get("IMAGE_ROUTING_MODE", "nano_all")
+IMAGE_ROUTING_MODE = os.environ.get("IMAGE_ROUTING_MODE", "flux_all")
 PREMIUM_IMAGE_MODEL = os.environ.get("PREMIUM_IMAGE_MODEL", "fal-ai/nano-banana/edit")
 # Soft per-job spend guardrail: once a job's estimated fal.ai cost reaches this,
 # remaining panels fall back to cheap SDXL so one comic can't runaway-spend.

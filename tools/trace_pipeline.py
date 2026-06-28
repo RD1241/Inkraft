@@ -39,7 +39,7 @@ def _routing_decision(style, focus, secondary, action):
         premium_model = "fal-ai/nano-banana-pro/edit"
     photoreal_style = style_key in ("cinematic", "realistic")
     is_shared = is_shared_frame_panel(focus, secondary, action)
-    if routing_mode == "sdxl_only" or photoreal_style:
+    if routing_mode in ("flux_all", "sdxl_only", "text_to_image") or photoreal_style:
         use_premium = False
     elif routing_mode in ("hybrid", "pro_shared"):
         use_premium = is_shared

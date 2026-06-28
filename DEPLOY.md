@@ -40,8 +40,8 @@ users, credits, and history. (Northflank: same idea, attach a 0.5 GB+ volume at 
 | `SUPABASE_PUBLISHABLE_KEY` | *(anon/publishable key)* | reuse from local `.env` |
 | `SUPABASE_SECRET_KEY` | *(service/secret key)* | reuse from local `.env` |
 | `DATA_DIR` | `/data` | matches the mounted volume |
-| `IMAGE_ROUTING_MODE` | `nano_all` | tiered routing (default) |
-| `PREMIUM_IMAGE_MODEL` | `fal-ai/nano-banana/edit` | cheap reference model (default) |
+| `IMAGE_ROUTING_MODE` | `flux_all` | **(changed 2026-06-28)** every panel = FLUX dev text-to-image. ⚠️ If your Railway service still has this set to `nano_all`, change it to `flux_all` — see note below. |
+| `PREMIUM_IMAGE_MODEL` | `fal-ai/nano-banana/edit` | only used by nano_all/hybrid/pro_shared |
 | `MAX_COST_PER_JOB` | `0.60` | per-comic fal.ai runaway guard (keep above a full comic's cost) |
 | `MAX_PANELS_PER_COMIC` | `6` | hard panel cap (UI already maxes at 6); raise for a paid tier |
 | `NEW_USER_CREDITS` | `5` | starting credits for new signups |
@@ -52,6 +52,15 @@ users, credits, and history. (Northflank: same idea, attach a 0.5 GB+ volume at 
 `IMAGE_PROVIDER` does **not** need setting — the app auto-selects `fal_ai` whenever a
 real `FAL_KEY` is present. `PORT` is provided by Railway automatically.
 
+> **⚠️ ROUTING CHANGE (2026-06-28) — flip your Railway env var.** The default
+> `IMAGE_ROUTING_MODE` is now **`flux_all`** (was `nano_all`). The QA pass verified on
+> a real Kael/Elena manga page that routing every panel through FLUX dev text-to-image
+> gives better prompt adherence AND keeps Vault characters consistent (strong identity
+> tokens + seed-lock) at lower cost than the nano reference-editor. **If your Railway
+> service has `IMAGE_ROUTING_MODE=nano_all` set explicitly, change it to `flux_all`**
+> (or delete the var to use the new default). Keep `nano_all` only if you specifically
+> want reference-anchored consistency over prompt adherence.
+>
 > **Image model (new default 2026-06-28):** every style's text-to-image model now
 > defaults to **FLUX dev** (`fal-ai/flux/dev`, ~$0.025/img). The paid model bake-off
 > showed it follows the prompt dramatically better than fast-sdxl (correct multi-
