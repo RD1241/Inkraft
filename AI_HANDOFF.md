@@ -165,6 +165,26 @@ Working through the founder's 6-part full-SaaS QA audit ($4 fal budget). Done so
   outline, hand-inked jitter) behind bold haloed text — a real manga impact effect, re-centred
   + clamped so it never clips. Verified by rendering CLASH! onto a clean panel. Dialogue boxes
   were already verified good in the real comic page (readable, positioned, no bad overlap).
+- **[DONE · cda0468] Genre-aware emotion floor (fixed my own regression).** A romance test
+  exposed that the tension>=7 floor hardened a romance climax (tension 8) to "intense" → "cold
+  eyes, unflinching stare". Now the upgrade reads the action: combat→intense, grief/tears→sad,
+  tender/romance→romantic_affection, else→intense. Verified: romance peak → "soft loving
+  half-lidded gaze, warm blush"; sword clash still → intense.
+- **[DONE · 768e0b4] Step-4 environment-only CLOSED (single-page).** Proved by direct A/B that
+  FLUX's tall-portrait bias (not the prompt) inserts a lone figure into empty scenes: same
+  empty-street prompt at 1280x768 = ZERO people, at 1024x1280 = always a person. Fix:
+  character-less single pages render landscape 1280x832. Verified end-to-end through the real
+  provider — clean empty street, no people. (Multi-panel env panels still portrait — changing
+  their dims would break the compositor tiling; lower priority.)
+- **⚠️ OPERATIONAL: Groq free tier daily token limit (100k TPD) was hit** by all the tracing/
+  testing this session — further LLM extraction/storyboard calls fall back to rule-based until
+  it resets (daily). Next session: pace Groq calls, or the founder can upgrade Groq tier.
+- **[OPEN · MED] Singly-named character dropped (romance/dialogue).** A romance scene
+  ("...'I love you,' he whispered") rendered SOLO — the male lead, named once then by pronoun,
+  is excluded by the 2+ occurrence rule (`llm_processor` `all_story_chars`). The rule-based
+  fallback DID get both. Two-person romance/dialogue scenes lose a person. This is the existing
+  §5 [MED] ghost-character tradeoff; a real fix (include possessive/dialogue-attributed single
+  mentions without re-opening ghosts) needs careful work + Groq to verify — deferred.
 - **STILL PENDING for next session:**
   - **Step 6 UI desktop+mobile** — per §1 division of labor this is **Antigravity's lane**
     (mobile has many issues; founder wants a rotating auto-cycling style-card animation). The
