@@ -368,10 +368,21 @@ class ComicRenderer:
             is_movement = any(w in action_desc_lower for w in ["footstep", "run", "stomp", "dash", "chase"])
             
             has_trigger_keyword = is_sword or is_strike or is_explosion or is_movement
-            is_action_layout = (layout_type.lower() == "action" and tension_level >= 7)
-            
-            # Enable sound effects if the condition is met and style is not manhwa/manhua
-            should_trigger = (is_action_layout or has_trigger_keyword) and (style_name not in ["manhwa", "manhua"])
+
+            # Quiet / emotional beats must NOT get a combat SFX, even inside an "action"
+            # comic and even if a weapon noun is present ("lowered his sword", "knelt
+            # before the crying girl"). Suppress on tender keywords. [QA 2026-06-28]
+            quiet_kw = ("kneel", "knelt", "comfort", "smile", "cry", "cries", "crying",
+                        "cried", "tear", "weep", "wept", "sob", "whisper", "hug", "embrace",
+                        "gentle", "calm", "lower", "sheath", "rest", "sleep", "soothe",
+                        "reassur", "peace", "tender", "quietly", "silent", "knee", "hold",
+                        "mourn", "grief", "pray", "kiss", "caress")
+            is_quiet = any(w in action_desc_lower for w in quiet_kw)
+
+            # Fire ONLY on a genuine combat/impact keyword in THIS panel's action, and
+            # never on a quiet beat. (The old "any action-layout panel with tension>=7"
+            # rule wrongly slapped SMASH! onto a knight comforting a child.)
+            should_trigger = has_trigger_keyword and not is_quiet and (style_name not in ["manhwa", "manhua"])
             
             if should_trigger:
                 import random

@@ -133,7 +133,7 @@ ENVIRONMENT_VISUAL_ANCHORS = {
     "forest": "dense forest background, trees, leaves, natural sunlight, foliage",
     "castle": "castle interior background, stone walls, banners, arches",
     "dungeon": "dungeon background, dark stone walls, chains, dim torchlight",
-    "city": "modern city street background, buildings, concrete pavement, urban skyline",
+    "city": "city street background, buildings, paved road, city skyline",
     "street": "outdoor street background, buildings, lamp posts, sidewalk",
     "alley": "dark narrow alleyway background, brick walls, trash cans",
     "rooftop": "rooftop background, city skyline, railings, open sky",
@@ -150,7 +150,7 @@ ENVIRONMENT_VISUAL_ANCHORS = {
     "ruins": "ancient ruins background, broken stone pillars, overgrown moss, debris",
     "tower": "stone tower interior background, spiral staircase, narrow windows",
     "courtyard": "school courtyard background, stone pavement, benches, trees",
-    "market": "bustling outdoor market background, market stalls, food stands",
+    "market": "outdoor market background, market stalls, food stands",
     "lab": "scientific laboratory background, test tubes, computer screens, futuristic equipment",
     "ship": "ship deck background, wooden planks, ocean waves, sails, masts",
     "school": "school building background, brick walls, windows, hallways",
@@ -528,13 +528,16 @@ class PromptBuilder:
         def _env_tokens():
             toks = []
             if env_input:
+                # Always include the RAW environment description first — it carries the
+                # period + mood ("ancient ruined city", "abandoned market", "moonlit
+                # rain") that the generic anchors used to OVERWRITE (e.g. "ancient city"
+                # became "modern city street"). FLUX follows the raw description well, so
+                # the concrete anchors are now only a light supplement appended after it.
+                toks.extend(self._to_tokens(env_input))
                 env_lower = env_input.lower().strip()
-                matched = [a for k, a in ENVIRONMENT_VISUAL_ANCHORS.items() if k in env_lower]
-                if matched:
-                    for anchor in matched:
-                        toks.extend(self._to_tokens(anchor))
-                else:
-                    toks.extend(self._to_tokens(env_input))
+                for k, a in ENVIRONMENT_VISUAL_ANCHORS.items():
+                    if k in env_lower:
+                        toks.extend(self._to_tokens(a))
             return toks
 
         def _action_tokens():
