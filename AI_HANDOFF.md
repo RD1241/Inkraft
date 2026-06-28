@@ -105,7 +105,7 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
-### 2026-06-28 — Claude Code — QA mega-task: emotion fix + model bake-off (FLUX wins) [IN PROGRESS]
+### 2026-06-28 — Claude Code — QA mega-task: FLUX migration + emotion/non-char/SFX fixes (steps 1-5 done; 6=UI→Antigravity)
 Working through the founder's 6-part full-SaaS QA audit ($4 fal budget). Done so far:
 - **NEW free diagnostic `tools/trace_pipeline.py`** — runs the real extract→storyboard
   →vault→prompt pipeline and prints the exact per-panel prompt + routing with ZERO fal
@@ -131,15 +131,44 @@ Working through the founder's 6-part full-SaaS QA audit ($4 fal budget). Done so
   `STYLE_MODEL_MAP`→flux/dev (env-overridable), FLUX arg/cost handling in `generate_image`,
   `.env.example`+`DEPLOY.md` updated. Cleaned stale `FAL_*` SDXL overrides from local `.env`.
   Spend this session so far ≈ **$0.20** of $4.
-- **OPEN — step-2 prompt-engine findings (next, free):** the bake-off exposed real
-  PROMPT/extraction weaknesses (not model faults): (1) **weapons/props dropped** — "glowing
-  sword" / "katana" vanish from the character tokens; (2) **actions flattened** — "raised his
-  glowing sword as enemies approached" → "stands ready in the distance"; (3) **emotion
-  downgraded to neutral** by the storyboard for clear action beats; (4) peaceful env anchors
-  (village) fight a dramatic mood ("burning"). These block step 4 (object/fight panels).
-- **STILL PENDING:** step 2 fixes above; step 3 full 5-page Vault-character comic (also the
-  nano-vs-FLUX consistency A/B); step 4 non-character/fight + SFX; step 5 dialogue boxes;
-  step 6 UI desktop+mobile.
+- **[DONE · f1bca0c] Step-4 non-character panels: ghost "none" character killed.** Object/
+  environment-only scenes (a sword on an altar; an empty street) made the LLM emit
+  `focus_character: "none"` → recovered into `CHARACTER_A: none, male adult, short dark hair`
+  + `solo` → a ghost man in every object panel. Fix: none/unknown/narrator added to BOTH
+  name blacklists + focus_character reconciled against the surviving cast; prompt_builder now
+  skips person emotion/camera tokens, foregrounds the hero object, and (since FLUX ignores
+  negatives) uses POSITIVE desolation adjectives to keep people out. Verified: the sword is
+  now the glowing hero of the temple (was absent before). KNOWN LIMIT: FLUX's portrait-aspect
+  still tends to add a lone figure to wide empty-street shots (needs a per-panel landscape
+  aspect — deferred, conflicts with the compositor).
+- **[DONE · 156e79c] Step-2 emotion floor for action beats.** The LLM tags intense action
+  (a tension-8 sword clash) as "neutral"/"calm" → flat face mid-fight. Central upgrade in
+  `validate_and_apply_overrides` (applied AFTER the tension-arc/combat escalation set final
+  tension): tension>=7 + flat emotion → "intense". Verified.
+- **[DONE · d21568b] Step-3 full-comic test + routing decision: default is now `flux_all`.**
+  Ran a REAL 3-panel Kael/Elena manga comic through the live pipeline in flux mode. The
+  assembled page (verified by eye): strong character consistency across all 3 panels (flux
+  ignores the IP ref — consistency came from seed-lock + Vault identity tokens), Vault
+  descriptions applied exactly, clean readable dialogue boxes ("ON YOUR LEFT!"/"STAY CLOSE!"),
+  "CLASH!" SFX on action panels, coherent beat. So FLUX wins on adherence (bake-off) +
+  consistency (this test) + cost. Changed default `IMAGE_ROUTING_MODE` nano_all→**flux_all**
+  (no nano). ⚠️ **FOUNDER ACTION: Railway likely has `IMAGE_ROUTING_MODE=nano_all` set
+  explicitly — change it to `flux_all`** (or delete it) to get this in prod (see DEPLOY.md).
+- **Step-2 props/action quality:** FIGHT scenes already render GREAT — the `action_library` +
+  `interaction_composer` inject rich combat tokens ("crossed swords, impact point visible,
+  metal sparks, forceful opposing stances") and FLUX honours them. Props survive when they're
+  in the ACTION (sword clash, drew his katana); they're only dropped when an item lives only
+  in a character's *held-item description*. Left as-is (lower priority than the above).
+- **Total fal spend this session ≈ $0.35** of $4 (bake-off + non-char + the real comic).
+- **STILL PENDING for next session:**
+  - **Step 5 SFX polish (optional):** dialogue boxes render well; the "CLASH!" SFX works but
+    is plain — real manga SFX are huge/jagged/dramatic. Enhance `comic_renderer` SFX styling.
+  - **Step 6 UI desktop+mobile** — per §1 division of labor this is **Antigravity's lane**
+    (mobile has many issues; founder wants a rotating auto-cycling style-card animation). The
+    mission asked Claude too, but the deep pipeline/quality work (Claude's lane) was the
+    priority and is now done; hand the UI rebuild to Antigravity.
+  - Optional: a true 5-page coherent-story comic (this session proved the 3-panel integration);
+    environment-only landscape-aspect fix.
 
 ### 2026-06-28 — Claude Code — SESSION HANDOFF: prompt-quality cracked; full QA audit PENDING (→ new session)
 - **LIVE on Railway:** https://inkraft-production.up.railway.app — verified serving (frontend + API + Supabase). Trial plan → **NO persistent volume yet** (generated images + local SQLite reset on redeploy; Supabase persists auth/credits/vault/history). Upgrade to Hobby + attach `/data` volume before real beta (see DEPLOY.md). **Supabase email verification is DISABLED** for testing — RE-ENABLE before public launch. Repo RD1241/Inkraft, all work pushed to `main`.
