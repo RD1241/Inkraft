@@ -105,6 +105,42 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-28 — Claude Code — QA mega-task: emotion fix + model bake-off (FLUX wins) [IN PROGRESS]
+Working through the founder's 6-part full-SaaS QA audit ($4 fal budget). Done so far:
+- **NEW free diagnostic `tools/trace_pipeline.py`** — runs the real extract→storyboard
+  →vault→prompt pipeline and prints the exact per-panel prompt + routing with ZERO fal
+  spend. This is the founder's "trace the real prompt before blaming the model" tool.
+  Exposes `compute_panels()` (shared with the bake-off).
+- **[FIXED · a684597] Emotion resolver bug (the founder's STILL-TODO).** `expression_engine
+  ._resolve_emotion_synonym` mapped storyboard emotions `tension`/`intense`/`suspense`/
+  `serious` to **fearful → "scared, fearful, wide eyes, cowering"** — so action heroes in a
+  tense gun standoff rendered cowering. Root cause: `"intense"` contains substring `"tense"`,
+  caught by the fear broad-match before the determined mapping. Fix: tense/tension/intense/
+  standoff/menacing → **determined** ("cold eyes, piercing gaze, unflinching stare");
+  cautious/wary→suspicion, threatening/hostile→angry, love/tender→romantic. Genuine fear
+  words (scared/afraid/terror/panic) still→fearful. Verified via re-trace: noir standoff now
+  "unflinching stare", not "cowering".
+- **[DONE · 4087bc7] MODEL BAKE-OFF — FLUX dev is the new default for every style.** New paid
+  harness `tools/model_bakeoff.py` generated the REAL pipeline prompt across fast-sdxl
+  (animagine/dreamshaper-XL/RealVisXL) vs FLUX schnell/dev/pro for cinematic/anime/manga/
+  realistic. **Viewed every image.** FLUX dev won decisively on prompt adherence — the
+  founder's #1 complaint: correct multi-character composition (SDXL dropped the 2nd char or
+  made broken diptychs / wrong-gender), prop/period accuracy (SDXL "realistic" gave a modern
+  soldier+rifle for "armor + sword"; FLUX kept armor+battlefield), native B&W manga (no
+  washed-out PIL grayscale). And FLUX dev ($0.025) is CHEAPER than nano ($0.039). Wired:
+  `STYLE_MODEL_MAP`→flux/dev (env-overridable), FLUX arg/cost handling in `generate_image`,
+  `.env.example`+`DEPLOY.md` updated. Cleaned stale `FAL_*` SDXL overrides from local `.env`.
+  Spend this session so far ≈ **$0.20** of $4.
+- **OPEN — step-2 prompt-engine findings (next, free):** the bake-off exposed real
+  PROMPT/extraction weaknesses (not model faults): (1) **weapons/props dropped** — "glowing
+  sword" / "katana" vanish from the character tokens; (2) **actions flattened** — "raised his
+  glowing sword as enemies approached" → "stands ready in the distance"; (3) **emotion
+  downgraded to neutral** by the storyboard for clear action beats; (4) peaceful env anchors
+  (village) fight a dramatic mood ("burning"). These block step 4 (object/fight panels).
+- **STILL PENDING:** step 2 fixes above; step 3 full 5-page Vault-character comic (also the
+  nano-vs-FLUX consistency A/B); step 4 non-character/fight + SFX; step 5 dialogue boxes;
+  step 6 UI desktop+mobile.
+
 ### 2026-06-28 — Claude Code — SESSION HANDOFF: prompt-quality cracked; full QA audit PENDING (→ new session)
 - **LIVE on Railway:** https://inkraft-production.up.railway.app — verified serving (frontend + API + Supabase). Trial plan → **NO persistent volume yet** (generated images + local SQLite reset on redeploy; Supabase persists auth/credits/vault/history). Upgrade to Hobby + attach `/data` volume before real beta (see DEPLOY.md). **Supabase email verification is DISABLED** for testing — RE-ENABLE before public launch. Repo RD1241/Inkraft, all work pushed to `main`.
 - **Fixed & deployed this session:** colour-mode backend; Vault Supabase fix; Railway deploy (slim 342MB image, no torch/Ollama); volume-aware `DATA_DIR`; sqlite backup; tiered credit pricing (grant 5; tiers 2:1,4:2,6:3); dashboard panel-count + colour controls; Supabase client caching; favicon; `CONCURRENT_WORKERS`; richer/persistent cost logging; cinematic/realistic now use proper SDXL models (dreamshaper-XL/RealVisXL) + honour panel_count + `IMAGE_ROUTING_MODE=sdxl_only`; bigger readable speech bubbles; **QUALITY ROOT CAUSE fix in `core/llm_processor.py`** (see entry below).
