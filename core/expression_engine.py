@@ -183,7 +183,7 @@ class ExpressionEngine:
             return "despair"
         elif any(term in emotion for term in ["stunned", "speechless", "astound", "dumbfound", "disbelief"]):
             return "shock_intense"
-        elif any(term in emotion for term in ["smitten", "lovestruck", "romantic", "affection", "longing", "adore"]):
+        elif any(term in emotion for term in ["smitten", "lovestruck", "romantic", "affection", "longing", "adore", "lov", "tender", "yearn"]):
             return "romantic_affection"
         elif any(term in emotion for term in ["mortif", "humiliat", "ashamed"]):
             return "embarrassment_enhanced"
@@ -195,13 +195,30 @@ class ExpressionEngine:
             return "confusion"
         elif any(term in emotion for term in ["determinat", "steely", "unwaver"]):
             return "determination"
+        # Dramatic *tension* / *intensity* (standoffs, action beats) is wariness and
+        # focus, NOT personal terror. Resolve these to "determined" (serious,
+        # unflinching, on-guard) BEFORE the legacy fear broad-match below — note
+        # "intense" contains the substring "tense", so it must be caught here or it
+        # would wrongly fall through to "fearful" (scared, cowering). [QA 2026-06-28]
+        elif any(term in emotion for term in ["tense", "tension", "intense", "wary",
+                                              "guarded", "alert", "on edge", "on-edge",
+                                              "standoff", "menac", "vigilant", "suspens",
+                                              "serious", "grim", "stoic", "dramatic",
+                                              "cold", "resolv", "resolute"]):
+            return "determined"
+        elif any(term in emotion for term in ["cautio", "hesitan", "uneasy", "uncertain",
+                                              "doubt", "reluctan"]):
+            return "suspicion"
+        elif any(term in emotion for term in ["threat", "hostile", "aggressi",
+                                              "snarl", "vicious"]):
+            return "angry"
 
         # --- Legacy broad-match synonyms (original 10 emotions) ---
         elif any(term in emotion for term in ["melancholy", "sadness", "sorrow", "depressed", "downcast", "gloomy"]):
             return "sad"
         elif any(term in emotion for term in ["surprise", "shock", "startl", "astonish", "stun"]):
             return "shocked"
-        elif any(term in emotion for term in ["tension", "tense", "worr", "anxi", "nerv", "scar", "fear", "fright", "panic", "cower", "terror"]):
+        elif any(term in emotion for term in ["worr", "anxi", "nerv", "scar", "afraid", "fear", "fright", "panic", "cower", "terror", "dread", "horror"]):
             return "fearful"
         elif any(term in emotion for term in ["cry", "sob", "weep", "tear"]):
             return "crying"
