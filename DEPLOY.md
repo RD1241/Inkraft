@@ -52,6 +52,17 @@ users, credits, and history. (Northflank: same idea, attach a 0.5 GB+ volume at 
 `IMAGE_PROVIDER` does **not** need setting — the app auto-selects `fal_ai` whenever a
 real `FAL_KEY` is present. `PORT` is provided by Railway automatically.
 
+> **Image model (new default 2026-06-28):** every style's text-to-image model now
+> defaults to **FLUX dev** (`fal-ai/flux/dev`, ~$0.025/img). The paid model bake-off
+> showed it follows the prompt dramatically better than fast-sdxl (correct multi-
+> character composition, prop/period accuracy, native B&W manga) — and it's *cheaper*
+> than the nano-banana path ($0.039). No env var needed; leave `FAL_*_MODEL` /
+> `FAL_*_ENDPOINT` unset. To revert one style to SDXL, set both
+> `FAL_<STYLE>_ENDPOINT=fal-ai/fast-sdxl` and `FAL_<STYLE>_MODEL=<hf id>`; for max
+> fidelity push a style to `fal-ai/flux-pro/v1.1`. Cost note: a 6-panel comic is
+> ~$0.15 on FLUX dev (was ~$0.015 on SDXL but visibly worse) — still well under
+> `MAX_COST_PER_JOB=0.60`.
+
 > **Beta budget, without losing quality:** keep `IMAGE_ROUTING_MODE=nano_all` and
 > `MAX_COST_PER_JOB=0.60` as-is. Lowering the cap or switching to `hybrid` would push
 > panels onto cheap SDXL = visibly worse output. The quality-neutral lever is

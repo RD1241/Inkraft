@@ -117,29 +117,42 @@ def is_valid_portrait(image_path: str, min_stddev: float = 6.0) -> bool:
     except Exception:
         return False
 
+# Default text-to-image model per style.
+# The paid model bake-off (2026-06-28; images in test_outputs/bakeoff/) compared
+# fast-sdxl (animagine/dreamshaper-XL/RealVisXL) against FLUX schnell/dev/pro on the
+# REAL pipeline prompt across every style. FLUX dev followed the prompt dramatically
+# better — correct multi-character composition (SDXL kept dropping the 2nd character
+# or producing broken diptychs), period/prop accuracy (SDXL "realistic" gave a modern
+# soldier with a rifle for "armor + sword"; FLUX gave armor + sword), and NATIVE
+# monochrome manga (no washed-out PIL-grayscale needed) — at $0.025/img, which is
+# actually CHEAPER than the nano-banana edit path ($0.039). So the default
+# text-to-image model is now FLUX dev for every style. Each is env-overridable; the
+# proven fast-sdxl models are documented below as fallbacks, and realistic/cinematic
+# can be pushed to flux-pro (FAL_*_ENDPOINT=fal-ai/flux-pro/v1.1) for max fidelity.
+FLUX_DEV_ENDPOINT = "fal-ai/flux/dev"
+# Fallback SDXL models (set FAL_<STYLE>_ENDPOINT=fal-ai/fast-sdxl + FAL_<STYLE>_MODEL
+# to revert a style to SDXL): manga/manhwa/anime=cagliostrolab/animagine-xl-3.1,
+# cinematic=Lykon/dreamshaper-xl-v2-turbo, realistic=SG161222/RealVisXL_V4.0.
 STYLE_MODEL_MAP = {
     "manga": {
-        "endpoint": "fal-ai/fast-sdxl",
-        "model_name": os.environ.get("FAL_MANGA_MODEL", "cagliostrolab/animagine-xl-3.1")
+        "endpoint": os.environ.get("FAL_MANGA_ENDPOINT", FLUX_DEV_ENDPOINT),
+        "model_name": os.environ.get("FAL_MANGA_MODEL"),
     },
     "manhwa": {
-        "endpoint": "fal-ai/fast-sdxl",
-        # Default aligned with the proven .env value. The previous default
-        # (Linaqruf/noobai-xl-v1.0) returns solid-black/safety-blocked frames on
-        # fal-ai/fast-sdxl — verified 2026-06-26 — so it must not be the fallback.
-        "model_name": os.environ.get("FAL_MANHWA_MODEL", "cagliostrolab/animagine-xl-3.1")
+        "endpoint": os.environ.get("FAL_MANHWA_ENDPOINT", FLUX_DEV_ENDPOINT),
+        "model_name": os.environ.get("FAL_MANHWA_MODEL"),
     },
     "anime": {
-        "endpoint": "fal-ai/fast-sdxl",
-        "model_name": os.environ.get("FAL_ANIME_MODEL", "cagliostrolab/animagine-xl-3.1")
+        "endpoint": os.environ.get("FAL_ANIME_ENDPOINT", FLUX_DEV_ENDPOINT),
+        "model_name": os.environ.get("FAL_ANIME_MODEL"),
     },
     "cinematic": {
-        "endpoint": "fal-ai/fast-sdxl",
-        "model_name": os.environ.get("FAL_CINEMATIC_MODEL", "Lykon/dreamshaper-xl-v2-turbo")
+        "endpoint": os.environ.get("FAL_CINEMATIC_ENDPOINT", FLUX_DEV_ENDPOINT),
+        "model_name": os.environ.get("FAL_CINEMATIC_MODEL"),
     },
     "realistic": {
-        "endpoint": os.environ.get("FAL_REALISTIC_ENDPOINT", "fal-ai/fast-sdxl"),
-        "model_name": os.environ.get("FAL_REALISTIC_MODEL", "SG161222/RealVisXL_V4.0")
+        "endpoint": os.environ.get("FAL_REALISTIC_ENDPOINT", FLUX_DEV_ENDPOINT),
+        "model_name": os.environ.get("FAL_REALISTIC_MODEL"),
     },
 }
 
@@ -344,7 +357,7 @@ class FalAIImageProvider(ImageProvider):
             style_key = "anime"
         model_config = STYLE_MODEL_MAP[style_key]
         current_endpoint = model_config["endpoint"]
-        current_model_log_name = model_config.get("model_name", current_endpoint)
+        current_model_log_name = model_config.get("model_name") or current_endpoint
 
         try:
             import fal_client
@@ -611,6 +624,19 @@ class FalAIImageProvider(ImageProvider):
                         "image_urls": image_urls,
                         "num_images": 1
                     }
+                elif current_endpoint.startswith("fal-ai/flux"):
+                    # FLUX text-to-image (dev / schnell / pro). FLUX does NOT accept
+                    # negative_prompt or model_name; it follows the positive prompt and
+                    # honours monochrome tokens natively (manga comes out true B&W).
+                    arguments = {
+                        "prompt": current_prompt,
+                        "image_size": {"width": w, "height": h},
+                        "num_inference_steps": 4 if "schnell" in current_endpoint else 28,
+                        "num_images": 1,
+                        "enable_safety_checker": False,
+                    }
+                    if current_seed is not None:
+                        arguments["seed"] = current_seed
                 else:
                     arguments = {
                         "prompt": current_prompt,
@@ -655,6 +681,12 @@ class FalAIImageProvider(ImageProvider):
                             cost_rate = 0.039
                         elif current_endpoint == "fal-ai/realistic-vision":
                             cost_rate = 0.039
+                        elif current_endpoint.startswith("fal-ai/flux-pro"):
+                            cost_rate = 0.05
+                        elif current_endpoint == "fal-ai/flux/dev":
+                            cost_rate = 0.025
+                        elif current_endpoint == "fal-ai/flux/schnell":
+                            cost_rate = 0.003
                         else:
                             cost_rate = 0.0025
                         estimated_request_cost += cost_rate
