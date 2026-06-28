@@ -329,6 +329,7 @@ class StoryboardDirector:
         if n == 0:
             return plan
 
+
         # 0. Environment lock across panels (Fix 2 & Improvement 2)
         # Extract environment from Panel 1's action description (or global_environment if not clear)
         first_panel = panels[0]
@@ -580,6 +581,15 @@ class StoryboardDirector:
                         old_shot = p.camera_shot
                         p.camera_shot = "MEDIUM_CLOSE"
                         print(f"[Storyboard] Scoped override on Panel {p.panel_id}: {old_shot} -> MEDIUM_CLOSE (both characters in frame)")
+
+        # Emotion floor for high-tension beats — applied LAST, after the tension arc
+        # override + combat-keyword escalation have set each panel's FINAL tension. The
+        # LLM frequently tags an intense action moment "neutral"/"calm", which renders a
+        # flat face mid-sword-fight; a tension>=7 panel that's flatly tagged becomes
+        # "intense" (expression engine -> serious, unflinching look). [QA 2026-06-28]
+        for p in panels:
+            if p.tension_level >= 7 and str(p.emotion).strip().lower() in ("neutral", "calm", "none", ""):
+                p.emotion = "intense"
 
         return plan
 
