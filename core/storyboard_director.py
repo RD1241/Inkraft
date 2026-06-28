@@ -584,12 +584,28 @@ class StoryboardDirector:
 
         # Emotion floor for high-tension beats — applied LAST, after the tension arc
         # override + combat-keyword escalation have set each panel's FINAL tension. The
-        # LLM frequently tags an intense action moment "neutral"/"calm", which renders a
-        # flat face mid-sword-fight; a tension>=7 panel that's flatly tagged becomes
-        # "intense" (expression engine -> serious, unflinching look). [QA 2026-06-28]
+        # LLM frequently tags an intense moment "neutral"/"calm", rendering a flat face.
+        # But the upgrade must be GENRE-AWARE: a romance climax also scores high tension,
+        # and hardening it to "intense" (cold, unflinching eyes) is wrong. So infer from
+        # the action — combat -> intense; emotional/romance -> a fitting soft emotion;
+        # otherwise a generic dramatic "intense". [QA 2026-06-28]
+        _combat_kw = ("fight", "clash", "strike", "attack", "sword", "blade", "punch",
+                      "kick", "slash", "battle", "charge", "swing", "blow", "combat",
+                      "shoot", "explos", "slam", "smash", "stab", "lunge", "duel")
+        _tender_kw = ("love", "kiss", "embrace", "hug", "tender", "gentle", "blush",
+                      "caress", "hold", "romance", "cherish", "whisper", "hand")
+        _grief_kw = ("tear", "cry", "weep", "sob", "mourn", "grief", "sorrow")
         for p in panels:
             if p.tension_level >= 7 and str(p.emotion).strip().lower() in ("neutral", "calm", "none", ""):
-                p.emotion = "intense"
+                act = (p.action or "").lower()
+                if any(k in act for k in _combat_kw):
+                    p.emotion = "intense"
+                elif any(k in act for k in _grief_kw):
+                    p.emotion = "sad"
+                elif any(k in act for k in _tender_kw):
+                    p.emotion = "romantic_affection"
+                else:
+                    p.emotion = "intense"
 
         return plan
 
