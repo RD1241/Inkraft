@@ -418,7 +418,17 @@ class FalAIImageProvider(ImageProvider):
             if routing_mode == "pro_shared":
                 premium_model = "fal-ai/nano-banana-pro/edit"
 
-            if routing_mode in ("hybrid", "pro_shared"):
+            # Cinematic & realistic MUST render on their dedicated SDXL models
+            # (filmic / photoreal) which actually follow the scene prompt — never the
+            # anime reference-editor, which forces an anime look and ignores the
+            # setting/action. So they always bypass the premium nano edit.
+            photoreal_style = style_key in ("cinematic", "realistic")
+
+            if routing_mode == "sdxl_only" or photoreal_style:
+                # No reference conditioning: straight text-to-image on the style's
+                # model, so the prompt (setting/action/style) drives the result.
+                use_premium = False
+            elif routing_mode in ("hybrid", "pro_shared"):
                 # Premium only for shared (multi-character) frames.
                 use_premium = is_shared_frame
             else:  # "nano_all" — any panel with a named character is reference-conditioned.

@@ -922,8 +922,14 @@ class ComicService:
             return "single_page"
         if generation_format == "panel_strip":
             return "panel_strip"
+        # An explicit multi-panel request wins for any style except the inherently
+        # single-page webtoon styles (manhwa/manhua render as one tall page).
+        if panel_count is not None and panel_count > 1 and style_norm not in ["manhwa", "manhua"]:
+            return "panel_strip"
         if generation_format is None or generation_format == "" or generation_format.lower() in ["null", "none", "ai_decides", "default"]:
-            if style_norm in ["manhwa", "manhua", "cinematic"]:
+            # manhwa/manhua are single tall pages by nature. cinematic/realistic now
+            # honour panel count (they were wrongly forced to single_page before).
+            if style_norm in ["manhwa", "manhua"]:
                 return "single_page"
             else:
                 return "panel_strip"

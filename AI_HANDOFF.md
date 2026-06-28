@@ -105,6 +105,13 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-28 — Claude Code — Prod feedback: quality routing + cinematic panels (founder testing)
+- Founder smoke-tested live Railway deploy. WORKING: auth, email verify, credits, PDF, dashboard quick-gen, colour mode (manga=B&W, others=colour), credit tiers. PROBLEMS reported → diagnosis + fixes:
+  - **Quality / prompt adherence (BIG).** Root cause: `nano_all` routes every panel through Nano Banana *edit*, anchored on a reference portrait that `build_portrait_prompt` **hardcodes to "anime style, school uniform"** — so every scene becomes a generic anime schoolkid and the edit model ignores the real setting/action/style (noir→schoolboys, cinematic→anime, etc.). FIX (partial): `fal_ai` routing now **forces cinematic & realistic to bypass nano** and use their dedicated SDXL models (dreamshaper-xl / RealVisXL text-to-image) which follow the prompt → proper filmic/photoreal. Added **`IMAGE_ROUTING_MODE=sdxl_only`** (env) to disable nano entirely for an A/B quality test across all styles. STILL TODO if sdxl_only wins: make it default and/or fix the hardcoded anime reference portrait; reserve nano for Vault-character consistency.
+  - **Panel count ignored for non-manga.** `resolve_generation_format` forced manhwa/manhua/**cinematic** → single_page. FIX: cinematic (and realistic) now honour panel_count (multi-panel); manhwa/manhua stay single tall page. Frontend TODO (Antigravity): hide the panel-count selector when manhwa/manhua is selected.
+  - **GENERATE wizard "steps don't work".** NOT a bug — headless-tested the live wizard: with story text it advances 1→2 fine; with an **empty** box it refuses (by design) but the error isn't prominent. UX TODO: make the "enter your story first" feedback obvious / disable Next until text present.
+- Founder priority: quality across ALL styles > cost (willing to drop free credits to 3). Next: founder sets `IMAGE_ROUTING_MODE=sdxl_only` on Railway and re-tests the 3 scenes to compare nano vs SDXL adherence.
+
 ### 2026-06-28 — Claude Code — Beta-prep: configurable workers + richer/persistent cost logging
 - Reviewed an external AI's pre-beta checklist against the real code: daily limit already removed, friendly insufficient-credit error already returned, generation logging already exists — so most of its "blockers" were done. Two cheap genuinely-missing items implemented (founder OK'd):
   - **`CONCURRENT_WORKERS` env (default 4).** `comic_service` job pool was hardcoded `max_workers=4`; now `settings.CONCURRENT_WORKERS`. (Corrects the external AI's wrong "it's 1" premise.)
