@@ -105,6 +105,30 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-30 — Claude Code — Legal: proper ToS + Privacy Policy (copyright/DMCA/sub-processors)
+- Founder worried about copyright/legal exposure. Replaced the thin beta ToS/Privacy modal stubs
+  in `frontend/index.html` (showLegalModal) with gap-closing baseline docs:
+  - **ToS** now covers: as-is/no-warranty, eligibility (13+/16+ EU), **user warrants they own/have
+    rights to their Inputs + grants a processing licence** (the big copyright risk = users pasting
+    copyrighted novels), **acceptable-use** (no infringing/illegal/explicit/real-person content),
+    AI-output ownership caveat (copyrightability not guaranteed), **DMCA/takedown contact +
+    repeat-infringer**, credits have no monetary value, **indemnity + liability cap ($20)**,
+    suspension, governing law.
+  - **Privacy** now discloses ALL sub-processors (was only fal.ai): **Supabase** (auth/vault/
+    history), **Groq** (story text → extraction), **fal.ai** (prompts → images), **Railway**
+    (hosting/storage), plus data collected, retention, **deletion/access rights**, security,
+    children. This closes the GDPR sub-processor gap.
+  - `LEGAL_CONTACT` (currently the founder's gmail) + `LEGAL_UPDATED` are editable consts at the
+    top of the block — **swap LEGAL_CONTACT for a dedicated support address** + set a specific
+    governing-law country before public launch.
+  - Single source of truth: added `index.html#terms` / `#privacy` hash auto-open; `register.html`
+    now links to both (was a stale `alert()` with only ToS + inconsistent "commercial use allowed"
+    wording).
+- **Verified:** `node --check` on the extracted inline module script passes (template literals OK);
+  structure mirrors the existing working modal. NOT a pixel-render check, NOT lawyer-reviewed.
+- **⚠️ For PUBLIC (paid) launch:** regenerate via Termly/iubenda or get a lawyer review — do not
+  ship paid on this AI-drafted baseline alone. Fine for an invite/closed beta.
+
 ### 2026-06-29 — Claude Code — Groq rate-limit resilience: model-fallback chain
 - **Problem:** the 70B Groq model (`llama-3.3-70b-versatile`) has a 100k-tokens/day free cap;
   when hit (429) the whole pipeline dropped to the RULE-BASED extractor, which ghosts capitalized
