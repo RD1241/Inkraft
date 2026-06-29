@@ -190,7 +190,7 @@ class LLMProcessor:
         self.system_prompt = """You are a comic storyboard extractor. Read the novel text and output ONLY valid JSON. No markdown, no explanation.
 
 Extract scenes into this exact structure:
-{"global_environment": "<where overall story happens, max 8 words>", "scenes": [{"scene_id": 1, "environment": "<location>", "focus_character": "<main char name>", "characters": [{"name": "<name>", "character_role": "main_character|secondary_character|enemy_character", "description": "<male/female, approx age, hair, and CLOTHING that fits this character's role and the story setting>"}], "action": "<what physically happens>", "emotion": "<mood>", "dialogue": [{"speaker": "<name or Narrator>", "type": "speech|narration", "text": "<words>"}]}]}
+{"global_environment": "<where overall story happens, 4-10 words; KEEP era/setting words (ancient, ruined, medieval, futuristic, snowy) + the place type>", "scenes": [{"scene_id": 1, "environment": "<location>", "focus_character": "<main char name>", "characters": [{"name": "<name>", "character_role": "main_character|secondary_character|enemy_character", "description": "<male/female, approx age, hair, and CLOTHING that fits this character's role and the story setting>"}], "action": "<what physically happens>", "emotion": "<mood>", "dialogue": [{"speaker": "<name or Narrator>", "type": "speech|narration", "text": "<words>"}]}]}
 
 Rules:
 - Use as many scenes as the text has beats (do not force exactly 4).

@@ -879,7 +879,7 @@ The layout style requested is "{target_layout}".
 
 Your output must strictly follow this JSON schema:
 {{
-  "global_environment": "<brief environment description, max 8 words>",
+  "global_environment": "<environment in 4-10 words; you MUST keep the era/setting words from the story (ancient, ruined, medieval, futuristic, snowy, underwater, etc.) and the specific place — e.g. 'ancient ruined marketplace at night', NOT a generic 'rain-soaked streets'>",
   "total_panels": {target_panel_count},
   "layout_type": "{target_layout}",
   "panels": [
