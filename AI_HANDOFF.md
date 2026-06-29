@@ -235,6 +235,30 @@ Working through the founder's 6-part full-SaaS QA audit ($4 fal budget). Done so
   original anime 'modern guy'); FLUX = a clean armored knight in a rainy cobblestone ruined
   street.** Conclusion reinforced: the model was never the problem — keep flux_all. Session
   fal spend now ≈ $0.85 of $4.
+- **[SYSTEMIC 2026-06-29 · 1c3e92a] Preserve rich scene atmosphere for FLUX (the real fix
+  for 'different prompts every time').** Founder's key point: the PIPELINE must build a good
+  prompt from ANY user novel, not be hand-tuned per scene. Root cause of thin output: the
+  prompt builder used an SDXL/CLIP 77-token-era budget (110 total / 20 for setting+action),
+  truncating exactly the atmospheric detail FLUX (T5) is best at. Fixes: (1) FLUX path now uses
+  a wide budget (170 total / 48 action+atmosphere / 30 char / 12 light; `_apply_color_mode`
+  cap-aware so it doesn't re-truncate); local SD keeps the tight CLIP cap. (2) storyboard
+  'action' field now demands a rich cinematic description that PRESERVES the source's
+  setting/weather/lighting/background. Verified (paid): the knight/girl novel now carries
+  'silver armor reflecting the faint moonlight, amidst the ruins of a once great city, broken
+  carts and debris' and renders a coherent atmospheric 3-panel sequence (armored knight in the
+  rainy ruined city -> kneeling to comfort the girl -> dialogue exchange). This helps EVERY
+  detailed scene automatically.
+- **[FEATURE 2026-06-29 · 41ab160] Art-direction / setting note.** New optional `art_direction`
+  field (<=300 chars) a creator can use to LOCK the backdrop/era/mood/style into every panel
+  when auto-extraction isn't enough (e.g. 'ancient ruined marketplace, broken carts' /
+  '1980s neon Tokyo'). Injected at the highest-priority prefix position; threaded
+  NovelInput.art_direction -> queue_comic_generation -> process_job_worker -> build_prompt
+  (both single-page + multi-panel). Verified it leads the prompt. **FRONTEND TODO (Antigravity):
+  add an optional 'Setting / Art direction' text input to the wizard + dashboard quick-gen,
+  POSTed as `art_direction`.**
+- **[FIXED 2026-06-29 · 127c053] Combat tokens leaking onto tender beats.** ActionLibrary/
+  InteractionComposer put 'impact strike pose, motion blur' on a kneeling-to-comfort panel;
+  now suppressed when the action is tender AND has no combat verb (real fights keep impact).
 - **⚠️ OPERATIONAL: Groq free tier daily token limit (100k TPD) was hit (RESET as of 2026-06-29)** by all the tracing/
   testing this session — further LLM extraction/storyboard calls fall back to rule-based until
   it resets (daily). Next session: pace Groq calls, or the founder can upgrade Groq tier.
