@@ -176,6 +176,17 @@ Working through the founder's 6-part full-SaaS QA audit ($4 fal budget). Done so
   character-less single pages render landscape 1280x832. Verified end-to-end through the real
   provider — clean empty street, no people. (Multi-panel env panels still portrait — changing
   their dims would break the compositor tiling; lower priority.)
+- **[DONE · 21a3439] Setting period + wrong-SFX fixes (from a real knight/child manga).** A
+  user's "ancient ruined city / abandoned market" novel rendered as a MODERN city with a bogus
+  "SMASH!" on a tender comforting beat. (1) `ENVIRONMENT_VISUAL_ANCHORS` overwrote the raw env:
+  "ancient city"→"MODERN city street", "abandoned market"→"BUSTLING market". Fixed: prompt_builder
+  keeps the RAW env description first (period/mood survives), anchors are a light supplement, and
+  the modern/bustling/concrete/urban bias words removed. (2) SFX fired on any action-layout panel
+  + on "lowered his sword"; now requires a real combat keyword AND suppresses quiet/tender beats
+  (kneel/comfort/cry/whisper/hug/lower). Both verified offline. NOTE: the same comic's "knight in
+  armor → modern guy" is an OLD-CODE (nano + anime/school-uniform portrait) artifact — the FLUX
+  deploy fixes it; re-test after deploy. The MISSING unnamed girl (a "small girl", no name → the
+  extractor/blacklist drops her) still needs a careful extraction fix + Groq to verify.
 - **⚠️ OPERATIONAL: Groq free tier daily token limit (100k TPD) was hit** by all the tracing/
   testing this session — further LLM extraction/storyboard calls fall back to rule-based until
   it resets (daily). Next session: pace Groq calls, or the founder can upgrade Groq tier.
