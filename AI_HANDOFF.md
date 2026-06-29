@@ -127,12 +127,22 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
   338x363→gen 896x512→crop 512x512; portrait 768x1024→gen 1536x1024→crop 768x1024). Landscape
   slots (≥1.5) untouched; character panels untouched. `fal_ai.py` compiles + imports clean
   (project venv). Test script: scratchpad `verify_env_crop.py`.
-- **⚠️ STILL PENDING — paid visual confirm (needs founder OK, ~$0.05):** generate ONE real
-  multi-panel comic containing an env-only establishing panel and EYEBALL the assembled page to
-  confirm (a) no lone figure in the empty panel and (b) the centre-cropped environment reads
-  coherently in its slot. The dim/crop MATH and the landscape→no-figure principle are verified;
-  only the end-to-end visual on a cropped multi-panel slot is unconfirmed. Session fal spend was
-  ≈ $0.85 of $4 before this task.
+- **VERIFIED (paid, ~$0.05 — founder OK'd):** ran a deterministic 2-panel comic (panel 1 = empty
+  ruined-city establishing shot focus=''/chars=[]; panel 2 = a knight) through the REAL
+  generate_image at real compositor slot dims (1016x713 → 1024x704) then the REAL
+  comic_renderer. Logs confirm the widen fired: "Env-only panel: generating wide 1216x704, will
+  centre-crop to 1024x704" → "Centre-cropped env panel 1216x704 -> 1024x704 (slot dims
+  preserved)", saved dims exactly 1024x704. **Eyeballed the assembled page:** the establishing
+  panel is a clean empty ruined street (crumbling archways, tower, cobblestones) with NO lone
+  figure; the knight renders correctly in panel 2; both tile cleanly with no distortion. Output:
+  `outputs/20260629_233855_envtest/final_comic_page.png`. Session fal spend ≈ $0.90 of $4.
+  - **Honest nuance:** the N=2 slot aspect (1.45) is only mildly portrait-biased, so this slot
+    alone isn't a slam-dunk causal A/B (1.45 might render figure-free even un-widened). The
+    STRONGEST at-risk multi-panel slots are square (N=6 "medium" → 512x512) and the portrait
+    fallback (768x1024); the SAME widen logic covers them (verified offline in `verify_env_crop.py`
+    + the single-page paid A/B 768e0b4 already proved landscape→no-figure causally). A dedicated
+    paid square-slot before/after A/B was skipped to save credits — optional if stronger proof is
+    wanted later.
 
 ### 2026-06-29 — Antigravity — UI audit & mobile responsiveness + hero carousel implemented
 
@@ -312,20 +322,22 @@ Working through the founder's 6-part full-SaaS QA audit ($4 fal budget). Done so
   calm. Now any combat beat (word-boundary: charge/attack/sorcery/magic/unleash/explosion/... )
   bumps tension>=7 in ANY layout → intense battle faces.
 - **➡️ NEXT SESSION (context handoff at ~65%): remaining work, in priority order:**
-  1. **Multi-panel environment-only portrait-bias** (deferred backend): in a MULTI-panel comic a
-     character-less establishing panel still uses portrait dims → FLUX adds a lone figure. Single-
-     page is fixed (landscape 1280x832). The clean approach: in `fal_ai.generate_image`, for a
-     character-less panel (no focus AND no secondary) generate at a WIDER aspect then centre-crop
-     to the compositor's slot dims (don't change the slot dims — that breaks tiling). Verify with a
-     real multi-panel comic that has an env-only panel.
+  1. ~~**Multi-panel environment-only portrait-bias** (deferred backend).~~ ✅ DONE 2026-06-29
+     (commit 814dec3, paid-verified) — char-less multi-panel slots <1.5 aspect now generate on a
+     wider landscape canvas + centre-crop back to exact slot dims in `fal_ai.generate_image`. See
+     the top Task Log entry for the paid 2-panel verification + the honest square-slot nuance.
   2. **More genre sweeps** (mystery, slice-of-life dialogue, war/gore safety-block handling) via
      `tools/trace_pipeline.py` (free) — fix bugs like the ones already found (gender default, ghost
      nouns, wrong-romance emotion, calm action).
   3. Verify the live Railway deploy picked up all of today's commits (latest `0862b31`) — founder
      re-tests the knight scene + the new Setting/Art-direction box.
-- **⚠️ OPERATIONAL: Groq free tier daily token limit (100k TPD) was hit (RESET as of 2026-06-29)** by all the tracing/
-  testing this session — further LLM extraction/storyboard calls fall back to rule-based until
-  it resets (daily). Next session: pace Groq calls, or the founder can upgrade Groq tier.
+- **⚠️ OPERATIONAL: Groq free tier daily token limit (100k TPD) is EXHAUSTED AGAIN (2026-06-29
+  late, ~97.9k/100k used)** — `llama-3.3-70b-versatile` returns 429 and extraction/storyboard fall
+  back to RULE-BASED (which ghosts capitalized env words as characters, e.g. focus='Crumbling').
+  This blocks free genre-sweep tracing (NEXT #2) until the daily reset. Next session: wait for
+  reset, pace Groq calls, or the founder upgrades the Groq tier. (NOTE: the env-fix paid test
+  above sidestepped this by hand-building a deterministic 2-panel plan — the fix itself does not
+  depend on the LLM.)
 - **[OPEN · MED] Singly-named character dropped (romance/dialogue).** A romance scene
   ("...'I love you,' he whispered") rendered SOLO — the male lead, named once then by pronoun,
   is excluded by the 2+ occurrence rule (`llm_processor` `all_story_chars`). The rule-based
