@@ -105,6 +105,27 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-29 — Claude Code — Groq rate-limit resilience: model-fallback chain
+- **Problem:** the 70B Groq model (`llama-3.3-70b-versatile`) has a 100k-tokens/day free cap;
+  when hit (429) the whole pipeline dropped to the RULE-BASED extractor, which ghosts capitalized
+  env words as characters (focus='Crumbling', secondary='Not') → broken comics. This is a real
+  beta/public scaling risk (100k TPD ≈ only ~15 comics/day across ALL users).
+- **Fix (`providers/llm/chat_client.py`):** `GroqChatClient.chat` now tries the primary model,
+  then on a 429 automatically retries a fallback chain (`GROQ_FALLBACK_MODELS`, default
+  `llama-3.1-8b-instant`) which has a SEPARATE, much larger free-tier token bucket. Transparent
+  to both call sites (`llm_processor`, `storyboard_director`) — no call-site changes. Rule-based
+  is now only the LAST resort (all Groq models exhausted / non-429 failures). New
+  `_is_rate_limit()` helper detects 429/tokens-per-day. Env-tunable; empty = disabled.
+- **LIVE-VERIFIED (the 70B was actually exhausted at test time):** a real extraction logged
+  "'llama-3.3-70b-versatile' rate-limited (429); falling back to 'llama-3.1-8b-instant'" →
+  "served by fallback model 'llama-3.1-8b-instant'" and returned a CLEAN knight extraction
+  (focus='knight', chars=['knight'] across 3 scenes) instead of ghost words. 8b is less
+  consistent than 70B (one run dropped the char — non-determinism) but is FAR better than the
+  rule-based ghosts; it's a safety net, not the primary. `.env.example` + `DEPLOY.md` updated.
+- **⚠️ Production note (in DEPLOY.md):** the real fix for scale is upgrading Groq to the paid Dev
+  tier (~$0.004/comic — effectively free) so the 70B never exhausts. The fallback chain just
+  prevents broken output in the meantime / under bursts.
+
 ### 2026-06-29 — Claude Code — Multi-panel environment-only portrait-bias fix (NEXT-SESSION #1)
 - **Problem (from prior NEXT-SESSION plan):** in a MULTI-panel comic a character-less
   establishing panel still used portrait/square slot dims → FLUX's tall-portrait bias
@@ -331,13 +352,14 @@ Working through the founder's 6-part full-SaaS QA audit ($4 fal budget). Done so
      nouns, wrong-romance emotion, calm action).
   3. Verify the live Railway deploy picked up all of today's commits (latest `0862b31`) — founder
      re-tests the knight scene + the new Setting/Art-direction box.
-- **⚠️ OPERATIONAL: Groq free tier daily token limit (100k TPD) is EXHAUSTED AGAIN (2026-06-29
-  late, ~97.9k/100k used)** — `llama-3.3-70b-versatile` returns 429 and extraction/storyboard fall
-  back to RULE-BASED (which ghosts capitalized env words as characters, e.g. focus='Crumbling').
-  This blocks free genre-sweep tracing (NEXT #2) until the daily reset. Next session: wait for
-  reset, pace Groq calls, or the founder upgrades the Groq tier. (NOTE: the env-fix paid test
-  above sidestepped this by hand-building a deterministic 2-panel plan — the fix itself does not
-  depend on the LLM.)
+- **⚠️ OPERATIONAL: Groq 70B free tier (100k TPD) was exhausted again (2026-06-29 late) — NOW
+  MITIGATED by the model-fallback chain** (see top Task Log): the pipeline auto-falls back to
+  `llama-3.1-8b-instant` (separate, larger free bucket) so extraction stays real instead of
+  ghosting. Free genre-sweep tracing (NEXT #2) now works even while 70B is capped, BUT 8b is
+  less consistent than 70B, so for definitive genre QA either wait for the 70B rolling reset
+  (~hours, it's a rolling 24h window not a midnight reset — small calls already work) or upgrade
+  Groq to the paid Dev tier (~$0.004/comic). Groq TPD is a ROLLING window; it replenishes
+  gradually, not all at once.
 - **[OPEN · MED] Singly-named character dropped (romance/dialogue).** A romance scene
   ("...'I love you,' he whispered") rendered SOLO — the male lead, named once then by pronoun,
   is excluded by the 2+ occurrence rule (`llm_processor` `all_story_chars`). The rule-based

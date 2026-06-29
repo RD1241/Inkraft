@@ -19,6 +19,25 @@ from config import settings
 # Override with the GROQ_MODEL env var.
 _GROQ_DEFAULT_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
 
+# Fallback chain: if the primary model hits its per-day token limit (429), retry
+# on these models IN ORDER before the pipeline degrades to the rule-based extractor
+# (which ghosts capitalized words as characters). `llama-3.1-8b-instant` has a
+# SEPARATE, much larger free-tier daily token bucket than the 70B model, so it keeps
+# real LLM extraction alive when the 70B is exhausted. Quality is lower than 70B but
+# far better than rule-based. Override / extend with the GROQ_FALLBACK_MODELS env var
+# (comma-separated). Set it empty to disable the chain.
+_GROQ_FALLBACK_MODELS = [
+    m.strip() for m in os.environ.get(
+        "GROQ_FALLBACK_MODELS", "llama-3.1-8b-instant"
+    ).split(",") if m.strip()
+]
+
+
+def _is_rate_limit(exc: Exception) -> bool:
+    """True if the exception is a Groq per-day/per-minute token rate-limit (429)."""
+    s = str(exc).lower()
+    return "rate_limit" in s or "429" in s or "tokens per day" in s or "tpd" in s
+
 
 def _llm_provider() -> str:
     return (os.environ.get("LLM_PROVIDER")
@@ -51,20 +70,41 @@ class GroqChatClient:
 
     def chat(self, model=None, messages=None, options=None, **kwargs) -> dict:
         options = options or {}
-        params = {
-            "model": self._resolve_model(model),
-            "messages": messages or [],
-        }
+        base_params = {"messages": messages or []}
         # Map the ollama options we actually use onto Groq params; ignore the
         # rest (num_ctx / keep_alive are Ollama-only concepts).
         if options.get("temperature") is not None:
-            params["temperature"] = options["temperature"]
+            base_params["temperature"] = options["temperature"]
         if options.get("num_predict"):
-            params["max_tokens"] = int(options["num_predict"])
-        resp = self._client.chat.completions.create(**params)
-        content = resp.choices[0].message.content if resp.choices else ""
-        # Mirror ollama.Client.chat()'s return shape used across the codebase.
-        return {"message": {"content": content}}
+            base_params["max_tokens"] = int(options["num_predict"])
+
+        # Try the primary model, then the fallback chain on a rate-limit (429), so a
+        # per-day token cap on the 70B model doesn't drop us to rule-based extraction.
+        primary = self._resolve_model(model)
+        chain = [primary] + [m for m in _GROQ_FALLBACK_MODELS if m != primary]
+        last_exc = None
+        for idx, mdl in enumerate(chain):
+            try:
+                resp = self._client.chat.completions.create(model=mdl, **base_params)
+                content = resp.choices[0].message.content if resp.choices else ""
+                if idx > 0:
+                    print(f"[GroqChatClient] Primary '{primary}' unavailable; "
+                          f"served by fallback model '{mdl}'.")
+                # Mirror ollama.Client.chat()'s return shape used across the codebase.
+                return {"message": {"content": content}}
+            except Exception as exc:
+                last_exc = exc
+                is_rl = _is_rate_limit(exc)
+                more = idx < len(chain) - 1
+                if is_rl and more:
+                    print(f"[GroqChatClient] '{mdl}' rate-limited (429); "
+                          f"falling back to '{chain[idx + 1]}'.")
+                    continue
+                # Non-rate-limit error, or no fallbacks left → surface to the caller's
+                # retry loop (which ultimately drops to rule-based extraction).
+                raise
+        # Defensive: loop always returns or raises, but satisfy the type checker.
+        raise last_exc if last_exc else RuntimeError("Groq chat failed with no models")
 
 
 def get_chat_client():

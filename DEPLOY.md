@@ -36,6 +36,8 @@ users, credits, and history. (Northflank: same idea, attach a 0.5 GB+ volume at 
 | `FAL_KEY` | *(your fal.ai key)* | reuse from local `.env` |
 | `GROQ_API_KEY` | *(your Groq key)* | reuse from local `.env` |
 | `LLM_PROVIDER` | `groq` | required (default is ollama) |
+| `GROQ_MODEL` | `llama-3.3-70b-versatile` | primary extraction/storyboard model |
+| `GROQ_FALLBACK_MODELS` | `llama-3.1-8b-instant` | auto-used on a 429 (per-day token limit) so extraction never degrades to the ghost-producing rule-based fallback. ⚠️ **Free Groq = 100k tokens/day ≈ ~15 comics/day across ALL users.** For real traffic, upgrade Groq to the paid Dev tier at console.groq.com (~$0.004/comic — effectively free) so the 70B never exhausts. |
 | `SUPABASE_URL` | *(your project URL)* | reuse from local `.env` |
 | `SUPABASE_PUBLISHABLE_KEY` | *(anon/publishable key)* | reuse from local `.env` |
 | `SUPABASE_SECRET_KEY` | *(service/secret key)* | reuse from local `.env` |
