@@ -35,7 +35,7 @@ class ComicService:
         # Env-configurable (settings.CONCURRENT_WORKERS, default 4) for open-beta scaling.
         self.job_executor = ThreadPoolExecutor(max_workers=getattr(settings, "CONCURRENT_WORKERS", 4))
 
-    def queue_comic_generation(self, text: str, style: str, panel_count: int = None, layout_type: str = None, user_id: str = None, characters: list = None, generation_format: str = None, color_mode: str = "auto") -> tuple[str, bool]:
+    def queue_comic_generation(self, text: str, style: str, panel_count: int = None, layout_type: str = None, user_id: str = None, characters: list = None, generation_format: str = None, color_mode: str = "auto", art_direction: str = "") -> tuple[str, bool]:
         """
         Queues a new job or returns a cached result.
         
@@ -93,10 +93,10 @@ class ComicService:
             generation_format=generation_format,
             user_id=user_id
         )
-        self.job_executor.submit(self.process_job_worker, job_id, text, style, panel_count, layout_type, user_id, characters, generation_format, color_mode)
+        self.job_executor.submit(self.process_job_worker, job_id, text, style, panel_count, layout_type, user_id, characters, generation_format, color_mode, art_direction)
         return job_id, False
 
-    def process_job_worker(self, job_id: str, text: str, style: str = "anime", panel_count: int = None, layout_type: str = None, user_id: str = None, characters: list = None, generation_format: str = None, color_mode: str = "auto"):
+    def process_job_worker(self, job_id: str, text: str, style: str = "anime", panel_count: int = None, layout_type: str = None, user_id: str = None, characters: list = None, generation_format: str = None, color_mode: str = "auto", art_direction: str = ""):
         """Background worker that handles the heavy AI generation pipeline."""
         start_time = time.time()
         dominant_char = None
@@ -170,7 +170,7 @@ class ComicService:
 
                 style_prompt_builder = PromptBuilder(style=style)
                 pos_prompt, neg_prompt = style_prompt_builder.build_prompt(
-                    panel_scene, self.memory_manager, is_continuation=False, style=style, color_mode=color_mode
+                    panel_scene, self.memory_manager, is_continuation=False, style=style, color_mode=color_mode, art_direction=art_direction
                 )
 
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -529,7 +529,7 @@ class ComicService:
 
                 # Build prompt using multi-layered PromptBuilder V2
                 pos_prompt, neg_prompt = thread_prompt_builder.build_prompt(
-                    panel_scene, self.memory_manager, is_continuation=(i > 0), style=style, color_mode=color_mode
+                    panel_scene, self.memory_manager, is_continuation=(i > 0), style=style, color_mode=color_mode, art_direction=art_direction
                 )
 
                 if use_reference:

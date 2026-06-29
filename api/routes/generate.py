@@ -20,6 +20,14 @@ class NovelInput(BaseModel):
     re_generate: Optional[bool] = Field(False, description="Optional bypass daily limit and re-generate")
     generation_format: Optional[str] = Field(None, description="Optional generation format: single_page | panel_strip | None")
     color_mode: Optional[str] = Field("auto", description="Colour mode: auto | color | bw")
+    art_direction: Optional[str] = Field("", description="Optional setting/art-direction note locked into every panel (e.g. 'ancient ruined marketplace, broken carts' or '1980s neon Tokyo')")
+
+    @field_validator("art_direction")
+    @classmethod
+    def validate_art_direction(cls, v):
+        if v and len(v) > 300:
+            raise ValueError("art_direction must be 300 characters or fewer")
+        return v
 
     @field_validator("color_mode")
     @classmethod
@@ -133,7 +141,8 @@ def generate_comic(
             user_id=user_id,
             characters=novel_input.characters,
             generation_format=novel_input.generation_format,
-            color_mode=novel_input.color_mode
+            color_mode=novel_input.color_mode,
+            art_direction=novel_input.art_direction or ""
         )
     except Exception as e:
         # If queueing itself failed, refund immediately

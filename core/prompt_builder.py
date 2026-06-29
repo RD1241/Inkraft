@@ -393,6 +393,7 @@ class PromptBuilder:
         is_continuation: bool = False,
         style: str = None,
         color_mode: str = "auto",
+        art_direction: str = "",
     ) -> tuple[str, str]:
         """
         Build (positive_prompt, negative_prompt) for a single panel.
@@ -595,6 +596,12 @@ class PromptBuilder:
         
         # Build prefix tokens
         prefix_tokens = []
+        # User-supplied art direction / setting note goes FIRST (highest weight) so a
+        # creator can lock the backdrop/era/mood/style across every panel when the
+        # auto-extraction isn't enough, e.g. "ancient ruined marketplace, broken carts,
+        # smoldering ruins" or "1980s neon Tokyo, cyberpunk". [QA 2026-06-29]
+        if art_direction and art_direction.strip():
+            prefix_tokens.extend(self._to_tokens(art_direction.strip()))
         if gender_token:
             prefix_tokens.extend(self._to_tokens(gender_token))
         if is_sdxl:
