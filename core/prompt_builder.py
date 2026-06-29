@@ -552,16 +552,33 @@ class PromptBuilder:
                         toks.extend(self._to_tokens(a))
             return toks
 
+        # Tender beats must NOT get the structured combat/impact action tokens (the
+        # ActionLibrary + InteractionComposer otherwise leak "impact strike pose,
+        # contact point visible, motion blur" onto a knight kneeling to comfort a
+        # crying child). Suppress ONLY when the action is clearly tender AND has no
+        # combat verb — so real fights still get their impact tokens. [QA 2026-06-29]
+        _tender_action_kw = ("kneel", "knelt", "comfort", "cry", "cries", "crying", "cried",
+                             "tear", "weep", "wept", "sob", "whisper", "hug", "embrace",
+                             "gentle", "soothe", "reassur", "caress", "kiss", "mourn",
+                             "pray", "cradle", "console")
+        _combat_action_kw = ("fight", "clash", "strike", "sword", "blade", "punch", "kick",
+                             "attack", "slash", "battle", "charge", "swing", "stab", "lunge",
+                             "shoot", "slam", "smash", "duel", "spar", "blow")
+
         def _action_tokens():
             toks = []
             if action_input:
                 toks.extend(self._to_tokens(action_input))
-                avt = _action_library.get_action_tokens(action_input)
-                if avt:
-                    toks.extend(avt)
-                it = _interaction_composer.detect_and_inject(action_input, len(characters))
-                if it:
-                    toks.extend(it)
+                al = action_input.lower()
+                is_tender = any(k in al for k in _tender_action_kw)
+                is_combat = any(k in al for k in _combat_action_kw)
+                if is_combat or not is_tender:
+                    avt = _action_library.get_action_tokens(action_input)
+                    if avt:
+                        toks.extend(avt)
+                    it = _interaction_composer.detect_and_inject(action_input, len(characters))
+                    if it:
+                        toks.extend(it)
             return toks
 
         if not has_characters:
