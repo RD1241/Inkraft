@@ -189,6 +189,18 @@
                 <div id="char-counter" class="char-counter">0 / 3000</div>
               </div>
             </div>
+            
+            <!-- Optional Setting / Art Direction Input -->
+            <div class="wizard-input-group" style="margin-top: 1.5rem;">
+              <label for="art-direction-input" class="selector-label">Setting / Art Direction <small style="opacity:0.6; text-transform:none;">(optional)</small></label>
+              <input 
+                type="text" 
+                id="art-direction-input" 
+                class="wizard-text-input" 
+                placeholder="Optional: lock the setting/style — e.g. 'ancient ruined marketplace, broken carts' or '1980s neon Tokyo'" 
+                maxlength="300"
+              >
+            </div>
           </div>
 
           <!-- STEP 2: Choose Style -->
@@ -1968,6 +1980,7 @@
       try {
         const panelCountVal = parseInt(document.getElementById('panel-count-input')?.value || '0');
         const colorModeVal  = document.getElementById('color-mode-input')?.value || 'auto';
+        const artDirectionVal = document.getElementById('art-direction-input')?.value.trim() || '';
         const body = { 
           text, 
           style: style || undefined, 
@@ -1976,7 +1989,8 @@
           panel_count: panelCountVal > 0 ? panelCountVal : undefined,
           color_mode: colorModeVal,
           characters: localCharacters.filter(c => c.selected !== false).length > 0 ? localCharacters.filter(c => c.selected !== false) : undefined,
-          re_generate: reGenerate
+          re_generate: reGenerate,
+          art_direction: artDirectionVal ? artDirectionVal.slice(0, 300) : undefined
         };
         const response = await apiFetch('/api/generate_comic', {
           method: 'POST',

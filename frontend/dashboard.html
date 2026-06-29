@@ -188,6 +188,18 @@
             <input type="hidden" id="qg-color-mode" value="auto">
           </div>
 
+          <!-- Setting / Art Direction -->
+          <div class="form-group">
+            <label for="qg-art-direction" class="qg-chips-label">Setting / Art Direction <small style="opacity:0.6; text-transform:none;">(optional)</small></label>
+            <input
+              type="text"
+              id="qg-art-direction"
+              class="qg-input"
+              placeholder="Optional: lock the setting/style — e.g. 'ancient ruined marketplace, broken carts' or '1980s neon Tokyo'"
+              maxlength="300"
+            >
+          </div>
+
           <div id="qg-error" class="auth-error hidden"></div>
 
           <button type="submit" class="qg-generate-btn" id="qg-btn">
@@ -525,6 +537,7 @@
       const layout = document.getElementById('qg-layout').value;
       const panelCount = parseInt(document.getElementById('qg-panel-count')?.value || '0');
       const colorMode  = document.getElementById('qg-color-mode')?.value || 'auto';
+      const artDirection = document.getElementById('qg-art-direction')?.value.trim() || '';
 
       try {
         const submitRes = await apiFetch('/api/generate_comic', {
@@ -534,7 +547,8 @@
             style: style || undefined,
             layout_type: layout || undefined,
             panel_count: panelCount > 0 ? panelCount : undefined,
-            color_mode: colorMode
+            color_mode: colorMode,
+            art_direction: artDirection ? artDirection.slice(0, 300) : undefined
           }),
         });
         const submitData = await submitRes.json();
