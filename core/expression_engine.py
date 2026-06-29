@@ -209,6 +209,18 @@ class ExpressionEngine:
         elif any(term in emotion for term in ["cautio", "hesitan", "uneasy", "uncertain",
                                               "doubt", "reluctan"]):
             return "suspicion"
+        # Action/peril stress words used to fall through to "neutral" (a calm face on a
+        # desperate escape). Map them to intense/determined (focused under pressure) so a
+        # hero sprinting from an explosion doesn't look serene — and without the
+        # "cowering" of the fearful bucket. [QA 2026-06-29]
+        elif any(term in emotion for term in ["urgen", "desperat", "frantic", "hurried",
+                                              "rushed", "panic-strick", "adrenaline"]):
+            return "determined"
+        elif any(term in emotion for term in ["triumph", "victorious", "elated", "exultant"]):
+            return "confident"
+        elif any(term in emotion for term in ["exhaust", "weary", "drained", "spent",
+                                              "fatigue", "worn out"]):
+            return "despair"
         elif any(term in emotion for term in ["threat", "hostile", "aggressi",
                                               "snarl", "vicious"]):
             return "angry"
