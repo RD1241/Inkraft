@@ -272,6 +272,28 @@ Working through the founder's 6-part full-SaaS QA audit ($4 fal budget). Done so
   capacity (~512 model tokens), so the budget already matches what FLUX can absorb; richer output
   now comes from the storyboard writing richer descriptions, not a bigger cap. The 3000 is the
   INPUT char limit (split across panels), not a per-panel prompt size.
+- **[DONE 2026-06-29 · 4c91579] Art-direction input — completed AG's frontend.** AG added the
+  'Setting / Art Direction' input to the wizard + dashboard and wired the WIZARD payload, but
+  left two gaps I fixed: (a) the `.wizard-text-input`/`.qg-input` CSS was never added (bare white
+  boxes) → added neo-brutalist styling; (b) the DASHBOARD input was a DEAD field (handler never
+  read `#qg-art-direction`) → wired it. Verified live: wizard input styled + maxlength 300, both
+  forms POST `art_direction`. The art-direction feature is now fully shipped (FE+BE).
+- **[DONE 2026-06-29 · 0862b31] Epic-battle tension floor.** Combat tension floor only fired for
+  layout=='action' on sword/clash/blade → epic battles in cinematic/standard layout rendered
+  calm. Now any combat beat (word-boundary: charge/attack/sorcery/magic/unleash/explosion/... )
+  bumps tension>=7 in ANY layout → intense battle faces.
+- **➡️ NEXT SESSION (context handoff at ~65%): remaining work, in priority order:**
+  1. **Multi-panel environment-only portrait-bias** (deferred backend): in a MULTI-panel comic a
+     character-less establishing panel still uses portrait dims → FLUX adds a lone figure. Single-
+     page is fixed (landscape 1280x832). The clean approach: in `fal_ai.generate_image`, for a
+     character-less panel (no focus AND no secondary) generate at a WIDER aspect then centre-crop
+     to the compositor's slot dims (don't change the slot dims — that breaks tiling). Verify with a
+     real multi-panel comic that has an env-only panel.
+  2. **More genre sweeps** (mystery, slice-of-life dialogue, war/gore safety-block handling) via
+     `tools/trace_pipeline.py` (free) — fix bugs like the ones already found (gender default, ghost
+     nouns, wrong-romance emotion, calm action).
+  3. Verify the live Railway deploy picked up all of today's commits (latest `0862b31`) — founder
+     re-tests the knight scene + the new Setting/Art-direction box.
 - **⚠️ OPERATIONAL: Groq free tier daily token limit (100k TPD) was hit (RESET as of 2026-06-29)** by all the tracing/
   testing this session — further LLM extraction/storyboard calls fall back to rule-based until
   it resets (daily). Next session: pace Groq calls, or the founder can upgrade Groq tier.
