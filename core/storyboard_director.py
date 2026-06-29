@@ -892,7 +892,7 @@ Your output must strictly follow this JSON schema:
       "panel_size": "<small, medium, large, or wide>",
       "lighting": "<lighting style, e.g. dramatic, soft, high-key, cinematic, dark>",
       "focus_character": "<name of character under focus, or empty>",
-      "action": "<detailed visual description of the action / pose in this panel>",
+      "action": "<rich, cinematic visual description of THIS panel: the character's action/pose AND the concrete setting/atmosphere visible in frame — weather, time of day, lighting, background objects and mood — drawn faithfully from the source text (e.g. 'the knight kneels in the rain before the crying girl amid broken carts and smoldering ruins, moonlight catching his dented armor'). Preserve the source's vivid details; do NOT flatten them to a generic summary>",
       "dialogue": [
         {{
           "speaker": "<character name or Narrator>",

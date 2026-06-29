@@ -365,12 +365,13 @@ class PromptBuilder:
     # Public API
     # ------------------------------------------------------------------
 
-    def _apply_color_mode(self, prompt: str, monochrome: bool) -> str:
+    def _apply_color_mode(self, prompt: str, monochrome: bool, cap: int = 110) -> str:
         """
         Normalise a finished positive prompt for the resolved colour mode.
-        Monochrome: prepend monochrome anchors (survive the 110-token cap).
+        Monochrome: prepend monochrome anchors (survive the token cap).
         Colour: strip any monochrome/ink-art tokens so a manga-styled prompt
         forced to colour does not keep pulling the model toward greyscale.
+        cap is the final token budget (wide for FLUX, tight for SD/CLIP).
         """
         tokens = self._to_tokens(prompt)
         if monochrome:
@@ -383,7 +384,7 @@ class PromptBuilder:
                 if not any(k in t.lower() for k in MONOCHROME_KEYWORDS)
             ]
         tokens = self._deduplicate_tokens(tokens)
-        return ", ".join(tokens[:110])
+        return ", ".join(tokens[:cap])
 
     def build_prompt(
         self,
@@ -419,6 +420,16 @@ class PromptBuilder:
                 "prefix": f"{active_style} illustration",
                 "lighting_override": "cinematic lighting"
             }
+
+        # Token budgets. The old 110-total / 20-for-setting caps were an SDXL/CLIP
+        # (77-token) constraint that THREW AWAY exactly the rich scene detail FLUX is
+        # best at — a user's "moonlight, rain-soaked cobblestone, abandoned market,
+        # broken carts, smoke from burning buildings" got truncated to 20 tokens. FLUX
+        # (the fal path) uses a T5 encoder that follows long, descriptive prompts, so
+        # give the setting/action far more room. Local SD keeps the tight CLIP budget.
+        # [QA 2026-06-29]
+        l5_cap = 48 if is_sdxl else 20      # action + environment / atmosphere
+        total_cap = 170 if is_sdxl else 110
 
         # Initialize layer token lists
         l1_camera_tokens = []
@@ -572,12 +583,12 @@ class PromptBuilder:
             l6_style_tokens.extend(self._to_tokens(template["prefix"]))
 
         # Assemble the candidate positive prompt without composition variation first
-        cand_l1 = l1_camera_tokens[:15]   # Camera (1-15)
-        cand_l2 = l2_emotion_tokens[:20]  # Emotion (16-35)
-        cand_l3 = l4_character_tokens[:25] # Character (36-60) - character tokens before lighting!
-        cand_l4 = l3_lighting_tokens[:10]  # Lighting (61-70)
-        cand_l5 = l5_action_env_tokens[:20] # Action & Env (71-90)
-        cand_l6 = l6_style_tokens[:20]     # Style (91-110)
+        cand_l1 = l1_camera_tokens[:15]   # Camera
+        cand_l2 = l2_emotion_tokens[:20]  # Emotion
+        cand_l3 = l4_character_tokens[:30] # Character (identity)
+        cand_l4 = l3_lighting_tokens[:12]  # Lighting
+        cand_l5 = l5_action_env_tokens[:l5_cap] # Action & Env / atmosphere (wide for FLUX)
+        cand_l6 = l6_style_tokens[:20]     # Style
 
         cand_all = cand_l1 + cand_l2 + cand_l3 + cand_l4 + cand_l5 + cand_l6
         cand_all = self._deduplicate_tokens(cand_all)
@@ -597,7 +608,7 @@ class PromptBuilder:
         # Prepend prefix tokens to cand_all, avoiding duplicates
         full_tokens = prefix_tokens + [t for t in cand_all if t.lower() not in [p.lower() for p in prefix_tokens]]
         full_tokens = self._deduplicate_tokens(full_tokens)
-        full_tokens = full_tokens[:110]
+        full_tokens = full_tokens[:total_cap]
         candidate_prompt = ", ".join(full_tokens)
 
         # Consecutive duplicate panel guard
@@ -622,7 +633,7 @@ class PromptBuilder:
             
             full_tokens = prefix_tokens + [t for t in cand_all if t.lower() not in [p.lower() for p in prefix_tokens]]
             full_tokens = self._deduplicate_tokens(full_tokens)
-            full_tokens = full_tokens[:110]
+            full_tokens = full_tokens[:total_cap]
             candidate_prompt = ", ".join(full_tokens)
 
         # V3 Continuation Lock: Re-inject Identity Core anchors at prompt start for panels 2+
@@ -641,11 +652,11 @@ class PromptBuilder:
                 candidate_prompt = f"{anchor_str}, {candidate_prompt}"
                 final_tokens = self._to_tokens(candidate_prompt)
                 final_tokens = self._deduplicate_tokens(final_tokens)
-                candidate_prompt = ", ".join(final_tokens[:110])
+                candidate_prompt = ", ".join(final_tokens[:total_cap])
 
         # Apply resolved colour mode: inject monochrome anchors or strip them
         # so the positive prompt matches auto/color/bw intent.
-        candidate_prompt = self._apply_color_mode(candidate_prompt, monochrome)
+        candidate_prompt = self._apply_color_mode(candidate_prompt, monochrome, total_cap)
 
         # Save final prompt for future comparison
         self.last_positive_prompt = candidate_prompt
