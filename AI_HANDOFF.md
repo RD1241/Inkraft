@@ -105,6 +105,35 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-29 — Claude Code — Multi-panel environment-only portrait-bias fix (NEXT-SESSION #1)
+- **Problem (from prior NEXT-SESSION plan):** in a MULTI-panel comic a character-less
+  establishing panel still used portrait/square slot dims → FLUX's tall-portrait bias
+  inserts a spurious lone figure into the empty scene. Single-page was already fixed
+  (landscape 1280x832, commit 768e0b4) but multi-panel slot dims are owned by the
+  compositor's tiling and must NOT change.
+- **Fix (`providers/image/fal_ai.py`, `generate_image`):** for a character-less multi-panel
+  slot (`not focus_character and not secondary_character`) whose aspect is `< 1.5`, generate
+  on a WIDER landscape canvas (`gen_w = round64(h*1.7)`, clamped [512,1536]) so no lone figure
+  appears, then **centre-crop the downloaded image back to the EXACT slot dims** so the
+  compositor tiling is unchanged. Slots already ≥1.5 landscape and ALL character panels are
+  untouched (no behavioural change for the common case). New `crop_to` tracker + a post-loop
+  PIL centre-crop (falls back to resize if the model returns smaller than expected).
+- **Why this works:** reuses the SAME landscape principle already paid-verified for single-page
+  (768e0b4: empty-street prompt at 1280x768 → ZERO people, at 1024x1280 → always a person).
+- **Verified OFFLINE (zero fal spend):** drove the REAL `panel_compositor` for N=2..6 standard
+  layouts + the portrait-fallback/square/2:1/large slots and replayed the exact dim logic +
+  PIL crop. All env-only sub-1.5 slots widen to a landscape gen aspect (1.50–1.75) and the
+  crop restores the slot dims EXACTLY (e.g. N=2 1016x713→gen 1216x704→crop 1024x704; N=6 square
+  338x363→gen 896x512→crop 512x512; portrait 768x1024→gen 1536x1024→crop 768x1024). Landscape
+  slots (≥1.5) untouched; character panels untouched. `fal_ai.py` compiles + imports clean
+  (project venv). Test script: scratchpad `verify_env_crop.py`.
+- **⚠️ STILL PENDING — paid visual confirm (needs founder OK, ~$0.05):** generate ONE real
+  multi-panel comic containing an env-only establishing panel and EYEBALL the assembled page to
+  confirm (a) no lone figure in the empty panel and (b) the centre-cropped environment reads
+  coherently in its slot. The dim/crop MATH and the landscape→no-figure principle are verified;
+  only the end-to-end visual on a cropped multi-panel slot is unconfirmed. Session fal spend was
+  ≈ $0.85 of $4 before this task.
+
 ### 2026-06-29 — Antigravity — UI audit & mobile responsiveness + hero carousel implemented
 
 Completed the full Step 6 UI audit and layout fixes across desktop and mobile, resolving all horizontal overflow and stretching issues on the landing page, wizard steps, auth pages, and secondary dashboards:

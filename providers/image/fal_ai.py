@@ -343,6 +343,11 @@ class FalAIImageProvider(ImageProvider):
         """
         from core.prompt_builder import resolve_monochrome
         monochrome = resolve_monochrome(color_mode, style)
+        # When set to (w, h), the image is generated on a wider landscape canvas (to
+        # dodge FLUX's lone-figure bias on character-less panels) and centre-cropped
+        # back to these exact slot dims after download so the compositor tiling is
+        # unchanged. None = no crop.
+        crop_to = None
         actual_submissions = 0
         actual_request_ids = []
         actual_safety_retries = 0
@@ -384,6 +389,23 @@ class FalAIImageProvider(ImageProvider):
                 h = int(round(panel_height / 64.0) * 64)
                 w = max(512, min(1536, w))
                 h = max(512, min(1536, h))
+
+                # Multi-panel environment-only panels: FLUX's tall/square portrait bias
+                # inserts a spurious lone figure into character-less establishing shots
+                # (verified single-page A/B: 1280x768 -> zero people, 1024x1280 -> always a
+                # person). The single-page path fixes this with a landscape aspect, but a
+                # multi-panel slot's dims are owned by the compositor's tiling and must NOT
+                # change. So for a character-less slot that isn't already comfortably
+                # landscape, generate on a WIDER landscape canvas (no figure) and centre-crop
+                # back to the exact slot dims after download. [QA 2026-06-29]
+                if not focus_character and not secondary_character and h > 0 and (w / h) < 1.5:
+                    gen_w = int(round((h * 1.7) / 64.0) * 64)
+                    gen_w = max(512, min(1536, gen_w))
+                    if gen_w > w:
+                        crop_to = (w, h)   # final slot dims to centre-crop back to
+                        w = gen_w          # generate wide; crop after download
+                        print(f"[FalAI] Env-only panel: generating wide {w}x{h}, "
+                              f"will centre-crop to {crop_to[0]}x{crop_to[1]}.")
 
             # Fix 2: Seed logic (Thread-safe)
             char_key = focus_character.strip().lower() if focus_character else "default"
@@ -852,6 +874,28 @@ class FalAIImageProvider(ImageProvider):
 
                 # If we reached here, the image is valid (not black)
                 break
+
+            # Env-only panels were generated on a wider landscape canvas to avoid FLUX's
+            # lone-figure bias; centre-crop back to the exact slot dims the compositor
+            # expects so the page tiling is unchanged.
+            if crop_to is not None:
+                try:
+                    target_w, target_h = crop_to
+                    with Image.open(output_path) as img:
+                        gen_img = img.convert("RGB")
+                        gw, gh = gen_img.size
+                        if gw >= target_w and gh >= target_h:
+                            left = (gw - target_w) // 2
+                            top = (gh - target_h) // 2
+                            cropped = gen_img.crop((left, top, left + target_w, top + target_h))
+                        else:
+                            # Generation came back smaller than expected — resize to slot dims.
+                            cropped = gen_img.resize((target_w, target_h))
+                    cropped.save(output_path)
+                    print(f"[FalAI] Centre-cropped env panel {gw}x{gh} -> {target_w}x{target_h} "
+                          f"(slot dims preserved).")
+                except Exception as crop_err:
+                    print(f"[FalAI Warning] Env-panel centre-crop failed: {crop_err}")
 
             # If the resolved colour mode is monochrome, convert the image to
             # greyscale to override any model/IP-Adapter colour bias.
