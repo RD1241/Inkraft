@@ -441,14 +441,19 @@ class StoryboardDirector:
                     if p != best_panel:
                         p.dialogue = [d for d in p.dialogue if d.get("text", "").strip().lower() != txt_lower]
 
-        # Enforce minimum tension floor of 7 for action layouts with sword/clash/blade keywords
-        if plan.layout_type and plan.layout_type.lower() == "action":
-            for p in panels:
-                act_lower = (p.action or "").lower()
-                if any(w in act_lower for w in ["sword", "clash", "blade"]):
-                    if p.tension_level < 7:
-                        print(f"[Storyboard] Action panel {p.panel_id} contains combat keywords. Setting tension_level from {p.tension_level} to 7.")
-                        p.tension_level = 7
+        # Minimum tension floor of 7 for any genuine combat beat, REGARDLESS of the
+        # chosen layout — an epic battle in 'cinematic'/'standard' layout was getting
+        # low tension + neutral (calm) faces. Word-boundary matched so 'stab' doesn't
+        # hit 'establish' nor 'war' hit 'toward'. Feeds the emotion floor -> intense
+        # faces in a battle. [QA 2026-06-29]
+        _combat_floor_re = re.compile(
+            r"\b(sword|clash|blade|fight|battle|charge|attack|strike|slash|punch|kick|"
+            r"stab|combat|duel|lunge|collide|sorcery|onslaught|ambush|siege|warfare|"
+            r"magic|spell|unleash|roar|explosion|gunfire|shoot|shot)\b")
+        for p in panels:
+            if _combat_floor_re.search((p.action or "").lower()) and p.tension_level < 7:
+                print(f"[Storyboard] Panel {p.panel_id} combat beat -> tension {p.tension_level}->7.")
+                p.tension_level = 7
 
         # 1. First panel pacing validation
         if n >= 3:
