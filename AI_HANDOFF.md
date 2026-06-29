@@ -197,7 +197,26 @@ Working through the founder's 6-part full-SaaS QA audit ($4 fal budget). Done so
   armor → modern guy" is an OLD-CODE (nano + anime/school-uniform portrait) artifact — the FLUX
   deploy fixes it; re-test after deploy. The MISSING unnamed girl (a "small girl", no name → the
   extractor/blacklist drops her) still needs a careful extraction fix + Groq to verify.
-- **⚠️ OPERATIONAL: Groq free tier daily token limit (100k TPD) was hit** by all the tracing/
+- **[VERIFIED 2026-06-29] Antigravity's Step-6 mobile/UI work — checked against the real
+  diff, not the claim.** AG made 3 frontend-only commits (index.html, style.css; ZERO backend).
+  Verified live in a headless browser: NO horizontal scroll at 375px (scrollW==clientW==375),
+  hero carousel = 5 preloaded cards + auto-cycle + hover-pause + stamp/label sync, every hero
+  element fits the viewport, no console errors, and the generate-form payload still sends
+  panel_count + color_mode. Auth-page fix is real (shared style.css cascade, not phantom).
+  Pushed. GAP: dashboard.html has its own dashboard.css which AG didn't pass over (only the
+  global overflow guard) — Phase-2 follow-up.
+- **[DONE 2026-06-29 · groq reset] Unnamed described character kept (the little girl).** A
+  user's knight/child manga rendered with NO child (+ a modern-dressed 'knight' + a bogus
+  SMASH!). Root causes split across fixes: (a) generic person nouns (girl/boy/man) were
+  blacklisted as ghosts → `_normalize_characters` now keeps a PERSON_NOUN name when it has a
+  substantive description (bare 'girl'/'someone' still filtered — verified no ghost regression);
+  (b) FLUX migration renders the armored knight (was nano's anime/school-uniform portrait);
+  (c) env fix gives ancient ruins not a modern street; (d) SFX fix drops the wrong SMASH!.
+  **GOLD-STANDARD VERIFICATION (paid, real comic):** re-generated the exact scene — Panel 1 a
+  proper armored knight w/ sword in ancient pillared ruins, Panel 2 knight + little girl (white
+  dress), Panel 3 Kael kneeling w/ 'YOU DON'T HAVE TO BE AFRAID ANYMORE' bubble, no SFX. Every
+  original defect fixed together. Session fal spend now ≈ $0.63 of $4.
+- **⚠️ OPERATIONAL: Groq free tier daily token limit (100k TPD) was hit (RESET as of 2026-06-29)** by all the tracing/
   testing this session — further LLM extraction/storyboard calls fall back to rule-based until
   it resets (daily). Next session: pace Groq calls, or the founder can upgrade Groq tier.
 - **[OPEN · MED] Singly-named character dropped (romance/dialogue).** A romance scene
