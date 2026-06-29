@@ -259,6 +259,19 @@ Working through the founder's 6-part full-SaaS QA audit ($4 fal budget). Done so
 - **[FIXED 2026-06-29 · 127c053] Combat tokens leaking onto tender beats.** ActionLibrary/
   InteractionComposer put 'impact strike pose, motion blur' on a kneeling-to-comfort panel;
   now suppressed when the action is tender AND has no combat verb (real fights keep impact).
+- **[ROBUSTNESS 2026-06-29 · c557d95] Genre sweep fixed 4 real bugs (horror + comedy).** (1)
+  EMOTION_MAPPER romance pattern matched 'hand'/'lantern'/'gently' → a horror victim grabbed by
+  'a pale HAND' rendered 'happy, blushing'; tightened to real romance words. (2) 'Something
+  breathed in the darkness' → ghost character 'Something'; added something/anything/everything/
+  etc. to blacklists. (3) gender default: a lone protagonist named once then pronoun'd ('Mara...
+  grabbed her... She screamed') tied 0-0 in the proximity window → defaulted MALE; widened to 12
+  words + full-text pronoun fallback when proximity is empty → Mara reads female. (4) comedy
+  emotions fell to calm 'neutral': laughing/amused/giggling→happy, awkward/sheepish→embarrassed.
+- **[BUDGET CLARIFICATION] The 110→170 FLUX prompt budget is NOT binding** — real per-panel
+  prompts are only ~35-42 phrase-tokens (~500-700 chars). 170 phrase-tokens ≈ FLUX's full T5
+  capacity (~512 model tokens), so the budget already matches what FLUX can absorb; richer output
+  now comes from the storyboard writing richer descriptions, not a bigger cap. The 3000 is the
+  INPUT char limit (split across panels), not a per-panel prompt size.
 - **⚠️ OPERATIONAL: Groq free tier daily token limit (100k TPD) was hit (RESET as of 2026-06-29)** by all the tracing/
   testing this session — further LLM extraction/storyboard calls fall back to rule-based until
   it resets (daily). Next session: pace Groq calls, or the founder can upgrade Groq tier.
