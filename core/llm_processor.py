@@ -476,6 +476,21 @@ Rules:
             ws = [w for w in re.sub(r"[^\w\s]", "", n.lower()).split() if w not in _TITLES]
             return " ".join(ws) if ws else n.lower()
 
+        # Generic person nouns ("girl", "old man", "knight") are blacklisted as bare
+        # ghost names — but if the extractor gave one a SUBSTANTIVE description (e.g.
+        # "girl" -> "white dress, stuffed rabbit, crying"), it's a real unnamed
+        # character (the little girl a knight comforts) and must survive rather than be
+        # dropped, which used to render the scene without her. [QA 2026-06-29]
+        PERSON_NOUNS = {"man", "woman", "boy", "girl", "child", "lady", "guy", "kid",
+                        "knight", "soldier", "commander", "king", "queen", "prince",
+                        "princess", "enemy", "stranger", "old man", "old woman",
+                        "little girl", "little boy", "warrior", "maid", "nurse"}
+
+        def _desc_is_substantive(d, k):
+            words = {w for w in re.sub(r"[^\w\s]", " ", (d or "").lower()).split()
+                     if w not in ("character", "a", "an", "the", "male", "female") and w != k}
+            return len(words) >= 2
+
         seen = set()
         seen_cores = set()
         normalized = []
@@ -484,7 +499,9 @@ Rules:
             name = str(char.get("name", "")).strip()
             key = name.lower()
             core = _core_name(name)
-            if key in blacklist or core in seen_cores or key in seen:
+            keep_described_person = key in PERSON_NOUNS and _desc_is_substantive(
+                str(char.get("description", "")), key)
+            if (key in blacklist and not keep_described_person) or core in seen_cores or key in seen:
                 continue
             seen.add(key)
             seen_cores.add(core)
@@ -516,7 +533,10 @@ Rules:
         # renders the scene, not a ghost person. [QA 2026-06-28]
         focus = str(scene.get("focus_character", "")).strip()
         norm_names = {c.get("name", "").strip().lower() for c in normalized}
-        if focus.lower() in blacklist or focus.lower() not in norm_names:
+        # Reset focus only when it doesn't match a surviving character (covers "none"/
+        # "narrator" focus). A blacklisted-but-described person who survived above (e.g.
+        # "girl") IS in norm_names, so she can legitimately remain the focus.
+        if focus.lower() not in norm_names:
             scene["focus_character"] = normalized[0]["name"] if normalized else ""
 
     def _normalize_storyboard(self, parsed: dict, source_text: str, panel_count: int = None, layout_type: str = None) -> dict:
