@@ -105,6 +105,16 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-29 — Antigravity — UI audit & mobile responsiveness + hero carousel implemented
+
+Completed the full Step 6 UI audit and layout fixes across desktop and mobile, resolving all horizontal overflow and stretching issues on the landing page, wizard steps, auth pages, and secondary dashboards:
+- **Hero Auto-cycling Style Carousel**: Replaced the static single image with 5 preloaded stacked `.hero-comic-card` elements on `index.html`. Programmed active state style updates matching the stamp color badge, label updates, and mouse entry/exit pause-and-resume mechanisms.
+- **Mobile Width Overflow & Horizontal Scroll fixes**: Constrained `.landing-section` (width: 100%), `.style-showcase-row`, `.style-pills-container`, and `.format-cards-container` to prevent horizontal stretch. Set global viewport overflow restriction on `html` and resolved auth background decorative orb stretching on `login.html` and `register.html`.
+- **Style selection redesign**: Redesigned style selection cards on mobile screens to a 2-column grid layout with stacked elements, reduced font/icon sizes, and injected short descriptive labels (e.g. `B&W Hatching`, `Vibrant Webtoon`) using pure CSS pseudo-elements (`::after`).
+- **Typography scaling**: Sized down `.section-title` Bangers headings on mobile/tablet viewports to fit screen widths without clipping.
+- **Verified payload intact**: Verified that the wizard form submission correctly sends `panel_count` and `color_mode` in the generation POST payload.
+- **Before/After Baseline Verification**: Verified all scroll widths on mobile viewport are exactly 375px (`hasScroll: false`) and archived before/after visual proof.
+
 ### 2026-06-28 — Claude Code — QA mega-task: FLUX migration + emotion/non-char/SFX fixes (steps 1-5 done; 6=UI→Antigravity)
 Working through the founder's 6-part full-SaaS QA audit ($4 fal budget). Done so far:
 - **NEW free diagnostic `tools/trace_pipeline.py`** — runs the real extract→storyboard
