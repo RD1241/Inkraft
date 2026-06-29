@@ -216,6 +216,25 @@ Working through the founder's 6-part full-SaaS QA audit ($4 fal budget). Done so
   proper armored knight w/ sword in ancient pillared ruins, Panel 2 knight + little girl (white
   dress), Panel 3 Kael kneeling w/ 'YOU DON'T HAVE TO BE AFRAID ANYMORE' bubble, no SFX. Every
   original defect fixed together. Session fal spend now ≈ $0.63 of $4.
+- **[FIXED 2026-06-29 · 42ea591] CRITICAL: 'Next Step' looked broken.** The #error-banner
+  lived INSIDE step-content[data-step=5] (display:none on step 1), so the step-1 'story too
+  short' validation rendered at 0 height and was unreachable — clicking Next on an empty box
+  did nothing visible. Pre-existing (not the mobile work). Moved the banner OUT of the step
+  panels + gave the previously-unstyled .error-banner a prominent red neo-brutalist style.
+  Verified live (headless): empty box -> step 1 + visible red banner; valid text -> step 2.
+- **[FIXED 2026-06-29 · a1ce388] 'All over the place' setting = PROMPT, not model.** A user's
+  'ancient ruined city/market' rendered as a modern lamp-post street. Causes: (1) 'street'/
+  'alley' anchors injected modern furniture (lamp posts/sidewalk/trash cans) — neutralized;
+  (2) storyboard+extraction collapsed the rich setting to 'rain-soaked streets', dropping the
+  era — strengthened both LLM prompts to keep era/place words. Trace now yields 'rain-soaked
+  cobblestone streets' (no modern furniture).
+- **[MODEL COMPARISON 2026-06-29] FLUX confirmed best — on the user's own scene.** Founder
+  asked to re-compare nano-banana/SDXL/FLUX. Generated the knight scene through each: **SDXL
+  animagine = a fully BLACK safety-blocked frame; nano-banana = reference portraits FAILED
+  validation (twice each) and fell back to FLUX (the nano path is also what produced the
+  original anime 'modern guy'); FLUX = a clean armored knight in a rainy cobblestone ruined
+  street.** Conclusion reinforced: the model was never the problem — keep flux_all. Session
+  fal spend now ≈ $0.85 of $4.
 - **⚠️ OPERATIONAL: Groq free tier daily token limit (100k TPD) was hit (RESET as of 2026-06-29)** by all the tracing/
   testing this session — further LLM extraction/storyboard calls fall back to rule-based until
   it resets (daily). Next session: pace Groq calls, or the founder can upgrade Groq tier.
