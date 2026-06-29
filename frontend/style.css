@@ -323,10 +323,12 @@ p, span, label, input, textarea, select, button, a {
 /* ── Section Dividers and Titles ── */
 .landing-section {
     padding: 6rem 2rem;
+    width: 100%;
     max-width: 1200px;
     margin: 0 auto;
     border-bottom: 4px solid #000000;
     position: relative;
+    box-sizing: border-box;
 }
 
 .section-title-wrap {
@@ -4421,12 +4423,112 @@ input:checked + .slider:before {
 .hero-switch-btn[data-style="cinematic"].active { background: #10b981 !important; color: #ffffff !important; }
 .hero-switch-btn[data-style="realistic"].active { background: #f59e0b !important; color: #000000 !important; }
 
-#hero-showcase-img {
-  transition: opacity 0.15s ease-in-out;
+/* Stacked cards for hero showcase carousel */
+.hero-comic-card {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  transform: scale(0.97);
+  z-index: 1;
 }
 
-/* Adjust layout spacing for hero showcase on mobile */
+.hero-comic-card.active {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+  z-index: 2;
+}
+
+/* Tooltip white-space normal fix */
+.tooltip .tooltiptext {
+  white-space: normal !important;
+}
+
+/* Max-width constraints on swipe rows & parent containers to prevent horizontal scrolling on mobile */
+@media (max-width: 768px) {
+  .style-pills-container,
+  .format-cards-container,
+  .style-showcase-row {
+    max-width: 100% !important;
+  }
+  
+  .input-section {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+  
+  /* Hero Showcase image height scaling */
+  .hero-comic-img {
+    height: 380px !important;
+  }
+
+  /* Style Selection Pills mobile grid redesign */
+  .style-pills-container {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+
+  .style-pill {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 0.75rem 0.5rem !important;
+    gap: 0.35rem !important;
+    min-height: 90px !important;
+    white-space: normal !important;
+  }
+
+  .style-icon-wrapper {
+    font-size: 1.5rem !important;
+    width: 38px !important;
+    height: 38px !important;
+    box-shadow: 1px 1px 0 #000 !important;
+  }
+
+  .style-label {
+    font-size: 0.9rem !important;
+    font-weight: 800 !important;
+  }
+
+  .style-desc {
+    display: none !important;
+  }
+
+  /* Short descriptions on mobile style-pills */
+  .style-pill[data-value=""] .style-card-content::after { content: "AI Auto-detect"; }
+  .style-pill[data-value="manga"] .style-card-content::after { content: "B&W Hatching"; }
+  .style-pill[data-value="manhwa"] .style-card-content::after { content: "Vibrant Webtoon"; }
+  .style-pill[data-value="anime"] .style-card-content::after { content: "Cel-shaded Look"; }
+  .style-pill[data-value="cinematic"] .style-card-content::after { content: "Moody Wide Frames"; }
+  .style-pill[data-value="realistic"] .style-card-content::after { content: "High-fidelity"; }
+
+  .style-pill .style-card-content::after {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+    margin-top: 0.15rem;
+    line-height: 1.1;
+    font-weight: 400;
+  }
+}
+
 @media (max-width: 480px) {
+  /* Hero Showcase image height scaling */
+  .hero-comic-img {
+    height: 300px !important;
+  }
+  
   .hero-switcher-buttons {
     gap: 0.35rem;
   }
@@ -4434,6 +4536,37 @@ input:checked + .slider:before {
     padding: 0.35rem 0.65rem;
     font-size: 0.75rem;
   }
+}
+
+/* Fix decorative orbs horizontal overflow in login / register */
+.auth-bg {
+  overflow: hidden !important;
+}
+body.auth-body {
+  overflow-x: hidden !important;
+}
+
+/* Mobile responsive heading and footer styling overrides */
+@media (max-width: 768px) {
+  .section-title {
+    font-size: 2.2rem !important;
+  }
+  .footer-links {
+    flex-wrap: wrap !important;
+    gap: 1rem !important;
+    justify-content: center !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .section-title {
+    font-size: 1.8rem !important;
+  }
+}
+
+/* Global viewport prevention of horizontal scroll */
+html {
+  overflow-x: hidden !important;
 }
 
 
