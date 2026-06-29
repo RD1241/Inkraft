@@ -60,7 +60,24 @@
       <div class="hero-showcase">
         <div class="hero-comic-frame">
           <div class="stamp-badge" id="hero-stamp-badge">MANGA STYLE</div>
-          <img src="assets/sample_comic.png" alt="Inkraft AI Manga Sample Page" class="hero-comic-img" id="hero-showcase-img">
+          
+          <!-- Preloaded stacked cards for each style to prevent transition flicker -->
+          <div class="hero-comic-card active" data-style="manga">
+            <img src="assets/sample_comic.png" alt="Inkraft AI Manga Sample Page" class="hero-comic-img">
+          </div>
+          <div class="hero-comic-card" data-style="manhwa">
+            <img src="assets/Manhwa.png" alt="Inkraft AI Manhwa Sample Page" class="hero-comic-img">
+          </div>
+          <div class="hero-comic-card" data-style="anime">
+            <img src="assets/anime_style_example.png" alt="Inkraft AI Anime Sample Page" class="hero-comic-img">
+          </div>
+          <div class="hero-comic-card" data-style="cinematic">
+            <img src="assets/Cinematic.png" alt="Inkraft AI Cinematic Sample Page" class="hero-comic-img">
+          </div>
+          <div class="hero-comic-card" data-style="realistic">
+            <img src="assets/realistic_style_example.png" alt="Inkraft AI Realistic Sample Page" class="hero-comic-img">
+          </div>
+          
           <div class="hero-zoom-badge">⚡ LIVE GENERATION PREVIEW</div>
         </div>
         
@@ -1339,35 +1356,87 @@
     });
 
     // ── Style Showcase Cards Integration ──
-    // ── Hero Style Showcase Switcher ──
-    const heroShowcaseImg = document.getElementById('hero-showcase-img');
+    // ── Hero Style Showcase Switcher & Auto-cycle Carousel ──
     const heroStampBadge = document.getElementById('hero-stamp-badge');
+    const switcherBtns = document.querySelectorAll('.hero-switch-btn');
+    const comicCards = document.querySelectorAll('.hero-comic-card');
+    const heroFrame = document.querySelector('.hero-comic-frame');
     
-    document.querySelectorAll('.hero-switch-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.hero-switch-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        
-        const src = btn.getAttribute('data-src');
-        const theme = btn.getAttribute('data-theme');
-        const textColor = btn.getAttribute('data-text');
-        const label = btn.getAttribute('data-label');
-        
-        if (heroShowcaseImg) {
-          heroShowcaseImg.style.opacity = '0.4';
-          setTimeout(() => {
-            heroShowcaseImg.src = src;
-            heroShowcaseImg.style.opacity = '1';
-          }, 100);
+    let currentIndex = 0;
+    let cycleInterval = null;
+    const cycleDelay = 4000; // 4 seconds
+    let isPaused = false;
+
+    function showStyle(index) {
+      if (index < 0 || index >= switcherBtns.length) return;
+      currentIndex = index;
+
+      // Update switcher buttons
+      switcherBtns.forEach((btn, idx) => {
+        if (idx === index) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
         }
-        
+      });
+
+      // Update cards
+      comicCards.forEach((card, idx) => {
+        if (idx === index) {
+          card.classList.add('active');
+        } else {
+          card.classList.remove('active');
+        }
+      });
+
+      // Update stamp badge
+      const activeBtn = switcherBtns[index];
+      if (activeBtn) {
+        const theme = activeBtn.getAttribute('data-theme');
+        const textColor = activeBtn.getAttribute('data-text');
+        const label = activeBtn.getAttribute('data-label');
         if (heroStampBadge) {
           heroStampBadge.textContent = label;
           heroStampBadge.style.backgroundColor = theme;
           heroStampBadge.style.color = textColor;
         }
+      }
+    }
+
+    function startCycle() {
+      if (cycleInterval) clearInterval(cycleInterval);
+      cycleInterval = setInterval(() => {
+        if (!isPaused) {
+          let nextIndex = (currentIndex + 1) % switcherBtns.length;
+          showStyle(nextIndex);
+        }
+      }, cycleDelay);
+    }
+
+    function resetCycle() {
+      startCycle();
+    }
+
+    // Hover listeners for pause/resume
+    if (heroFrame) {
+      heroFrame.addEventListener('mouseenter', () => {
+        isPaused = true;
+      });
+      heroFrame.addEventListener('mouseleave', () => {
+        isPaused = false;
+      });
+    }
+
+    // Switcher button clicks
+    switcherBtns.forEach((btn, idx) => {
+      btn.addEventListener('click', () => {
+        showStyle(idx);
+        resetCycle(); // Reset timer on manual interaction
       });
     });
+
+    // Start initial cycle
+    startCycle();
 
     document.querySelectorAll('.showcase-style-card').forEach(card => {
       card.addEventListener('click', () => {
