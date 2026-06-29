@@ -470,11 +470,15 @@
               ⚡ <a href="/register.html">Register free</a> to save your comics and track your history.
             </div>
 
-            <!-- Error Banner -->
-            <div id="error-banner" class="error-banner hidden" style="margin-top: 1rem; margin-bottom: 0px;">
-              <span id="error-text"></span>
-              <button type="button" onclick="document.getElementById('error-banner').classList.add('hidden')">✕</button>
-            </div>
+          </div>
+
+          <!-- Error Banner — MUST live OUTSIDE the step panels: it was nested inside
+               step-content[data-step="5"] (display:none on step 1), so the step-1
+               "story too short" validation was structurally invisible and Next Step
+               looked broken. [QA 2026-06-29] -->
+          <div id="error-banner" class="error-banner hidden" style="margin-top: 1rem; margin-bottom: 0px;">
+            <span id="error-text"></span>
+            <button type="button" onclick="document.getElementById('error-banner').classList.add('hidden')">✕</button>
           </div>
 
           <!-- Wizard Navigation Buttons -->
