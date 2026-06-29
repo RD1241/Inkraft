@@ -149,18 +149,22 @@ class LLMProcessor:
                             match_ok = False
                             break
                     if match_ok:
-                        # 8-word window before and after the matched name index
-                        start = max(0, idx - 8)
-                        end = min(len(words), idx + len(char_tokens) + 8)
+                        # 12-word window before and after the matched name index
+                        start = max(0, idx - 12)
+                        end = min(len(words), idx + len(char_tokens) + 12)
                         window_words = words[start:end]
                         for w in window_words:
                             if w in female_pronouns:
                                 female_count += 1
                             elif w in male_pronouns:
                                 male_count += 1
-        else:
-            # Name appears 0 times or name is empty - fall back to full-text pronoun count
-            method_used = "full_text_fallback"
+
+        # If the name never appears, OR the proximity window found NO gender pronouns
+        # near it (a lone protagonist named once, then referred to by pronoun — "Mara
+        # crept... grabbed her ankle. She screamed"), count pronouns across the whole
+        # scene so the obvious gender isn't lost to a default. [QA 2026-06-29]
+        if name_occurrences == 0 or (female_count == 0 and male_count == 0):
+            method_used = "full_text_fallback" if name_occurrences == 0 else "full_text_supplement"
             for w in words:
                 if w in female_pronouns:
                     female_count += 1
@@ -402,6 +406,7 @@ Rules:
             # must never become a real character, or object/environment-only panels
             # render a ghost man. [QA 2026-06-28]
             "none", "unknown", "narrator", "nothing", "soul", "no", "n/a",
+            "something", "anything", "everything", "somewhere", "nowhere", "everywhere",
             "people", "man", "woman", "boy", "girl", "knight", "commander", "enemy", "the",
             "and", "but", "then", "this", "when", "after", "for", "with", "a", "an", "of"
         }
@@ -658,6 +663,7 @@ Rules:
             # must never become a real character, or object/environment-only panels
             # render a ghost man. [QA 2026-06-28]
             "none", "unknown", "narrator", "nothing", "soul", "no", "n/a",
+            "something", "anything", "everything", "somewhere", "nowhere", "everywhere",
             "people", "man", "woman", "boy", "girl", "knight", "commander", "enemy",
             # common conjunctions / prepositions / articles
             "the", "and", "but", "then", "this", "when", "after", "for", "with", "a", "an", "of",

@@ -37,7 +37,7 @@ ACTION_CLASSIFIER = {
 EMOTION_MAPPER = {
     r"cry|sob|weep|grief": "sad, crying expression with tears, closed eyes squeezing tears, shoulders slumped, head bowed",
     r"anger|rage|furious|betray|accuse": "angry, furious glaring expression, grinding teeth, intense glaring eyes, clenched fists",
-    r"love|romance|lantern|hand|gently": "happy, gentle warm smile, blushing cheeks, soft gentle eyes, relaxed posture",
+    r"\b(love|romance|romantic|kiss|embrace|cuddle|affection|sweetheart|darling|tender moment)\b": "happy, gentle warm smile, blushing cheeks, soft gentle eyes, relaxed posture",
     r"fear|terror|flee|chase": "fearful, terrified shocked expression, wide dilated pupils, cowering posture"
 }
 

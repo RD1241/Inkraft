@@ -234,11 +234,11 @@ class ExpressionEngine:
             return "fearful"
         elif any(term in emotion for term in ["cry", "sob", "weep", "tear"]):
             return "crying"
-        elif any(term in emotion for term in ["shy", "embarrass", "fluster", "blush"]):
+        elif any(term in emotion for term in ["shy", "embarrass", "fluster", "blush", "awkward", "sheepish", "bashful"]):
             return "embarrassed"
         elif any(term in emotion for term in ["intense", "resolut", "focus", "determin", "stern"]):
             return "determined"
-        elif any(term in emotion for term in ["happ", "cheer", "smil", "joy", "excit", "curio"]):
+        elif any(term in emotion for term in ["happ", "cheer", "smil", "joy", "excit", "curio", "laugh", "giggl", "chuckl", "amus", "grin", "delight", "playful", "glee"]):
             return "happy"
         elif any(term in emotion for term in ["angr", "furi", "annoy", "irat", "glar"]):
             return "angry"
