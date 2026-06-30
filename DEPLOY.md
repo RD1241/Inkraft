@@ -103,7 +103,14 @@ Otherwise email-confirmation / OAuth redirects bounce to localhost.
 
 ## 5. SQLite backups
 
-Run `tools/backup_sqlite.py` on a schedule (Railway Cron service, or any host cron):
+**Automatic (default):** when `DATA_DIR` is set (i.e. on Railway with the volume), the app runs an
+in-process daily SQLite backup on startup — no extra service needed (a separate cron can't reach a
+single-service Railway volume). Tune with env vars: `BACKUP_INTERVAL_HOURS` (default 24, floored at
+1) and `BACKUP_KEEP` (default 7). Writes `/data/backups/<timestamp>/`. Disabled in local dev
+(no `DATA_DIR`). NOTE: critical data (accounts/credits/vault/history) also lives in Supabase, which
+is the primary durability layer — these snapshots are secondary insurance for the on-volume SQLite.
+
+**Manual run** (still available):
 
 ```
 python tools/backup_sqlite.py        # writes /data/backups/<timestamp>/, keeps newest 7

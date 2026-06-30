@@ -37,6 +37,13 @@ app.mount("/", StaticFiles(directory=os.path.join(settings.BASE_DIR, "frontend")
 
 @app.on_event("startup")
 def startup_event():
+    # Periodic SQLite backup (prod/volume only — no-op locally without DATA_DIR).
+    try:
+        from services.backup_scheduler import start_backup_scheduler
+        start_backup_scheduler()
+    except Exception as e:
+        print(f"[Startup] Backup scheduler not started: {e}")
+
     image_provider_name = os.environ.get("IMAGE_PROVIDER", "stable_diffusion").lower()
     if image_provider_name == "stable_diffusion":
         print("[Startup] IMAGE_PROVIDER is stable_diffusion. Pre-warming local model to avoid VRAM spikes...")

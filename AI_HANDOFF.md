@@ -105,6 +105,17 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-30 — Claude Code — Automatic in-app SQLite backup (Railway-friendly)
+- Railway volumes attach to ONE service, so a separate cron service can't reach `/data` → a
+  traditional "backup cron" doesn't fit. Implemented an in-process scheduler instead:
+  `services/backup_scheduler.py` starts a daemon thread (from `api/main.py` startup) that runs
+  `tools/backup_sqlite.main()` every `BACKUP_INTERVAL_HOURS` (default 24, floored 1h), first run
+  60s after boot. **Gated on `DATA_DIR`** so it's prod/volume-only (no-op + clutter-free in local
+  dev). Failures are logged, never crash serving (daemon, try/except). Verified: compiles; gate
+  off without DATA_DIR; thread starts + idempotent with DATA_DIR; `DEPLOY.md` §5 updated.
+  Honest note kept in docs: Supabase is the primary durability layer; these snapshots are
+  secondary insurance for the on-volume SQLite.
+
 ### 2026-06-30 — Claude Code — LIVE paid e2e on Railway: FLUX output CONFIRMED (~$0.05)
 - Founder OK'd a real paid run to prove the deployed site renders. Registered a throwaway account
   on https://inkraft-production.up.railway.app via the API (`/api/auth/register` → `/api/auth/login`
