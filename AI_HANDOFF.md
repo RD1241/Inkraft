@@ -105,6 +105,34 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-30 — Claude Code — QA-report fixes: detect false-positives, credit msg, DIALOGUE FONTS, quick-gen
+Antigravity ran a 3-persona QA pass (desktop happy-path, desktop breaker, mobile). Fixed all
+findings + the founder's dialogue-box ask:
+- **[HIGH] Char-detect false-positives (`api/routes/characters.py`).** `/api/characters/detect`
+  flagged capitalized sentence/dialogue starters ("Look", "Then", "Wait") as characters → false
+  vault-enforcement BLOCK ("define Look"). Fix: a name now qualifies only if it appears capitalized
+  MID-SENTENCE (preceded by a lowercase letter — "met Mei", "Kaito's sword") OR recurs 2+ times,
+  minus an expanded common-word blacklist. Verified: "Look"→rejected, "Kaito/Mei" + "Harry/Hermione"
+  still detected, dialogue/imperatives → none.
+- **[MED] Raw credit error on dashboard (`frontend/dashboard.html`).** Quick-gen showed the generic
+  `detail` ("Billing check failed") instead of the friendly `message` ("Insufficient credits. This
+  comic needs N credit(s); balance: X"). Swapped to prefer `message`. (Wizard already did. The
+  "Failed to load resource: 400" the QA saw was Chrome's console log, not the banner.) A real
+  buy-credits CTA waits on payments.
+- **[HIGH on prod] DIALOGUE BOXES ILLEGIBLE ON LIVE (`core/comic_renderer.py` + `Dockerfile.railway`).**
+  Founder asked to check dialogue readability — found the real bug: `_get_default_font` only searched
+  `C:\Windows\Fonts`, so on the slim Linux image (which ships NO fonts) `font_path` was None and
+  bubbles used PIL's tiny bitmap `load_default()` → microscopic text on the deployed page. Looked
+  fine locally (Windows has Arial) — classic "works on my machine". Fix: (1) `_get_default_font` now
+  also searches Linux (DejaVu/Liberation) + macOS paths; (2) `Dockerfile.railway` installs
+  `fonts-dejavu-core`; (3) new `_sized_default()` helper makes EVERY fallback `load_default(size=N)`
+  (Pillow>=10.1, unpinned → recent) so text is never microscopic even with zero fonts. Verified by
+  forcing `font_path=None` and rendering — bubbles are now readable (were tiny). Railway builds via
+  DOCKERFILE (railway.json) so the font install applies.
+- **[LOW] Quick-gen "View Full Comic" (`frontend/dashboard.html`)** dumped users into the History
+  grid to re-find their card; now opens the comic's `final_page` image directly in a new tab.
+- Verified: all files compile; action-token + detect regressions pass; Windows bubble render intact.
+
 ### 2026-06-30 — Claude Code — Automatic in-app SQLite backup (Railway-friendly)
 - Railway volumes attach to ONE service, so a separate cron service can't reach `/data` → a
   traditional "backup cron" doesn't fit. Implemented an in-process scheduler instead:

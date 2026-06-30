@@ -11,12 +11,40 @@ class ComicRenderer:
         self._rendered_dialogues = {}
         
     def _get_default_font(self):
-        # Try to find standard comic-friendly fonts on Windows
-        for font_name in ["comicbd.ttf", "comic.ttf", "arialbd.ttf", "arial.ttf"]:
-            windows_font = os.path.join("C:\\Windows\\Fonts", font_name)
-            if os.path.exists(windows_font):
-                return windows_font
+        # Find a bold, readable TTF. Order: comic-friendly Windows fonts (local dev),
+        # then Linux fonts (Railway/containers — installed via Dockerfile.railway's
+        # fonts-dejavu-core), then macOS. CRITICAL: the slim Linux image ships NO fonts,
+        # so without a Linux path here self.font_path was None and speech bubbles fell
+        # back to PIL's tiny bitmap default → illegible dialogue on the live site. [QA 2026-06-30]
+        candidates = [
+            # Windows (local dev)
+            "C:\\Windows\\Fonts\\comicbd.ttf",
+            "C:\\Windows\\Fonts\\arialbd.ttf",
+            "C:\\Windows\\Fonts\\comic.ttf",
+            "C:\\Windows\\Fonts\\arial.ttf",
+            # Linux (Railway / containers)
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+            # macOS
+            "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+            "/Library/Fonts/Arial.ttf",
+        ]
+        for path in candidates:
+            if os.path.exists(path):
+                return path
         return None
+
+    def _sized_default(self, size):
+        """Sized fallback when no system TTF is found. Pillow>=10.1 scales the bundled
+        default via load_default(size); on older Pillow it ignores size (tiny) — but the
+        Dockerfile installs DejaVu so font_path is set on the live box and this is only a
+        last-resort safety net so dialogue never renders microscopic."""
+        try:
+            return ImageFont.load_default(size=size)
+        except TypeError:
+            return ImageFont.load_default()
 
     def _wrap_text(self, text: str, font, max_width: int, draw: ImageDraw) -> list:
         lines = []
@@ -124,16 +152,20 @@ class ComicRenderer:
                 try:
                     speech_font = ImageFont.truetype(self.font_path, font_size)
                     # For narration, use non-bold version if available
-                    regular_font_path = self.font_path.replace("arialbd.ttf", "arial.ttf").replace("comicbd.ttf", "comic.ttf")
+                    regular_font_path = (self.font_path
+                        .replace("arialbd.ttf", "arial.ttf")
+                        .replace("comicbd.ttf", "comic.ttf")
+                        .replace("DejaVuSans-Bold.ttf", "DejaVuSans.ttf")
+                        .replace("LiberationSans-Bold.ttf", "LiberationSans-Regular.ttf"))
                     if os.path.exists(regular_font_path):
                         narration_font = ImageFont.truetype(regular_font_path, font_size)
                     else:
                         narration_font = speech_font
                 except IOError:
-                    speech_font = ImageFont.load_default()
+                    speech_font = self._sized_default(font_size)
                     narration_font = speech_font
             else:
-                speech_font = ImageFont.load_default()
+                speech_font = self._sized_default(font_size)
                 narration_font = speech_font
 
             # Positioning logic
@@ -562,9 +594,9 @@ class ComicRenderer:
             try:
                 font = ImageFont.truetype(self.font_path, 24)
             except IOError:
-                font = ImageFont.load_default()
+                font = self._sized_default(24)
         else:
-            font = ImageFont.load_default()
+            font = self._sized_default(24)
             
         text = getattr(settings, "WATERMARK_TEXT", "Inkraft.ai")
         
@@ -865,9 +897,9 @@ class ComicRenderer:
                 elif self.font_path:
                     n_font = ImageFont.truetype(self.font_path, font_size)
                 else:
-                    n_font = ImageFont.load_default()
+                    n_font = self._sized_default(font_size)
             except Exception:
-                n_font = ImageFont.load_default()
+                n_font = self._sized_default(font_size)
 
             lines = self._wrap_text(narration, n_font, target_w - 60, draw)
             line_height = draw.textbbox((0, 0), lines[0], font=n_font)[3] - draw.textbbox((0, 0), lines[0], font=n_font)[1] if lines else 20
@@ -926,9 +958,9 @@ class ComicRenderer:
 
             font_size = 18
             try:
-                speech_font = ImageFont.truetype(self.font_path, font_size) if self.font_path else ImageFont.load_default()
+                speech_font = ImageFont.truetype(self.font_path, font_size) if self.font_path else self._sized_default(font_size)
             except Exception:
-                speech_font = ImageFont.load_default()
+                speech_font = self._sized_default(font_size)
 
             text = dialogue
             if text_case == "uppercase":

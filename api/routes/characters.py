@@ -204,27 +204,48 @@ def detect_characters(body: DetectRequest):
         "someone", "everyone", "nobody", "noone", "anybody", "somebody", "character",
         "people", "man", "woman", "boy", "girl", "knight", "commander", "enemy",
         # common conjunctions / prepositions / articles
-        "the", "and", "but", "then", "this", "when", "after", "for", "with", "a", "an", "of",
+        "the", "and", "but", "then", "this", "that", "these", "those", "when", "after",
+        "for", "with", "a", "an", "of",
         # common sentence-starting adverbs / prepositions that get capitalised
         "across", "above", "before", "below", "behind", "beside", "between",
         "beyond", "during", "inside", "outside", "around", "against",
         "meanwhile", "suddenly", "finally", "already", "later", "now",
         "slowly", "quickly", "quietly", "together", "however", "though",
         "although", "while", "until", "unless", "despite", "without",
+        # common dialogue / imperative / interjection openers (the "Look" false-positive class)
+        "look", "wait", "stop", "run", "come", "please", "yes", "okay", "hey", "well",
+        "listen", "watch", "help", "hello", "sorry", "thanks", "never", "always", "maybe",
+        "perhaps", "once", "soon", "still", "just", "only", "even", "also", "indeed",
+        "instead", "what", "why", "how", "who", "where", "here", "there", "everything",
+        "nothing", "something", "anything", "good", "great", "okay", "fine", "sure",
     }
 
-    cap_words = re.findall(r'\b([A-Z][a-z]{2,})\b', text)
-    word_counts = Counter(cap_words)
-    # Accept names appearing 2+ times; preserve insertion order
-    char_names = list(dict.fromkeys(
-        w for w in cap_words
-        if w.lower() not in blacklist and word_counts[w] >= 2
-    ))
-    # If frequency filter eliminates everything, fall back to single-occurrence words
-    if not char_names:
-        char_names = list(dict.fromkeys(
-            w for w in cap_words if w.lower() not in blacklist
-        ))
+    # A capitalized word is a NAME candidate only if it appears capitalized at least once
+    # MID-SENTENCE — i.e. immediately after a lowercase letter ("met Mei", "Kaito's sword").
+    # Real proper nouns get capitalized in running text; common words like "Look"/"Then"/
+    # "Wait" are only capitalized at the start of a sentence or quote. This kills the
+    # false-positive vault-enforcement block on ordinary English words. [QA 2026-06-30]
+    order = list(dict.fromkeys(re.findall(r"[A-Z][a-z]{2,}", text)))
+    mid_sentence = set()
+    counts = Counter()
+    for m in re.finditer(r"[A-Z][a-z]{2,}", text):
+        w = m.group(0)
+        if w.lower() in blacklist:
+            continue
+        counts[w] += 1
+        j = m.start() - 1
+        while j >= 0 and text[j] in " \t":
+            j -= 1
+        if j >= 0 and text[j].islower():   # preceded by a lowercase word → strong proper-noun signal
+            mid_sentence.add(w)
+
+    # A name qualifies if it appears capitalized mid-sentence (e.g. "met Mei") OR recurs 2+
+    # times (e.g. "Harry ... Harry"). Common words are excluded by the blacklist, so a bare
+    # sentence-start "Look" no longer counts — fixing the false vault-enforcement block.
+    char_names = [
+        w for w in order
+        if w.lower() not in blacklist and (w in mid_sentence or counts[w] >= 2)
+    ]
 
     processor = LLMProcessor()
     characters = []

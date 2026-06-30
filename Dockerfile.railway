@@ -4,6 +4,13 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
+# System fonts for the comic speech-bubble renderer. The slim image ships NO TTF
+# fonts, so without this Pillow falls back to a tiny bitmap font and dialogue is
+# unreadable on the deployed page. DejaVu is small, bold, and highly legible.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
 # Cloud-only deps (see requirements-railway.txt for why torch et al are excluded).
 COPY requirements-railway.txt .
 RUN pip install --no-cache-dir -r requirements-railway.txt

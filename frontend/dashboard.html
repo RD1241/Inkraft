@@ -558,7 +558,10 @@
           }),
         });
         const submitData = await submitRes.json();
-        if (!submitRes.ok) throw new Error(submitData.detail || submitData.message || 'Generation failed');
+        // Prefer the friendly `message` (e.g. "This comic needs 3 credit(s); balance: 2")
+        // over the generic `detail` so credit/validation errors read clearly.
+        if (!submitRes.ok || submitData.status === 'error')
+          throw new Error(submitData.message || submitData.detail || 'Generation failed');
         const jobId = submitData.job_id || submitData.data?.job_id;
         if (!jobId) throw new Error('Server did not return a job ID.');
 
@@ -585,7 +588,11 @@
 
             qgProgress.classList.add('hidden');
             document.getElementById('qg-result-img').src = (result.final_page || '') + '?t=' + Date.now();
-            document.getElementById('qg-result-view').href = '/history.html';
+            // Open the full comic image directly (new tab) instead of dumping the user
+            // into the History grid to hunt for the card they just made. [QA 2026-06-30]
+            const rv = document.getElementById('qg-result-view');
+            if (result.final_page) { rv.href = result.final_page; rv.target = '_blank'; rv.rel = 'noopener'; }
+            else { rv.href = '/history.html'; }
             qgResult.classList.remove('hidden');
 
             // Refresh stats after generation
