@@ -6,6 +6,8 @@ Prevents vague physical contact descriptions by mapping narrative contact to
 precise SD/SDXL positional tokens. Only activates for scenes with 2+ characters.
 """
 
+import re
+
 INTERACTION_TEMPLATES = {
     "holding_hands": {
         "keywords": [
@@ -107,6 +109,15 @@ class InteractionComposer:
             for kw in data["keywords"]:
                 self._keyword_map[kw.lower()] = data["tokens"]
                 self._min_char_map[kw.lower()] = data.get("min_chars", 2)
+        # Precompile WORD-BOUNDARY patterns, longest keyword first. Word-boundary
+        # matching (not raw substring) prevents false positives like "hugs" matching
+        # "thugs" or "embrace" matching unrelated words — same fix as ActionLibrary.
+        # [QA 2026-06-30]
+        self._compiled = [
+            (kw, re.compile(r"\b" + re.escape(kw) + r"\b"),
+             self._keyword_map[kw], self._min_char_map.get(kw, 2))
+            for kw in sorted(self._keyword_map.keys(), key=len, reverse=True)
+        ]
 
     def detect_and_inject(self, action_text: str, char_count: int = 1) -> list:
         """
@@ -119,11 +130,9 @@ class InteractionComposer:
         if not action_text or char_count < 2:
             return []
         lower = action_text.lower()
-        sorted_kws = sorted(self._keyword_map.keys(), key=len, reverse=True)
-        for kw in sorted_kws:
-            if kw in lower:
-                if char_count >= self._min_char_map.get(kw, 2):
-                    return list(self._keyword_map[kw])
+        for kw, pattern, tokens, min_chars in self._compiled:
+            if pattern.search(lower) and char_count >= min_chars:
+                return list(tokens)
         return []
 
     def detect_all_interactions(self, action_text: str, char_count: int = 1) -> list:
@@ -136,10 +145,9 @@ class InteractionComposer:
         lower = action_text.lower()
         seen = set()
         result = []
-        sorted_kws = sorted(self._keyword_map.keys(), key=len, reverse=True)
-        for kw in sorted_kws:
-            if kw in lower and char_count >= self._min_char_map.get(kw, 2):
-                for tok in self._keyword_map[kw]:
+        for kw, pattern, tokens, min_chars in self._compiled:
+            if pattern.search(lower) and char_count >= min_chars:
+                for tok in tokens:
                     if tok.lower() not in seen:
                         seen.add(tok.lower())
                         result.append(tok)

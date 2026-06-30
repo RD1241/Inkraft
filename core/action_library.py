@@ -5,6 +5,8 @@ Structured visual action token mappings for comic panel image generation.
 Maps narrative action keywords to precise SD/SDXL prompt tokens.
 """
 
+import re
+
 ACTION_LIBRARY = {
     "sword_clash": {
         "keywords": ["sword clash", "clash sword", "swords clash", "blades clash", "clash blade", "sword fight", "sword combat"],
@@ -86,6 +88,18 @@ class ActionLibrary:
         for action_name, data in ACTION_LIBRARY.items():
             for kw in data["keywords"]:
                 self._keyword_map[kw.lower()] = data["tokens"]
+        # Precompile WORD-BOUNDARY patterns, longest keyword first (so multi-word /
+        # specific keywords win over short ones). Word-boundary matching — NOT raw
+        # substring — is critical: the old `kw in text` check made "cast" match
+        # "the moonlight CASTing shadows" and inject "magic circle, arcane energy"
+        # into a plain chase scene (and "hit"→"white", "races"→"embraces", etc.).
+        # Combat/magic tokens must only fire on the actual action verb. [QA 2026-06-30]
+        self._compiled = [
+            (kw, re.compile(r"\b" + re.escape(kw) + r"\b"), tokens)
+            for kw, tokens in sorted(
+                self._keyword_map.items(), key=lambda kv: len(kv[0]), reverse=True
+            )
+        ]
 
     def get_action_tokens(self, action_text: str) -> list:
         """
@@ -96,10 +110,9 @@ class ActionLibrary:
         if not action_text:
             return []
         lower = action_text.lower()
-        sorted_kws = sorted(self._keyword_map.keys(), key=len, reverse=True)
-        for kw in sorted_kws:
-            if kw in lower:
-                return list(self._keyword_map[kw])
+        for kw, pattern, tokens in self._compiled:
+            if pattern.search(lower):
+                return list(tokens)
         return []
 
     def get_all_matches(self, action_text: str) -> list:
@@ -112,10 +125,9 @@ class ActionLibrary:
         lower = action_text.lower()
         seen = set()
         result = []
-        sorted_kws = sorted(self._keyword_map.keys(), key=len, reverse=True)
-        for kw in sorted_kws:
-            if kw in lower:
-                for tok in self._keyword_map[kw]:
+        for kw, pattern, tokens in self._compiled:
+            if pattern.search(lower):
+                for tok in tokens:
                     if tok.lower() not in seen:
                         seen.add(tok.lower())
                         result.append(tok)

@@ -105,6 +105,24 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-30 — Claude Code — FIXED spurious magic/combat token injection (substring bug)
+- **The bug (founder-reported):** a plain chase scene got "hands outstretched, magic circle, arcane
+  energy" injected into the image prompt. **Root cause:** `ActionLibrary.get_action_tokens` matched
+  keywords with raw substring (`if kw in lower`), so the `cast_spell` keyword **"cast" matched
+  "the moonlight CASTing shadows"**. Same flaw caused a whole latent class: "hit"→"white",
+  "races"→"embraces", "cast"→"castle"/"forecast"/"broadcast", "fall"→"footfall", and (in
+  `interaction_composer`) "hugs"→"thugs".
+- **Fix:** both `core/action_library.py` and `core/interaction_composer.py` now match on WORD
+  BOUNDARIES (precompiled `\b<kw>\b` regex, still longest-keyword-first). Real action verbs still
+  fire ("casts a fireball"→magic, "swords clash"→combat, "hugs her"→embrace); innocent words no
+  longer do. Multi-word phrases behave identically to before.
+- **Verified:** new `tools/test_action_tokens.py` (10 assertions: false-positives blocked + real
+  verbs still match) all PASS; the founder's exact repro through `trace_pipeline.py` now yields
+  **0** magic/arcane tokens for the chase scene; a real sword-duel still gets combat tokens. Minor
+  accepted tradeoff: past-tense phrasings not in the keyword list (e.g. "swords clashed") no longer
+  match — acceptable since the library is supplementary and the rich storyboard action text still
+  carries combat context to FLUX. Files: action_library.py, interaction_composer.py, +test.
+
 ### 2026-06-30 — Claude Code — Railway redeploy + 2 mobile bug fixes + Vault verified
 - **Deployed latest to Railway (founder bought Hobby + set volume/vars).** Pushed all session
   commits to origin/main; Railway auto-deploys on push. LIVE-VERIFIED every marker on
