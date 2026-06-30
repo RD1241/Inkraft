@@ -105,6 +105,25 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-30 — Claude Code — Private beta-feedback feature (for the soft-launch demand signal)
+- Founder wants a way for soft-launch users to leave reviews ("how they feel / would they use it").
+  Built it as PRIVATE feedback (not shown on-site) — the right call for a small beta (honest answers,
+  no public bad-review risk; it's the demand signal to decide on payments/public).
+- **Backend `api/routes/feedback.py`** (registered in `api/main.py`): `POST /api/feedback`
+  {rating 1–5, would_use yes/maybe/no, message, page} → saves to SQLite `feedback.db` (settings.DB_DIR,
+  volume-persistent) + best-effort Supabase `feedback` table sync. Optional auth (attaches user_id if
+  a token is sent; works anonymously too). Rejects empty.
+- **Frontend `frontend/feedback.js`** — self-contained widget (floating "💬 Feedback" button + modal:
+  star rating, would-you-use, free-text), inline-styled neo-brutalist, no CSS deps. Included via
+  `<script src="feedback.js" defer>` on index/dashboard/history/gallery/characters.
+- **Verified end-to-end (local):** POST saves to SQLite (rating/would_use/message/page); empty→400;
+  widget injects, modal opens, submit returns 200 + success; no console errors.
+- **⚠️ FOUNDER ACTION to READ feedback in Supabase dashboard:** create the table once (SQL is in
+  `feedback.py`'s docstring): `create table feedback (id bigint generated always as identity primary
+  key, user_id text, email text, rating int, would_use text, message text, page text, created_at
+  timestamptz default now());`. Until then, feedback still persists in the on-volume SQLite
+  (`/data/db/feedback.db`).
+
 ### 2026-06-30 — Claude Code — Layout fix CONFIRMED on real art + fresh style-showcase images
 - **Real-art layout confirmation (paid):** generated a live 6-panel manga ("lone samurai") — it
   composited as a clean **2×3 grid of six balanced, undistorted panels** (consistent samurai, sharp

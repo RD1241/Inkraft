@@ -7,7 +7,7 @@ from fastapi.responses import Response, FileResponse
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import settings
-from api.routes import generate, status, health, credits, history, gallery, download, auth, characters
+from api.routes import generate, status, health, credits, history, gallery, download, auth, characters, feedback
 
 app = FastAPI(title="Inkraft API", description="Enterprise-Grade AI Pipeline")
 
@@ -21,6 +21,7 @@ app.include_router(gallery.router, prefix="/api")
 app.include_router(credits.router, prefix="/api")
 app.include_router(history.router, prefix="/api")
 app.include_router(characters.router, prefix="/api")
+app.include_router(feedback.router, prefix="/api")
 
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon():
