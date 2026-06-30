@@ -151,14 +151,42 @@ step-by-step in **`DEPLOY.md`**.
 
 ---
 
-## 10. Current state
+## 10. Recent Architectural Additions & Mobile Responsiveness Audit
 
-**Done & verified:** full pipeline on Groq+fal; auth; Character Vault (Supabase +
-SQLite); tiered credits; colour mode; panel-count selector (wizard + dashboard);
-history/gallery; PDF export; Railway deploy prep (slim image container-tested);
-per-request Supabase client caching.
+In the latest updates (June 2026), the application went through a comprehensive UI/UX refinement, responsiveness audit, and new user feature integration:
 
-**Pending:** the founder's Railway deploy (account + dashboard steps in `DEPLOY.md`),
-a manual prod smoke test, and an optional real favicon. **Payments (Lemon Squeezy)
-are deferred** until the beta validates.
-```
+### 1. Viewport Horizontal Scroll & Mobile Audit (375px & 414px)
+- **Eliminated Overflow**: Audited and fully resolved horizontal scrolls on all pages (`index.html`, `dashboard.html`, `login.html`, `register.html`, `characters.html`, `history.html`, `gallery.html`).
+- **Responsive Pills Grid**: Replaced hover tooltips (which are touch-incompatible on mobile) on style selectors with a clean 2-column flex grid on mobile viewports. Short labels like "B&W Hatching", "Cel-shaded Look", and "Vibrant Webtoon" are injected dynamically using CSS pseudo-elements (`::after`).
+- **Layout Guards**: Implemented `html { overflow-x: hidden !important; }` globally, flex-wrapped footer links, and scaled headings to match constraints cleanly.
+
+### 2. Auto-Cycling Hero Showcase Cards
+- **Preloaded Stack Layout**: Changed the single static hero image on the landing page into a stack of 5 preloaded `.hero-comic-card` elements to completely avoid loading flashes.
+- **Auto-Cycle Carousel**: Added JavaScript that auto-cycles the active showcase card every 4 seconds. Included hover listeners to pause/resume the timer, and manually reset the interval when a showcase tab is clicked.
+
+### 3. Missing Character Detection & Vault Enforcement
+- **Extraction Guard**: When moving from Step 1 (Novel Text) to Step 2, the wizard sends the text payload to `/api/characters/detect`.
+- **Enforcement Modal**: If the text contains 2 or more characters that do not exist inside the user's Character Vault, it halts the wizard and prompts the user with a pre-filled Character creation modal to add them.
+
+### 4. Optional "Setting / Art Direction" Input
+- **Wizard Step 1 Input**: Added an input with ID `art-direction-input` inside Step 1 of the landing wizard. Styled with a custom manga-style 3px black border and 4px offset shadow. Enforces a maximum length of 300 characters.
+- **Dashboard Quick-Gen Input**: Integrated a matching input field with ID `qg-art-direction` inside the Quick Generate card. Styled with translucent backgrounds to fit dashboard cards.
+- **FastAPI Backend Integration**: Trims, slices to 300 characters, and forwards the value inside the `art_direction` field of the `/api/generate_comic` request payload. Validated via a Pydantic `@field_validator("art_direction")` on the FastAPI server.
+
+---
+
+## 11. Current state
+
+**Done & verified:**
+- Full backend pipeline on Groq + fal.ai;
+- Supabase Authentication & Syncing;
+- Dynamic Character Vault (Supabase + SQLite fallback) with auto-detection blocking on generation;
+- Tiered credits system scaling with panel counts;
+- Colour mode selection (Auto/Colour/B&W);
+- Optional Setting / Art Direction parameters across both generate wizards (Landing page & Dashboard);
+- Responsive design audited at 375px mobile viewports;
+- PDF export;
+- Local SQLite database & cloud Supabase syncing;
+- Railway Docker configuration.
+
+**Pending:** the founder's Railway deploy (account + dashboard steps in `DEPLOY.md`) and a manual production smoke test. Payments (Lemon Squeezy) are deferred until the beta validates.
