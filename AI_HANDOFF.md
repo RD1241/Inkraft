@@ -127,10 +127,16 @@ LIVE site — the report was largely wrong:
   wide/short slots centre-crop the art (keeps the middle) instead of squishing — the correct lesser
   evil; minor risk of clipping a corner speech bubble on a very wide panel (rare; wide panels are
   usually establishing shots).
-- **FOLLOW-UP (offered, not done):** the layout still favours wide horizontal STRIPS for some counts
-  (4 = 4 stacked wide rows) which now crop a lot vertically. Biasing `panel_compositor` toward
-  balanced GRIDS ("proper squares" — 2×2 for 4, 2×3 for 6) would reduce cropping and match the
-  founder's "6 squares of proper height and length" vision — a separate compositor change.
+- **FOLLOW-UP — DONE (balanced grids).** Founder confirmed they want panels "placed properly in the
+  grid, not compressed" (not literally square). Added `_proportion_penalty()` to
+  `panel_compositor.calculate_layout`'s selector: it replicates the row-scaling math to estimate
+  each panel's final aspect and adds a QUADRATIC penalty (× weight 10) for extreme aspects (>2.2
+  wide or <0.55 tall), so cramped wide-strip layouts are effectively never chosen even when a
+  high-tension panel would otherwise inflate their score. The good grid templates already existed;
+  the scorer just wasn't picking them. **Verified across increasing/varied/flat tension patterns:**
+  N=4 widest aspect 3.31→2.0, N=6 3.71→1.08 (a clean 2×3 grid of near-square panels). Circle render
+  confirms: every panel a balanced box with a fully-visible round circle, no squish, minimal crop.
+  Combined with the cover-fit, multi-panel pages now look like proper comic grids.
 
 ### 2026-06-30 — Claude Code — QA-report fixes: detect false-positives, credit msg, DIALOGUE FONTS, quick-gen
 Antigravity ran a 3-persona QA pass (desktop happy-path, desktop breaker, mobile). Fixed all

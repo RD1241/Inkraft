@@ -164,6 +164,42 @@ class PanelCompositor:
                 panels_left -= 1
         return rows
 
+    def _proportion_penalty(self, structure: List[List[str]]) -> float:
+        """Estimate each panel's final aspect ratio (width/height) using the SAME
+        vertical/horizontal scaling as calculate_layout, and return a penalty that grows
+        as panels become too wide-and-short or too tall-and-thin. Used by the layout
+        selector to prefer balanced, well-proportioned grids over cramped strips.
+
+        Comfortable aspect band is ~[0.55, 2.2]; panels outside it are penalised
+        proportionally to how far out they are."""
+        n_rows = len(structure)
+        if n_rows == 0:
+            return 0.0
+        total_gutter_h = (n_rows - 1) * self.gutter
+        avail_h = self.page_height - self.top_margin - self.bottom_margin - total_gutter_h
+        row_def_h = [max(SIZE_DIMENSIONS[s]["height"] for s in row) for row in structure]
+        sum_def = sum(row_def_h) or 1
+        penalty = 0.0
+        for ri, row in enumerate(structure):
+            row_h = max(1.0, row_def_h[ri] * (avail_h / sum_def))
+            k = len(row)
+            row_gutter_w = (k - 1) * self.gutter
+            sum_tw = sum(SIZE_DIMENSIONS[s]["width"] for s in row)
+            for s in row:
+                if sum_tw + row_gutter_w > self.page_width:
+                    w = SIZE_DIMENSIONS[s]["width"] * (self.page_width - row_gutter_w) / max(1, sum_tw)
+                else:
+                    w = SIZE_DIMENSIONS[s]["width"]
+                ar = w / row_h
+                # Quadratic: mild aspects (<=~2.4) barely matter, but extreme wide-short
+                # strips (ar 3+) are punished hard so they're effectively never chosen,
+                # even when a high-tension panel would otherwise inflate that layout's score.
+                if ar > 2.2:
+                    penalty += (ar - 2.2) ** 2 * 3.0
+                elif ar < 0.55:
+                    penalty += (0.55 - ar) ** 2 * 4.0   # tall-thin panels are also undesirable
+        return penalty
+
     def calculate_layout(self, panels: List[Any], layout_type: str = "standard") -> PageLayout:
         """
         Calculates exact coordinates for each panel based on its tension level and position.
@@ -204,7 +240,7 @@ class PanelCompositor:
             selected_structure = self._generate_procedural_layout(N)
         else:
             best_structure = None
-            best_score = -1.0
+            best_score = float("-inf")
 
             for structure in candidates:
                 # Flatten structure to get linear slot sizes
@@ -234,6 +270,13 @@ class PanelCompositor:
                 # Add a minor diversity bonus to prefer layouts with varied panel sizes
                 unique_sizes = len(set(flat_slots))
                 score += unique_sizes * 1.5
+
+                # Proportion penalty: strongly demote layouts that produce extreme-aspect
+                # panels (e.g. several full-width rows stacked → wide/short "strips" that
+                # crop heavily and look cramped). This biases selection toward balanced,
+                # well-proportioned grids (2-up rows) over wide single-column strips —
+                # the founder's "placed properly in the grid, not compressed" goal. [QA 2026-06-30]
+                score -= self._proportion_penalty(structure) * 10.0
 
                 if score > best_score:
                     best_score = score
