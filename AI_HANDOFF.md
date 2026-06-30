@@ -105,6 +105,33 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-30 — Claude Code — FIXED real panel-distortion (QA report missed it) + report was stale
+Founder's 2nd QA pass (subagents 1+2) reported "layout ALL PASS, perfect aspect ratio, no
+distortion" AND re-flagged the detect + credit bugs as still-open. Verified all three against the
+LIVE site — the report was largely wrong:
+- **Detect "Blocker" = FALSE.** Live `/api/characters/detect` "Look! Wait... Then they ran." → `[]`;
+  "Kaito met Mei..." → [Kaito, Mei]. Already fixed/deployed earlier today (080f2e4). The report
+  reused a stale finding without re-testing the deployed code.
+- **Credit "Major" = FALSE.** Already fixed; the "Failed to load resource: 400" they saw is Chrome's
+  console log, not the banner (warned about this).
+- **Layout "ALL PASS" = WRONG — there WAS real distortion (the founder's actual concern).** Rendered
+  4- and 6-panel pages through the REAL compositor with a CIRCLE drawn on each mock panel: circles
+  came out as flat OVALS. Root cause: slots have extreme aspect ratios (wide_short/short full_width
+  scale up to ar 3.3–3.7), but generated art is clamped to ~ar 2.0 (`h=max(512,...)`), and
+  `create_custom_layout_page` did a plain **stretch-resize** → squished art (faces/circles). The
+  QA's PASS verdict was surface-level (never checked proportions).
+- **FIX (`core/comic_renderer.py`):** `create_custom_layout_page` now fits each panel with
+  **object-fit:cover** — scale preserving aspect to fill the slot, then centre-crop the overflow —
+  so proportions are ALWAYS preserved (no squish). Cost-neutral (no generation change). Verified:
+  re-rendered 4- & 6-panel circle tests → every circle now perfectly ROUND. Trade-off: extreme
+  wide/short slots centre-crop the art (keeps the middle) instead of squishing — the correct lesser
+  evil; minor risk of clipping a corner speech bubble on a very wide panel (rare; wide panels are
+  usually establishing shots).
+- **FOLLOW-UP (offered, not done):** the layout still favours wide horizontal STRIPS for some counts
+  (4 = 4 stacked wide rows) which now crop a lot vertically. Biasing `panel_compositor` toward
+  balanced GRIDS ("proper squares" — 2×2 for 4, 2×3 for 6) would reduce cropping and match the
+  founder's "6 squares of proper height and length" vision — a separate compositor change.
+
 ### 2026-06-30 — Claude Code — QA-report fixes: detect false-positives, credit msg, DIALOGUE FONTS, quick-gen
 Antigravity ran a 3-persona QA pass (desktop happy-path, desktop breaker, mobile). Fixed all
 findings + the founder's dialogue-box ask:

@@ -825,12 +825,25 @@ class ComicRenderer:
                     break
                     
                 img = Image.open(image_paths[i])
-                
-                # Resize image to panel dimensions but only if dimensions don't already match
-                if img.size == (panel.width, panel.height):
+
+                # Fit the panel art into its slot WITHOUT distortion. The slots have
+                # varied aspect ratios (some very wide/short) that the generated art
+                # can't match, and a plain resize STRETCHED the art — squishing faces
+                # and making the page look "compressed/forced". Use object-fit:cover —
+                # scale preserving aspect to fill the slot, then centre-crop the
+                # overflow — so proportions are always preserved. [QA 2026-06-30]
+                target_w, target_h = panel.width, panel.height
+                if img.size == (target_w, target_h):
                     resized_img = img
                 else:
-                    resized_img = img.resize((panel.width, panel.height), Image.Resampling.LANCZOS)
+                    src_w, src_h = img.size
+                    scale = max(target_w / src_w, target_h / src_h)
+                    new_w = max(target_w, int(round(src_w * scale)))
+                    new_h = max(target_h, int(round(src_h * scale)))
+                    scaled = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+                    left = (new_w - target_w) // 2
+                    top = (new_h - target_h) // 2
+                    resized_img = scaled.crop((left, top, left + target_w, top + target_h))
                 
                 # White border (3px on each side = +6px total)
                 bordered_img = Image.new("RGB", (panel.width + 6, panel.height + 6), "white")
