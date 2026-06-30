@@ -132,6 +132,12 @@ findings + the founder's dialogue-box ask:
 - **[LOW] Quick-gen "View Full Comic" (`frontend/dashboard.html`)** dumped users into the History
   grid to re-find their card; now opens the comic's `final_page` image directly in a new tab.
 - Verified: all files compile; action-token + detect regressions pass; Windows bubble render intact.
+- **LIVE PAID CONFIRM (~$0.05, prod after the Docker font rebuild):** generated a 2-panel manga
+  WITH dialogue on the live site and viewed it — bubbles "STAY BEHIND ME" / "THEY ARE COMING FOR US"
+  render in crisp, bold, properly-sized DejaVu (were microscopic before). Detect-fix also confirmed
+  live (`/api/characters/detect` "Look" → []). Dialogue-legibility bug CLOSED on prod. (Two QA
+  throwaway users now exist: `inkraft.qa.*` uids 1ddd0e4e-... and the b93a9362 one — delete in
+  Supabase → Auth → Users if desired.)
 
 ### 2026-06-30 — Claude Code — Automatic in-app SQLite backup (Railway-friendly)
 - Railway volumes attach to ONE service, so a separate cron service can't reach `/data` → a
