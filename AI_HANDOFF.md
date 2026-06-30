@@ -105,6 +105,19 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-30 — Claude Code — LIVE paid e2e on Railway: FLUX output CONFIRMED (~$0.05)
+- Founder OK'd a real paid run to prove the deployed site renders. Registered a throwaway account
+  on https://inkraft-production.up.railway.app via the API (`/api/auth/register` → `/api/auth/login`
+  → token → `/api/generate_comic`), generated a 2-panel manga, polled `/api/status` to completion
+  (~11s), downloaded the assembled page and **viewed it**: a clean rain-soaked-alley manga — Kaito
+  with sword vs. a shadowy hooded figure, consistent character across panels, true B&W, coherent
+  composition, and NO spurious magic (today's action-token fix confirmed live). The "stuck
+  deploy/no output" worry is fully resolved — the live box runs the FLUX pipeline correctly.
+- **⚠️ FINDING: Supabase email verification is currently OFF on prod** (register→login worked with
+  no confirmation step). Fine for frictionless closed beta; **founder must re-enable before public
+  launch** (still on the checklist). Throwaway QA user (`inkraft.qa.*@gmail.com`,
+  uid 1ddd0e4e-...) + its job/outputs are harmless junk on prod — delete if desired.
+
 ### 2026-06-30 — Claude Code — FIXED spurious magic/combat token injection (substring bug)
 - **The bug (founder-reported):** a plain chase scene got "hands outstretched, magic circle, arcane
   energy" injected into the image prompt. **Root cause:** `ActionLibrary.get_action_tokens` matched
