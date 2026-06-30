@@ -105,6 +105,45 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-30 — Claude Code — Railway redeploy + 2 mobile bug fixes + Vault verified
+- **Deployed latest to Railway (founder bought Hobby + set volume/vars).** Pushed all session
+  commits to origin/main; Railway auto-deploys on push. LIVE-VERIFIED every marker on
+  https://inkraft-production.up.railway.app: `app-shell.css` z-index:99, `style.css`/`dashboard`/
+  `index` vault-hint, `register.html` new legal links. Backend healthy: `/api/health` 200,
+  `/api/characters` 200 (Supabase OK), `/api/generate_comic` unauth → 401 (clean gate, no 500).
+  IMAGE_ROUTING_MODE=flux_all confirmed in Railway vars. The "stuck old deploy / no output" issue
+  is resolved — live now runs the FLUX pipeline + all session fixes. (Founder's GROQ_FALLBACK_MODELS
+  var was staged; even if unapplied, the same chain is the code default in chat_client.py.)
+- **Mobile bug #1 (wizard "can't go to next step") — FIXED.** Reproduced live at 375px via the
+  preview: the Step-1 length validation works, BUT the "story too short" error never cleared while
+  the user typed valid text, so it FELT permanently stuck. Fix (`index.html` input handler): clear
+  `#error-banner` as soon as the text is valid length. Verified: error shows on empty → clears on
+  valid typing → advances to step 2.
+- **Mobile bug #2 (can't switch tabs via hamburger on non-dashboard pages) — FIXED.** Root cause
+  found via live `elementFromPoint`: `.nav-backdrop` (a body-level element, z:110) painted ABOVE
+  the slide-out drawer, because the drawer's z:120 is TRAPPED inside `.app-header`'s stacking
+  context (`position:sticky; z-index:100`). So the backdrop swallowed every tap on the nav links —
+  on all shared-drawer pages (index/history/gallery/vault), but NOT dashboard (its own nav). Fix
+  (`app-shell.css`): backdrop z-index 110 → 99 (below the header context). Verified live: all 5 nav
+  links now receive taps; backdrop still closes the drawer when tapped outside.
+- **Vault discovery hint (founder ask #3) — ADDED.** Neo-brutalist `.vault-hint` under the Generate
+  button on BOTH the wizard (`index.html` step 5) and dashboard quick-gen, linking to the Vault.
+  Verified rendering.
+- **Character Vault rigorously tested (founder ask #4) — FULLY WORKS.** Exercised the live API
+  (user_id param, no auth needed): SAVE (Supabase-synced) → LIST → GET → UPSERT (re-save same name
+  updates, no dup) → DETECT (Kaito=male, Mei=female) → DELETE (gone from SQLite+Supabase, GET→404).
+  **Source-of-truth consistency PROVEN via trace:** a story saying only "Kaito sprinted" (no
+  appearance) → the extractor guessed "leather armor" but the Vault OVERRODE it; both panels
+  rendered Kaito's canonical tokens "spiky short black hair, amber eyes, scar over left eyebrow,
+  black hooded jacket" with log `detected gender = male (source: design_sheet)`. Test data cleaned
+  up. Minor non-issue: DELETE of a non-existent character returns 200 not 404 (idempotent).
+- **⚠️ SEPARATE QUALITY BUG FOUND (not fixed — flagged):** in that Vault trace, a non-magic action
+  ("Kaito spun around to face the figure") got spurious tokens injected: "hands outstretched, magic
+  circle, arcane energy". No magic in the story. Likely an ActionLibrary/InteractionComposer or
+  action-classifier misfire (possibly amplified by the 8b fallback guessing "leather armor"/fantasy).
+  Worth a separate investigation — does NOT affect the Vault feature itself.
+- **Dev note:** added `.claude/launch.json` (uvicorn on :8000) for the preview tool — left untracked.
+
 ### 2026-06-30 — Antigravity — Setting / Art direction input addition
 - **Feature Addition**: Added an optional `"Setting / Art direction"` text input to both the landing page creation wizard (Step 1) and the dashboard quick-generate form.
   - Implemented custom styling in `style.css` for `.wizard-text-input` (manga-style black border & offset shadow) and `.qg-input` (translucent theme) to match the page designs perfectly.
