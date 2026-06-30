@@ -105,6 +105,29 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-30 — Claude Code — STALE-CACHE fix (the "next-step" bug) + feedback read endpoint
+- **"Can't move to next step" (desktop+mobile) — root cause = STALE BROWSER CACHE, not a code
+  bug.** Reproduced exhaustively in the preview: the next-step HANDLER works (programmatic click
+  advances 1→2), the textarea is editable + not overlaid, the button is not overlaid
+  (elementFromPoint = the button), no scroll-trap at desktop. The live index.html already HAS the
+  error-clear fix. BUT StaticFiles served HTML/JS with only ETag/Last-Modified and **NO
+  Cache-Control** → browsers heuristically cache and serve a STALE index.html WITHOUT revalidating
+  → the founder kept running OLD JS where the error never cleared → looked "stuck". Classic "your
+  fix didn't work for me."
+- **FIX (`api/main.py`):** added a middleware setting `Cache-Control: no-cache, must-revalidate`
+  on `/`, `*.html`, `*.js` so browsers ALWAYS revalidate (fast 304 when unchanged) — users get
+  fresh frontend after every deploy. Images/CSS keep normal caching. Verified: `/` and
+  `feedback.js` now send no-cache; images don't. **Founder must hard-refresh once** (Ctrl+Shift+R)
+  to clear the already-cached old copy; future loads self-correct.
+- **Feedback readable WITHOUT the Supabase table.** Added `GET /api/feedback` gated by
+  `FEEDBACK_ADMIN_TOKEN` env (404 when unset, 401 wrong token) → returns all feedback from the
+  on-volume SQLite, newest first. So the founder can set ONE env var on Railway and read reviews at
+  `/api/feedback?token=<token>` — no Supabase SQL needed (Supabase sync still works if the table is
+  created). Verified gating + read.
+- **NOTE for next session:** if the founder reports the next-step STILL fails after a hard-refresh
+  on the latest deploy, it's environment-specific — ask for browser console errors on click (a JS
+  error would reveal it); I could not reproduce any logic bug.
+
 ### 2026-06-30 — Claude Code — Private beta-feedback feature (for the soft-launch demand signal)
 - Founder wants a way for soft-launch users to leave reviews ("how they feel / would they use it").
   Built it as PRIVATE feedback (not shown on-site) — the right call for a small beta (honest answers,

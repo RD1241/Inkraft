@@ -11,6 +11,22 @@ from api.routes import generate, status, health, credits, history, gallery, down
 
 app = FastAPI(title="Inkraft API", description="Enterprise-Grade AI Pipeline")
 
+
+@app.middleware("http")
+async def no_cache_html_js(request, call_next):
+    """Force browsers to REVALIDATE HTML/JS on every load. StaticFiles sends only
+    ETag/Last-Modified (no Cache-Control), which triggers heuristic caching — browsers
+    can serve a STALE index.html/JS without checking the server, so users keep running
+    old frontend code after a deploy (e.g. a fix that "didn't work for them"). `no-cache`
+    still allows a fast 304 when nothing changed, but guarantees freshness. Critical while
+    iterating during the beta. Hashed assets (images/CSS) keep their normal caching."""
+    response = await call_next(request)
+    path = request.url.path
+    if path == "/" or path.endswith(".html") or path.endswith(".js"):
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    return response
+
+
 # Register routers under prefix '/api'
 app.include_router(generate.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")

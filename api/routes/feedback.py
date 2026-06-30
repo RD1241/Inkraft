@@ -19,7 +19,7 @@ import sqlite3
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Query
 from pydantic import BaseModel, field_validator
 
 from config import settings
@@ -108,3 +108,35 @@ def submit_feedback(
         print(f"[Feedback] Supabase sync skipped: {e}")
 
     return {"status": "success", "message": "Thanks for the feedback!"}
+
+
+@router.get("")
+def list_feedback(
+    token: Optional[str] = Query(None),
+    authorization: Optional[str] = Header(None, alias="Authorization"),
+):
+    """Founder-only: read all feedback (newest first) WITHOUT needing the Supabase table.
+    Gated by the FEEDBACK_ADMIN_TOKEN env var — set it on the host, then read at
+    GET /api/feedback?token=<that-token>. Disabled (404) until the env var is set."""
+    admin = os.environ.get("FEEDBACK_ADMIN_TOKEN")
+    if not admin:
+        raise HTTPException(status_code=404, detail="Not found")
+    provided = token
+    if not provided and authorization and authorization.startswith("Bearer "):
+        provided = authorization.split(" ", 1)[1]
+    if provided != admin:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    items = []
+    try:
+        conn = sqlite3.connect(os.path.join(settings.DB_DIR, "feedback.db"))
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT id, user_id, email, rating, would_use, message, page, created_at"
+            " FROM feedback ORDER BY id DESC LIMIT 500"
+        ).fetchall()
+        items = [dict(r) for r in rows]
+        conn.close()
+    except Exception:
+        items = []  # table not created yet (no feedback) → empty
+    return {"count": len(items), "feedback": items}
