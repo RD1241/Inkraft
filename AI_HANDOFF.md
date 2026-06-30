@@ -105,6 +105,20 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-30 — Claude Code — Layout fix CONFIRMED on real art + fresh style-showcase images
+- **Real-art layout confirmation (paid):** generated a live 6-panel manga ("lone samurai") — it
+  composited as a clean **2×3 grid of six balanced, undistorted panels** (consistent samurai, sharp
+  B&W). Confirms cover-fit + balanced-grid fixes work on real generations, not just the circle test.
+- **Refreshed ALL 5 style-showcase images** (founder: the landing-page style samples were old,
+  2-month-old generations + inconsistent sizes — 1024x1450 / 1897x903 / 512x512 mix). Generated
+  fresh on the LIVE deployed pipeline, one striking sample per style, all **1024x1450**:
+  `sample_comic.png` (manga 6-panel samurai grid), `Manhwa.png` (glowing-power girl, single webtoon
+  page), `anime_style_example.png` (forest girl + cat), `Cinematic.png` (rain detective),
+  `realistic_style_example.png` (photoreal fisherman — genuinely photographic). Same filenames so
+  `index.html` refs (hero carousel + switcher) are unchanged. Verified all 5 fetch at 1024x1450.
+- Paid spend this batch ≈ $0.40 (18 panels). Throwaway accounts `inkraft.showcase.*@example.com`
+  created — delete in Supabase if desired.
+
 ### 2026-06-30 — Claude Code — FIXED real panel-distortion (QA report missed it) + report was stale
 Founder's 2nd QA pass (subagents 1+2) reported "layout ALL PASS, perfect aspect ratio, no
 distortion" AND re-flagged the detect + credit bugs as still-open. Verified all three against the
