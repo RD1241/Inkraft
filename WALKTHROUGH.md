@@ -216,17 +216,29 @@ panel-count selector; balanced non-distorted multi-panel layout; legible dialogu
 history/gallery; PDF export; mobile nav/wizard fixes; Groq fallback chain; in-app SQLite
 backup; private beta-feedback widget; Railway deploy on a persistent volume.
 
-**Plan: soft-launch to a few real users → gather feedback → decide on public.** Remaining
-founder-side steps before inviting real users / going public:
+**Plan: soft-launch to a few real users → gather feedback → decide on public.**
 
-1. **Re-enable Supabase email verification** (currently OFF for testing) + set the Supabase
-   Auth Site URL / redirect URLs to the live domain.
+**Auth flow (email verification ON as of 2026-06-30):** register → backend Supabase
+sign-up → if confirmation required, the UI shows "Account created! Check your email to
+confirm, then sign in." Login is blocked until confirmed ("Invalid login credentials").
+The confirmation email link redirects to the Site URL; `index.html`/`login.html` forward
+any auth-callback hash (`access_token`/`type=signup`/`error_code`) to `callback.html`,
+which establishes the session and routes to the dashboard (implicit flow) or falls back to
+"please sign in". Supabase Site URL + redirect URLs are set to the live domain.
+
+Remaining founder-side steps before inviting real users / going public:
+
+1. ✅ Email verification re-enabled + Auth Site URL / redirect URLs set to live domain.
 2. **Create the Supabase `feedback` table** (SQL in `api/routes/feedback.py`) to read
    reviews in the dashboard.
-3. *(Optional)* one more controlled subagent QA run — cap the fal spend (~$2).
-4. **Soft-launch** to ~5–15 real people in one niche on the free tier; watch usage + the
+3. **Smoke-test signup with a REAL email** (register → click the email link → confirm it
+   lands logged-in or at sign-in). If the callback shows "please sign in" instead of
+   auto-login, the email link uses the PKCE flow and a small `/api/auth/verify` endpoint
+   would make it seamless — only add if the real-email test shows that.
+4. *(Optional)* one more controlled subagent QA run — cap the fal spend (~$2).
+5. **Soft-launch** to ~5–15 real people in one niche on the free tier; watch usage + the
    feedback widget's "would you use it?" signal.
-5. **If validated → payments (Lemon Squeezy) → public.** Payments make per-comic cost a
+6. **If validated → payments (Lemon Squeezy) → public.** Payments make per-comic cost a
    non-issue (users fund their own generation).
 
 **Known minor/open items:** a singly-named character in a 2-person romance/dialogue scene

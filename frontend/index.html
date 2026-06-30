@@ -2,6 +2,20 @@
 <html lang="en" style="scroll-behavior: smooth;">
 <head>
   <meta charset="UTF-8">
+  <!-- Forward Supabase auth-callback redirects (email confirmation / password
+       recovery / magic link) that land on this Site URL to the dedicated
+       /callback.html handler, which establishes the session and routes to the
+       dashboard. Safe no-op on normal loads — only fires when the URL hash carries
+       an auth token/error/type. -->
+  <script>
+    (function () {
+      var h = location.hash || '';
+      if (h.indexOf('access_token=') !== -1 || h.indexOf('error_code=') !== -1
+          || h.indexOf('type=signup') !== -1 || h.indexOf('type=recovery') !== -1) {
+        location.replace('/callback.html' + h);
+      }
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Inkraft - AI Comic Generator</title>
   <meta name="description" content="Convert your novel text into AI-generated manga and manhwa comics. Dynamic panel counts, cinematic layouts, multiple art styles. 100% local AI pipeline.">

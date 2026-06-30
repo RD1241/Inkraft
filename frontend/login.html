@@ -2,6 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <!-- Forward Supabase auth-callback redirects to /callback.html (see index.html). -->
+  <script>
+    (function () {
+      var h = location.hash || '';
+      if (h.indexOf('access_token=') !== -1 || h.indexOf('error_code=') !== -1
+          || h.indexOf('type=signup') !== -1 || h.indexOf('type=recovery') !== -1) {
+        location.replace('/callback.html' + h);
+      }
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Inkraft - Login</title>
   <meta name="description" content="Log in to your Inkraft account to access your comics, generation history, and dashboard.">
