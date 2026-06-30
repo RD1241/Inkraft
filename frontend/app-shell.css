@@ -385,7 +385,15 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
-  z-index: 110;
+  /* MUST stay below .app-header's stacking context (position:sticky; z-index:100).
+     The slide-out drawer (.header-nav) is a CHILD of .app-header, so its z-index:120
+     is only 120 *within* the header's level-100 context. A backdrop at z:110 (a
+     body-level element) therefore painted ABOVE the drawer and swallowed every tap on
+     the nav links — breaking tab switching on all drawer pages (index/history/gallery/
+     vault). At z:99 the whole header subtree (drawer + hamburger) sits above the
+     backdrop, while the backdrop still covers page content and closes the drawer when
+     tapped outside. [QA 2026-06-30] */
+  z-index: 99;
   backdrop-filter: blur(2px);
 }
 .nav-backdrop.active {

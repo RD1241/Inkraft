@@ -4681,3 +4681,21 @@ html {
   border-color: var(--accent-color) !important;
   box-shadow: 0 0 0 3px rgba(232,50,74,0.25), 3px 3px 0 #000 !important;
 }
+
+/* Character Vault discovery hint (under the Generate button) */
+.vault-hint {
+  margin: 0.9rem 0 0;
+  padding: 0.7rem 0.9rem;
+  background: rgba(124, 92, 255, 0.10);
+  border: 2px dashed rgba(124, 92, 255, 0.55);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-secondary, #c8c8d0);
+}
+.vault-hint a {
+  color: var(--accent-color);
+  font-weight: 700;
+  text-decoration: underline;
+}
+.vault-hint strong { color: var(--text-primary, #fff); }

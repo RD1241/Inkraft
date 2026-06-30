@@ -476,7 +476,13 @@
             </div>
 
             <button id="generate-btn" class="glow-button main-generate-cta" style="margin-top: 1.5rem;">Paint Comic Page! ⚡</button>
-            
+
+            <!-- Character-consistency hint: point users to the Vault for recurring characters -->
+            <p class="vault-hint">
+              🎭 Want a character to look <strong>identical across every comic</strong>? Define them once in the
+              <a href="/characters.html">Character Vault</a> — then they stay consistent everywhere.
+            </p>
+
             <!-- Credits warning for guests -->
             <div id="guest-notice" class="guest-notice hidden" style="margin-top: 1rem; margin-bottom: 0px;">
               ⚡ <a href="/register.html">Register free</a> to save your comics and track your history.
@@ -1495,6 +1501,14 @@
     novelInput.addEventListener('input', () => {
       const text = novelInput.value;
       const len  = text.length;
+
+      // Clear the "story text too short/long" error as soon as the input becomes valid,
+      // so the user can see they're unblocked. Without this the red error persisted while
+      // they typed and the wizard FELT stuck (couldn't tell they could now advance). [QA 2026-06-30]
+      if (len >= MIN_CHARS && len <= MAX_CHARS) {
+        document.getElementById('error-banner')?.classList.add('hidden');
+      }
+
       charCounter.textContent = `${len} / ${MAX_CHARS}`;
       charCounter.style.color =
         len < MIN_CHARS ? '#e8324a' :
