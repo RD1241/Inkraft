@@ -1209,18 +1209,9 @@
 
     if (nextBtn) {
       nextBtn.addEventListener('click', () => {
-        if (currentStep === 1) {
-          const textVal = novelInput.value.trim();
-          if (textVal.length < MIN_CHARS) {
-            showError(`Story text too short. Please enter at least ${MIN_CHARS} characters.`);
-            return;
-          }
-          if (textVal.length > MAX_CHARS) {
-            showError(`Story text too long. Max ${MAX_CHARS} characters allowed.`);
-            return;
-          }
-          document.getElementById('error-banner').classList.add('hidden');
-        }
+        // No validation on navigation — users can freely browse all steps.
+        // Validation only triggers when they click Generate.
+        document.getElementById('error-banner').classList.add('hidden');
         if (currentStep < totalSteps) {
           showStep(currentStep + 1);
         }
