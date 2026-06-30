@@ -1235,17 +1235,11 @@
       });
     }
 
-    // Allow step bubble direct navigation with validation on step 1
+    // Allow step bubble direct navigation — freely browse any step without validation
+    // (Validation only triggers when pressing Next from Step 1 or clicking Generate)
     document.querySelectorAll('.step-indicator-item').forEach(item => {
       item.addEventListener('click', () => {
         const targetStep = parseInt(item.getAttribute('data-step'));
-        if (targetStep > 1) {
-          const textVal = novelInput.value.trim();
-          if (textVal.length < MIN_CHARS) {
-            showError(`Story text too short. Please enter at least ${MIN_CHARS} characters.`);
-            return;
-          }
-        }
         document.getElementById('error-banner').classList.add('hidden');
         showStep(targetStep);
       });
