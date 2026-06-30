@@ -105,6 +105,13 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-06-30 — Antigravity — Setting / Art direction input addition
+- **Feature Addition**: Added an optional `"Setting / Art direction"` text input to both the landing page creation wizard (Step 1) and the dashboard quick-generate form.
+  - Implemented custom styling in `style.css` for `.wizard-text-input` (manga-style black border & offset shadow) and `.qg-input` (translucent theme) to match the page designs perfectly.
+  - In `index.html` (landing page wizard) and `dashboard.html` (quick generate), extracted the input value inside the respective form handlers, trimming and slicing it to 300 characters before forwarding it inside the body payload as `art_direction`.
+  - Added Pydantic schema validation inside `api/routes/generate.py` via `NovelInput.art_direction` with a `@field_validator("art_direction")` to guarantee server-side compliance of ≤ 300 characters.
+  - Documents updated in `WALKTHROUGH.md` to cover all new inputs, responsive layout audits, hero carousel updates, and vault enforcement mechanisms.
+
 ### 2026-06-30 — Claude Code — Legal: proper ToS + Privacy Policy (copyright/DMCA/sub-processors)
 - Founder worried about copyright/legal exposure. Replaced the thin beta ToS/Privacy modal stubs
   in `frontend/index.html` (showLegalModal) with gap-closing baseline docs:
@@ -149,6 +156,19 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 - **⚠️ Production note (in DEPLOY.md):** the real fix for scale is upgrading Groq to the paid Dev
   tier (~$0.004/comic — effectively free) so the 70B never exhausts. The fallback chain just
   prevents broken output in the meantime / under bursts.
+- **[UPDATE 2026-06-30] Paid Groq Dev tier is currently BLOCKED by Groq** ("Developer tier upgrades
+  are temporarily unavailable due to high demand" — founder's billing screenshot). Founder is
+  willing to pay but can't yet. So the fallback chain is now the PRIMARY mitigation, not a stopgap.
+  **Expanded it to a multi-model chain** (default `GROQ_FALLBACK_MODELS` =
+  `meta-llama/llama-4-scout-17b-16e-instruct, openai/gpt-oss-120b, llama-3.1-8b-instant`). Each
+  Groq model has its OWN separate free daily token bucket → ~4× effective free capacity, and the
+  first two fallbacks are HIGH quality (not just a cheap 8b). **Verified 2026-06-30:** queried the
+  account's live model list and ran the real extraction prompt+parser through all candidates —
+  gpt-oss-120b, llama-4-scout-17b, qwen3-32b, gpt-oss-20b, 8b-instant ALL produced clean JSON with
+  both characters (Kael + little girl); reasoning models (qwen/gpt-oss) did NOT break the
+  bracket-depth parser. Also hardened `chat()` to advance to the next model on ANY error (not just
+  429) so a decommissioned fallback can't crash the call. Founder action: retry the paid Dev tier
+  on the Groq dashboard periodically — buy it the moment it reopens.
 
 ### 2026-06-29 — Claude Code — Multi-panel environment-only portrait-bias fix (NEXT-SESSION #1)
 - **Problem (from prior NEXT-SESSION plan):** in a MULTI-panel comic a character-less

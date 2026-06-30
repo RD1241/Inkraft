@@ -28,7 +28,13 @@ _GROQ_DEFAULT_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
 # (comma-separated). Set it empty to disable the chain.
 _GROQ_FALLBACK_MODELS = [
     m.strip() for m in os.environ.get(
-        "GROQ_FALLBACK_MODELS", "llama-3.1-8b-instant"
+        # Each model has its OWN separate free-tier daily token bucket, so chaining
+        # several ~multiplies effective free capacity AND keeps quality high when the
+        # 70B is exhausted. Order = quality/availability balance; all verified to
+        # produce clean extraction JSON (2026-06-30). Scout is fast+good; gpt-oss-120b
+        # is the heavy-hitter backstop; 8b-instant is the always-available last resort.
+        "GROQ_FALLBACK_MODELS",
+        "meta-llama/llama-4-scout-17b-16e-instruct,openai/gpt-oss-120b,llama-3.1-8b-instant"
     ).split(",") if m.strip()
 ]
 
@@ -94,14 +100,17 @@ class GroqChatClient:
                 return {"message": {"content": content}}
             except Exception as exc:
                 last_exc = exc
-                is_rl = _is_rate_limit(exc)
                 more = idx < len(chain) - 1
-                if is_rl and more:
-                    print(f"[GroqChatClient] '{mdl}' rate-limited (429); "
+                if more:
+                    # Advance to the next model on ANY error while models remain — a
+                    # rate-limit (429) OR an unavailable/decommissioned fallback model
+                    # should both fall through rather than crash the whole call.
+                    reason = "rate-limited (429)" if _is_rate_limit(exc) else "unavailable"
+                    print(f"[GroqChatClient] '{mdl}' {reason}; "
                           f"falling back to '{chain[idx + 1]}'.")
                     continue
-                # Non-rate-limit error, or no fallbacks left → surface to the caller's
-                # retry loop (which ultimately drops to rule-based extraction).
+                # No models left → surface to the caller's retry loop (which ultimately
+                # drops to rule-based extraction as the final safety net).
                 raise
         # Defensive: loop always returns or raises, but satisfy the type checker.
         raise last_exc if last_exc else RuntimeError("Groq chat failed with no models")

@@ -37,7 +37,7 @@ users, credits, and history. (Northflank: same idea, attach a 0.5 GB+ volume at 
 | `GROQ_API_KEY` | *(your Groq key)* | reuse from local `.env` |
 | `LLM_PROVIDER` | `groq` | required (default is ollama) |
 | `GROQ_MODEL` | `llama-3.3-70b-versatile` | primary extraction/storyboard model |
-| `GROQ_FALLBACK_MODELS` | `llama-3.1-8b-instant` | auto-used on a 429 (per-day token limit) so extraction never degrades to the ghost-producing rule-based fallback. ⚠️ **Free Groq = 100k tokens/day ≈ ~15 comics/day across ALL users.** For real traffic, upgrade Groq to the paid Dev tier at console.groq.com (~$0.004/comic — effectively free) so the 70B never exhausts. |
+| `GROQ_FALLBACK_MODELS` | `meta-llama/llama-4-scout-17b-16e-instruct,openai/gpt-oss-120b,llama-3.1-8b-instant` | tried in order on a 429/unavailable so extraction never degrades to the ghost-producing rule-based fallback. Each model has its OWN separate free daily bucket → ~4× effective free capacity with high-quality fallbacks (all verified 2026-06-30). ⚠️ **Free Groq 70B = 100k tokens/day ≈ ~15 comics/day**; the chain multiplies that. The real scale fix is the paid Dev tier (~$0.004/comic) — but it was **"temporarily unavailable" on Groq as of 2026-06-30**; retry later, use this chain meanwhile. |
 | `SUPABASE_URL` | *(your project URL)* | reuse from local `.env` |
 | `SUPABASE_PUBLISHABLE_KEY` | *(anon/publishable key)* | reuse from local `.env` |
 | `SUPABASE_SECRET_KEY` | *(service/secret key)* | reuse from local `.env` |
