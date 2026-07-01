@@ -184,6 +184,105 @@
     const togglePw  = document.getElementById('toggle-pw');
     const toggleConfirmPw = document.getElementById('toggle-confirm-pw');
 
+    // --- Resend section (injected once, shown/hidden as needed) ---
+    const resendSection = document.createElement('div');
+    resendSection.id = 'resend-section';
+    resendSection.style.cssText = `
+      display: none;
+      margin-top: 1rem;
+      padding: 1rem;
+      background: rgba(139, 92, 246, 0.08);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 10px;
+      text-align: center;
+    `;
+    resendSection.innerHTML = `
+      <p style="margin: 0 0 0.75rem; font-size: 0.88rem; color: #d0d0d0; line-height: 1.5;">
+        📧 We've sent a <strong>new confirmation link</strong> to your email.<br>
+        <span style="font-size: 0.8rem; opacity: 0.7;">Didn't receive it? Check your spam folder or resend below.</span>
+      </p>
+      <button type="button" id="resend-btn"
+        style="background: linear-gradient(135deg, #7c3aed, #a855f7);
+               border: none; border-radius: 8px; color: #fff;
+               padding: 0.55rem 1.4rem; font-size: 0.85rem;
+               font-family: 'Outfit', sans-serif; font-weight: 600;
+               cursor: pointer; transition: opacity 0.2s;">
+        Resend Confirmation Email
+      </button>
+      <p id="resend-status" style="margin: 0.5rem 0 0; font-size: 0.8rem; color: #a0a0a0; min-height: 1.2em;"></p>
+    `;
+    // Insert after the successEl div
+    successEl.insertAdjacentElement('afterend', resendSection);
+
+    const resendBtn    = document.getElementById('resend-btn');
+    const resendStatus = document.getElementById('resend-status');
+
+    // Tracks the last email the user tried to register with (used by the resend button)
+    let pendingEmail = '';
+
+    // --- Helper: call the resend API ---
+    async function callResendAPI(email) {
+      try {
+        const res = await fetch('/api/auth/resend-confirmation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (res.status === 429) return 'rate_limit';
+        if (!res.ok) return 'error';
+        if (data.message === 'already_confirmed') return 'already_confirmed';
+        return 'ok';
+      } catch {
+        return 'error';
+      }
+    }
+
+    // --- Show the "resend" section and trigger an auto-resend ---
+    async function showResendFlow(email) {
+      pendingEmail = email;
+      errorEl.classList.add('hidden');
+      resendSection.style.display = 'block';
+      resendStatus.textContent = 'Sending…';
+      const outcome = await callResendAPI(email);
+      if (outcome === 'ok') {
+        resendStatus.textContent = '✅ Sent! Check your inbox (and spam folder).';
+      } else if (outcome === 'already_confirmed') {
+        resendSection.style.display = 'none';
+        successEl.textContent = 'Your email is already confirmed! You can sign in now.';
+        successEl.classList.remove('hidden');
+        setTimeout(() => { window.location.href = '/login.html'; }, 2500);
+      } else if (outcome === 'rate_limit') {
+        resendStatus.textContent = '⏳ Too many attempts — please wait a few minutes then try again.';
+      } else {
+        resendStatus.textContent = 'Could not send email. Please try again in a moment.';
+      }
+    }
+
+    // --- Resend button click ---
+    resendBtn.addEventListener('click', async () => {
+      if (!pendingEmail) return;
+      resendBtn.disabled = true;
+      resendBtn.style.opacity = '0.6';
+      resendStatus.textContent = 'Sending…';
+      const outcome = await callResendAPI(pendingEmail);
+      resendBtn.disabled = false;
+      resendBtn.style.opacity = '1';
+      if (outcome === 'ok') {
+        resendStatus.textContent = '✅ New email sent! Check your inbox.';
+      } else if (outcome === 'already_confirmed') {
+        resendSection.style.display = 'none';
+        successEl.textContent = 'Your email is already confirmed! Redirecting to sign in…';
+        successEl.classList.remove('hidden');
+        setTimeout(() => { window.location.href = '/login.html'; }, 2500);
+      } else if (outcome === 'rate_limit') {
+        resendStatus.textContent = '⏳ Too many attempts — please wait a few minutes then try again.';
+      } else {
+        resendStatus.textContent = 'Something went wrong. Please try again in a moment.';
+      }
+    });
+
+    // --- Password show/hide toggles ---
     togglePw.addEventListener('click', () => {
       const isHidden = pwInput.type === 'password';
       pwInput.type   = isHidden ? 'text' : 'password';
@@ -196,6 +295,7 @@
       toggleConfirmPw.textContent = isHidden ? '🙈' : '👁';
     });
 
+    // --- Password strength meter ---
     pwInput.addEventListener('input', () => {
       const val = pwInput.value;
       let strength = 0;
@@ -212,6 +312,7 @@
       pwLabel.textContent    = strength ? labels[strength - 1] : '';
     });
 
+    // --- Password match check ---
     const checkMatch = () => {
       const password = pwInput.value;
       const passwordConfirm = pwConfirmInput.value;
@@ -227,10 +328,12 @@
     pwConfirmInput.addEventListener('input', checkMatch);
     pwInput.addEventListener('input', checkMatch);
 
+    // --- Form submit ---
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       errorEl.classList.add('hidden');
       successEl.classList.add('hidden');
+      resendSection.style.display = 'none';
 
       const email    = document.getElementById('email-input').value.trim();
       const password = pwInput.value;
@@ -248,7 +351,6 @@
         pwConfirmInput.style.borderColor = 'var(--accent-color)';
         return;
       }
-
 
       btnText.textContent = 'Creating account…';
       spinner.classList.remove('hidden');
@@ -274,27 +376,40 @@
                    || { email };
 
         if (token) {
+          // Email confirmation is OFF — user is immediately logged in
           authStore.setAuth(token, user);
           window.location.href = '/dashboard.html';
         } else {
-          // Email confirmation flow (when Confirm Email is enabled)
-          successEl.textContent = 'Account created! Check your email to confirm, then sign in.';
+          // Email confirmation is ON — account created, waiting for confirm
+          successEl.textContent = '✅ Account created! Check your email to confirm, then sign in.';
           successEl.classList.remove('hidden');
-          setTimeout(() => { window.location.href = '/login.html'; }, 3000);
+          setTimeout(() => { window.location.href = '/login.html'; }, 3500);
         }
+
       } catch (err) {
-        // Translate Supabase raw errors into user-friendly messages
-        let msg = err.message || 'Registration failed. Please try again.';
-        if (msg.toLowerCase().includes('rate limit') || msg.toLowerCase().includes('email rate'))
-          msg = 'Too many signup attempts. Please wait 1 hour and try again, or contact support.';
-        else if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('user already'))
-          msg = 'This email is already registered. Try signing in instead.';
-        else if (msg.toLowerCase().includes('invalid email'))
-          msg = 'Please enter a valid email address.';
-        else if (msg.toLowerCase().includes('password') && msg.toLowerCase().includes('short'))
-          msg = 'Password must be at least 8 characters.';
-        errorEl.textContent = msg;
-        errorEl.classList.remove('hidden');
+        const raw = err.message || '';
+        const lower = raw.toLowerCase();
+
+        if (lower.includes('already registered') || lower.includes('already exists') || lower.includes('user already')) {
+          // User exists but is likely unconfirmed — auto-resend and show friendly UI
+          await showResendFlow(email);
+
+        } else if (lower.includes('rate limit') || lower.includes('email rate') || lower.includes('too many')) {
+          errorEl.textContent = '⏳ Too many attempts. Please wait a few minutes and try again.';
+          errorEl.classList.remove('hidden');
+
+        } else if (lower.includes('invalid email')) {
+          errorEl.textContent = 'Please enter a valid email address.';
+          errorEl.classList.remove('hidden');
+
+        } else if (lower.includes('password') && lower.includes('short')) {
+          errorEl.textContent = 'Password must be at least 8 characters.';
+          errorEl.classList.remove('hidden');
+
+        } else {
+          errorEl.textContent = raw || 'Registration failed. Please try again.';
+          errorEl.classList.remove('hidden');
+        }
       } finally {
         btnText.textContent = 'Create Account';
         spinner.classList.add('hidden');
@@ -304,3 +419,4 @@
   </script>
 </body>
 </html>
+

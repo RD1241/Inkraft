@@ -146,6 +146,30 @@ class SupabaseAuth:
         except Exception:
             pass
 
+    def resend_confirmation_email(self, email: str) -> Dict[str, Any]:
+        """
+        Resend the signup confirmation email to an unconfirmed user.
+        Uses Supabase GoTrue's official resend endpoint (type='signup').
+        Safe to call multiple times — Supabase handles dedup on its end.
+        """
+        if not self.enabled:
+            # Local mock — just acknowledge the call silently
+            logger.info(f"[MockAuth] resend_confirmation_email called for {email}")
+            return {"message": "Confirmation email resent (mock)."}
+        self._ensure_client()
+        try:
+            # Supabase Python SDK: client.auth.resend({"type": "signup", "email": email})
+            self.client.auth.resend({"type": "signup", "email": email})
+            return {"message": "Confirmation email resent successfully."}
+        except Exception as e:
+            error_str = str(e).lower()
+            # Supabase returns a specific error when the user is already confirmed —
+            # treat that as a success (no need to resend, tell frontend to just log in).
+            if "already confirmed" in error_str or "email already confirmed" in error_str:
+                return {"message": "already_confirmed"}
+            # Rate-limit or other errors — re-raise so the route can surface them.
+            raise
+
     def get_user(self, token: str) -> Optional[Dict[str, Any]]:
         if not self.enabled:
             return {
