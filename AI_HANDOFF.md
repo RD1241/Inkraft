@@ -131,8 +131,7 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 8. User clicks "Go to Sign In" → logs in with new password
 ```
 
-**Verified:** Both Python files compile clean (`py_compile`). No existing `register/login/logout/me/resend-confirmation` flows touched.
-**⚠️ Supabase Dashboard action:** Go to **Authentication → Email Templates → Reset Password** and make sure the template's "Confirm URL" redirects to `https://inkraft-production.up.railway.app/reset-password.html` (it will be populated from `redirect_to` automatically but good to verify).
+**⚠️ Supabase Dashboard action:** Ensure that the reset password page `https://inkraft-production.up.railway.app/reset-password.html` is added to the allowed **Redirect URLs** under **URL Configuration** on the Supabase Dashboard (Authentication section). This authorizes GoTrue to process redirects using that link. The Reset Password email template itself uses `{{ .ConfirmationURL }}` and requires no structural HTML edits.
 
 ### 2026-07-01 — Antigravity — Email Confirmation UX Fix (resend flow + smart error handling) · 6df5ffd
 
