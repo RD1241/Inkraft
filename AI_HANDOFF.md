@@ -105,6 +105,11 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-07-01 — Antigravity — Login Unconfirmed Email Spam Warning · f1aadd4
+
+**Problem:** When unconfirmed users try to log in, the default error message does not prompt them to look in their Spam folder where Gmail SMTP confirmation emails might have landed.
+**Fix (`login.html`):** Updated the sign-in error handler. If login fails because email confirmation is required, it now shows a prominent banner: *"✉️ Email confirmation required! Please check your Gmail inbox (and your Spam folder!) for the activation link to confirm your account."*
+
 ### 2026-07-01 — Antigravity — Signup Spam Warning UI Update · c7ded8c
 
 **Problem:** Transactional emails sent via Gmail SMTP for beta testing often route to users' Spam/Junk folders initially (due to sender policy restrictions on free `@gmail.com` accounts).
