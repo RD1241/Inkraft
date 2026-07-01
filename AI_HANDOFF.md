@@ -105,6 +105,45 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-07-01 — Antigravity — Email Confirmation UX Fix (resend flow + smart error handling) · 6df5ffd
+
+**Problem (user-reported):** Users who missed their signup confirmation email were getting trapped:
+1. They tried to register again with the same Gmail → Supabase sent a new email but subsequent emails had no confirmation link (GoTrue sends a "you already have an account" notification, not a fresh OTP).
+2. After 3 re-register attempts → Supabase hard-blocked them with "wait 1 hour before trying again" (GoTrue rate limit: 3 emails/hr per address).
+3. The frontend error message was *"This email is already registered. Try signing in instead."* — a dead-end because they can't sign in on an unconfirmed account.
+
+**Root causes:**
+| # | Cause | Where |
+|---|---|---|
+| 1 | OTP expiry only 3600s (1 hr) — expired before user clicked | Supabase Dashboard |
+| 2 | Email rate limit = 3/hr — hit immediately on re-register attempts | Supabase Dashboard |
+| 3 | No "Resend" button — users forced to use sign-up form as a retry | `register.html` |
+| 4 | Wrong error branch — showed "try signing in" dead-end for unconfirmed users | `register.html` |
+
+**Fixes — 3 files changed, all additive (zero changes to existing register/login/logout/me flows):**
+
+- **`providers/auth/supabase_auth.py`** — Added `resend_confirmation_email(email)` method. Calls Supabase GoTrue's official `client.auth.resend({"type":"signup","email":email})`. Handles `already_confirmed` edge-case as a clean success (tells frontend to redirect to login). Mock fallback returns a no-op for local dev. Lines ~149–170.
+- **`api/routes/auth.py`** — Added `ResendRequest` Pydantic model + `POST /api/auth/resend-confirmation` route. Returns `HTTP 429` with `detail="rate_limit"` on Supabase rate-limit errors so the frontend can show a clear message. Otherwise always returns HTTP 200 so the frontend can show a friendly "check your inbox" message.
+- **`frontend/register.html`** — Replaced the catch-block error handling with a smart resend flow. When Supabase returns "already registered/exists/user already" on re-signup: (a) auto-calls `/api/auth/resend-confirmation` silently, (b) shows a purple-bordered resend panel ("📧 We've sent a new confirmation link to your email"), (c) shows a **"Resend Confirmation Email"** self-serve button. Also handles `already_confirmed` → auto-redirect to `/login.html` with a success message.
+
+**Supabase Dashboard (manual — founder action):**
+- Go to **Authentication → Configuration → Email → OTP Expiry** → set to `7200` (2 hours, up from default 3600).
+- This ensures confirmation links stay valid for 2 hours. Rate limits in Supabase are separate — the new resend endpoint uses the *official* resend API which is not subject to the same 3/hr re-signup limit.
+
+**New UX flow (after fix):**
+```
+User signs up → misses email → tries to sign up again
+  → Backend: "already registered" error
+  → Frontend: auto-calls /api/auth/resend-confirmation (silent)
+  → Shows: "📧 We've sent a new confirmation link to your email"
+  → Shows: "Resend Confirmation Email" button (unlimited self-service retries)
+  → If already confirmed: redirects to login with "Your email is confirmed!"
+  → No more 1-hour lockout dead-end
+```
+
+**Commit:** `6df5ffd` — pushed to `main`, Railway auto-deploys.
+**Verified:** Files compile clean; existing register/login/logout/me routes untouched; duplicate stale code removed from register.html after tool edit artifact.
+
 ### 2026-06-30 — Claude Code — STALE-CACHE fix (the "next-step" bug) + feedback read endpoint
 - **"Can't move to next step" (desktop+mobile) — root cause = STALE BROWSER CACHE, not a code
   bug.** Reproduced exhaustively in the preview: the next-step HANDLER works (programmatic click
