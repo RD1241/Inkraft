@@ -126,9 +126,11 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 - **`api/routes/auth.py`** — Added `ResendRequest` Pydantic model + `POST /api/auth/resend-confirmation` route. Returns `HTTP 429` with `detail="rate_limit"` on Supabase rate-limit errors so the frontend can show a clear message. Otherwise always returns HTTP 200 so the frontend can show a friendly "check your inbox" message.
 - **`frontend/register.html`** — Replaced the catch-block error handling with a smart resend flow. When Supabase returns "already registered/exists/user already" on re-signup: (a) auto-calls `/api/auth/resend-confirmation` silently, (b) shows a purple-bordered resend panel ("📧 We've sent a new confirmation link to your email"), (c) shows a **"Resend Confirmation Email"** self-serve button. Also handles `already_confirmed` → auto-redirect to `/login.html` with a success message.
 
-**Supabase Dashboard (manual — founder action):**
-- Go to **Authentication → Configuration → Email → OTP Expiry** → set to `3600` (1 hour - default).
-- Rate limits in Supabase are separate — the new resend endpoint uses the *official* resend API which is not subject to the same 3/hr re-signup limit.
+**Supabase Dashboard (manual — configured for Beta):**
+- **OTP Expiry:** Maintained at `3600` seconds (1 hour - default).
+- **Custom SMTP:** Enabled using a personal Gmail SMTP provider for the duration of the beta phase (free, no domain needed, bypasses default sandbox limit).
+- **Email Rate Limit:** Increased to `50` emails per hour under the **Rate Limits** section.
+- **Future Scale Plan:** Once the beta succeeds, a custom domain will be purchased and email routing will be migrated to a dedicated transactional provider like **Resend** to scale sending limits.
 
 **New UX flow (after fix):**
 ```
