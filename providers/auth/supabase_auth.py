@@ -170,6 +170,43 @@ class SupabaseAuth:
             # Rate-limit or other errors — re-raise so the route can surface them.
             raise
 
+    def send_password_reset(self, email: str) -> Dict[str, Any]:
+        """
+        Send a password reset email to the user.
+        Uses Supabase GoTrue's built-in password recovery flow.
+        The email will contain a link that redirects to /reset-password.html
+        where the user can enter a new password.
+        Always returns a generic success message to avoid user enumeration
+        (never reveal whether an email exists in the system).
+        """
+        if not self.enabled:
+            logger.info(f"[MockAuth] send_password_reset called for {email}")
+            return {"message": "If this email exists, a reset link has been sent."}
+        self._ensure_client()
+        try:
+            self.client.auth.reset_password_email(
+                email,
+                options={"redirect_to": "/reset-password.html"}
+            )
+        except Exception as e:
+            # Log but swallow the error — never reveal whether the email exists.
+            logger.warning(f"[SupabaseAuth] send_password_reset error (suppressed): {e}")
+        return {"message": "If this email exists, a reset link has been sent."}
+
+    def update_password(self, token: str, new_password: str) -> Dict[str, Any]:
+        """
+        Update the user's password after they've clicked the reset link.
+        The token is the Supabase access_token from the reset link's URL hash.
+        """
+        if not self.enabled:
+            logger.info("[MockAuth] update_password called (mock)")
+            return {"message": "Password updated successfully."}
+        self._ensure_client()
+        # Set the session using the token from the reset link
+        self.client.auth.set_session(access_token=token, refresh_token="")
+        response = self.client.auth.update_user({"password": new_password})
+        return {"message": "Password updated successfully.", "user": _to_dict(getattr(response, "user", None))}
+
     def get_user(self, token: str) -> Optional[Dict[str, Any]]:
         if not self.enabled:
             return {

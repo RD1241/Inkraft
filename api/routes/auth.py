@@ -16,6 +16,13 @@ class UserAuthRequest(BaseModel):
 class ResendRequest(BaseModel):
     email: str
 
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     token = credentials.credentials
     user = auth_provider.verify_token(token)
@@ -82,6 +89,40 @@ def resend_confirmation(req: ResendRequest):
             )
         # Any unexpected error — log it but still return 200 to avoid
         # leaking internal details to the client.
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+@router.post("/forgot-password")
+def forgot_password(req: ForgotPasswordRequest):
+    """
+    Send a password reset email. Always returns 200 regardless of whether
+    the email exists in the system — prevents user enumeration attacks.
+    """
+    try:
+        result = auth_provider.send_password_reset(email=req.email)
+        return result
+    except Exception:
+        # Always return 200 with the generic message — do not leak
+        # whether the email exists in the system.
+        return {"message": "If this email exists, a reset link has been sent."}
+
+@router.post("/reset-password")
+def reset_password(req: ResetPasswordRequest):
+    """
+    Update the user's password after they've clicked the reset link.
+    The token is the Supabase access_token extracted from the reset link's URL hash.
+    """
+    if not req.new_password or len(req.new_password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 6 characters."
+        )
+    try:
+        result = auth_provider.update_password(token=req.token, new_password=req.new_password)
+        return result
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)

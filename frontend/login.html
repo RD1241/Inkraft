@@ -46,7 +46,7 @@
             <div class="form-group">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
                 <label for="password-input" style="margin-bottom: 0;">Password</label>
-                <a href="#" onclick="alert('Password Recovery:\nDuring the Open Beta phase, please contact support@inkraft.ai to reset your password manually.'); return false;" style="font-size: 0.75rem; color: var(--accent-color); text-decoration: none; font-family: 'Outfit', sans-serif;">Forgot Password?</a>
+                <a href="#" id="forgot-pw-link" style="font-size: 0.75rem; color: var(--accent-color); text-decoration: none; font-family: 'Outfit', sans-serif;">Forgot Password?</a>
               </div>
               <div class="password-wrap">
                 <input type="password" id="password-input" name="password" placeholder="••••••••" autocomplete="current-password" required>
@@ -61,6 +61,22 @@
               <span id="login-btn-spinner" class="btn-spinner hidden"></span>
             </button>
           </form>
+
+          <!-- Forgot Password inline panel (hidden by default) -->
+          <div id="forgot-pw-panel" style="display:none; margin-top: 1.5rem; padding: 1.25rem; border: 2px solid var(--accent-color); background: rgba(232,50,74,0.06); border-radius: 8px;">
+            <p style="font-family: 'Outfit', sans-serif; font-weight: 600; margin: 0 0 0.75rem; font-size: 0.95rem;">🔑 Reset your password</p>
+            <p style="font-size: 0.8rem; color: var(--text-muted, #888); margin: 0 0 1rem; font-family: 'Outfit', sans-serif;">Enter your email and we'll send you a reset link.</p>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <input type="email" id="reset-email-input" placeholder="you@example.com"
+                style="flex: 1; min-width: 180px; padding: 0.6rem 0.9rem; border: 2px solid #333; border-radius: 6px; background: #1a1a1a; color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.9rem; outline: none;">
+              <button id="reset-send-btn"
+                style="padding: 0.6rem 1.2rem; background: var(--accent-color, #e8324a); color: #fff; border: none; border-radius: 6px; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 0.9rem; cursor: pointer; white-space: nowrap;">
+                Send Link
+              </button>
+            </div>
+            <p id="reset-status" style="margin: 0.75rem 0 0; font-size: 0.8rem; font-family: 'Outfit', sans-serif; min-height: 1.2em;"></p>
+            <a href="#" id="back-to-login-link" style="font-size: 0.78rem; color: var(--accent-color); text-decoration: none; font-family: 'Outfit', sans-serif;">← Back to Sign In</a>
+          </div>
 
           <p class="auth-switch">Don't have an account? <a href="/register.html">Register free</a></p>
         </div>
@@ -155,12 +171,61 @@
     import { authStore, redirectIfLoggedIn } from './auth.js?v=2';
     redirectIfLoggedIn('/dashboard.html');
 
-    const form     = document.getElementById('login-form');
-    const errorEl  = document.getElementById('login-error');
-    const btnText  = document.getElementById('login-btn-text');
-    const spinner  = document.getElementById('login-btn-spinner');
-    const pwInput  = document.getElementById('password-input');
-    const togglePw = document.getElementById('toggle-pw');
+    const form          = document.getElementById('login-form');
+    const errorEl       = document.getElementById('login-error');
+    const btnText       = document.getElementById('login-btn-text');
+    const spinner       = document.getElementById('login-btn-spinner');
+    const pwInput       = document.getElementById('password-input');
+    const togglePw      = document.getElementById('toggle-pw');
+    const forgotLink    = document.getElementById('forgot-pw-link');
+    const forgotPanel   = document.getElementById('forgot-pw-panel');
+    const backLink      = document.getElementById('back-to-login-link');
+    const resetEmailEl  = document.getElementById('reset-email-input');
+    const resetSendBtn  = document.getElementById('reset-send-btn');
+    const resetStatus   = document.getElementById('reset-status');
+
+    // --- Forgot-password toggle ---
+    forgotLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      forgotPanel.style.display = 'block';
+      form.style.display = 'none';
+      // Pre-fill with whatever email they already typed
+      const existingEmail = document.getElementById('email-input').value.trim();
+      if (existingEmail) resetEmailEl.value = existingEmail;
+      resetStatus.textContent = '';
+      resetEmailEl.focus();
+    });
+
+    backLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      forgotPanel.style.display = 'none';
+      form.style.display = 'block';
+    });
+
+    // --- Send reset link ---
+    resetSendBtn.addEventListener('click', async () => {
+      const email = resetEmailEl.value.trim();
+      if (!email) { resetStatus.textContent = '⚠️ Please enter your email address.'; return; }
+      resetSendBtn.disabled = true;
+      resetSendBtn.textContent = 'Sending…';
+      resetStatus.textContent = '';
+      try {
+        const res = await fetch('/api/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        // Always 200 by design (no user enumeration)
+        resetStatus.style.color = '#22c55e';
+        resetStatus.textContent = '✅ If this email is registered, a reset link has been sent. Check your inbox!';
+        resetSendBtn.textContent = 'Sent ✓';
+      } catch (err) {
+        resetStatus.style.color = '#ef4444';
+        resetStatus.textContent = 'Something went wrong. Please try again.';
+        resetSendBtn.disabled = false;
+        resetSendBtn.textContent = 'Send Link';
+      }
+    });
 
     togglePw.addEventListener('click', () => {
       const isHidden = pwInput.type === 'password';
