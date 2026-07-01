@@ -381,9 +381,9 @@
           window.location.href = '/dashboard.html';
         } else {
           // Email confirmation is ON — account created, waiting for confirm
-          successEl.textContent = '✅ Account created! Check your email to confirm, then sign in.';
+          successEl.innerHTML = '✅ Account created! Please check your Gmail Inbox (<strong>and your Spam folder!</strong>) for the confirmation link to activate your account. Redirecting you to Sign In in a moment...';
           successEl.classList.remove('hidden');
-          setTimeout(() => { window.location.href = '/login.html'; }, 3500);
+          setTimeout(() => { window.location.href = '/login.html'; }, 8000);
         }
 
       } catch (err) {
