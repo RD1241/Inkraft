@@ -105,6 +105,35 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-07-01 — Antigravity — Forgot / Reset Password flow · 5a6d2e6
+
+**Feature:** Full self-service password recovery. Users can now reset their password without contacting the founder.
+
+**Files changed (4 — all additive, zero existing flows broken):**
+- **`providers/auth/supabase_auth.py`** — Added two methods:
+  - `send_password_reset(email)`: Calls `client.auth.reset_password_email()` with `redirect_to=/reset-password.html`. Always returns a generic success message (no user enumeration). Errors are swallowed + logged so no one can tell if an email exists.
+  - `update_password(token, new_password)`: Sets session from the reset link token, then calls `client.auth.update_user({password})`. Both have mock fallbacks for local dev.
+- **`api/routes/auth.py`** — Added two new routes:
+  - `POST /api/auth/forgot-password` `{email}` → sends the reset email, always HTTP 200.
+  - `POST /api/auth/reset-password` `{token, new_password}` → updates the password, returns 400 if < 6 chars or token invalid.
+- **`frontend/login.html`** — Replaced the dead `alert()` "Forgot Password?" link with a real inline slide-in panel: email input + "Send Link" button + "← Back to Sign In" link. Pre-fills the email the user already typed. Shows a green success message after sending.
+- **`frontend/reset-password.html`** [NEW] — Dedicated reset page that Supabase redirects users to after they click their reset email link. Extracts `access_token` + `type=recovery` from the URL hash, shows a "Set new password" form with password strength meter + confirm field, then calls `/api/auth/reset-password`. On success shows a "Password updated → Go to Sign In" screen. Shows an "invalid/expired link" message if no token in hash.
+
+**How the full flow works:**
+```
+1. User clicks "Forgot Password?" on login.html
+2. Panel slides in → types their email → clicks "Send Link"
+3. Backend calls Supabase → Supabase sends email via Gmail SMTP
+4. Email contains a link: https://inkraft-production.up.railway.app/reset-password.html#access_token=xxx&type=recovery
+5. User clicks link → lands on reset-password.html
+6. Types new password + confirm → clicks "Update Password"
+7. Backend sets new password in Supabase → "Password updated!" screen
+8. User clicks "Go to Sign In" → logs in with new password
+```
+
+**Verified:** Both Python files compile clean (`py_compile`). No existing `register/login/logout/me/resend-confirmation` flows touched.
+**⚠️ Supabase Dashboard action:** Go to **Authentication → Email Templates → Reset Password** and make sure the template's "Confirm URL" redirects to `https://inkraft-production.up.railway.app/reset-password.html` (it will be populated from `redirect_to` automatically but good to verify).
+
 ### 2026-07-01 — Antigravity — Email Confirmation UX Fix (resend flow + smart error handling) · 6df5ffd
 
 **Problem (user-reported):** Users who missed their signup confirmation email were getting trapped:
