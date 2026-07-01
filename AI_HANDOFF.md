@@ -105,6 +105,11 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 
 ## 9. Task Log (append newest at top)
 
+### 2026-07-01 — Antigravity — Signup Spam Warning UI Update · c7ded8c
+
+**Problem:** Transactional emails sent via Gmail SMTP for beta testing often route to users' Spam/Junk folders initially (due to sender policy restrictions on free `@gmail.com` accounts).
+**Fix (`register.html`):** Updated the registration success notification to instruct users to check both their Inbox and Spam folder. Extended the redirect timer from 3.5s to 8.0s so they have adequate time to read the notice.
+
 ### 2026-07-01 — Antigravity — Forgot / Reset Password flow · 5a6d2e6
 
 **Feature:** Full self-service password recovery. Users can now reset their password without contacting the founder.
