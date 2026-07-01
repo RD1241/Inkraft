@@ -267,7 +267,13 @@
         authStore.setAuth(token, user);
         window.location.href = '/dashboard.html';
       } catch (err) {
-        errorEl.textContent = err.message;
+        const rawErr = err.message || '';
+        const lowerErr = rawErr.toLowerCase();
+        if (lowerErr.includes('email not confirmed') || lowerErr.includes('confirmation') || lowerErr.includes('session was returned')) {
+          errorEl.innerHTML = '✉️ <strong>Email confirmation required!</strong><br>Please check your Gmail inbox (<strong>and your Spam folder!</strong>) for the activation link to confirm your account.';
+        } else {
+          errorEl.textContent = rawErr;
+        }
         errorEl.classList.remove('hidden');
       } finally {
         btnText.textContent = 'Sign In';
