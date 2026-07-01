@@ -127,8 +127,8 @@ Working: full pipeline runs, auth, credits w/ ledger + refund-on-failure, vault,
 - **`frontend/register.html`** — Replaced the catch-block error handling with a smart resend flow. When Supabase returns "already registered/exists/user already" on re-signup: (a) auto-calls `/api/auth/resend-confirmation` silently, (b) shows a purple-bordered resend panel ("📧 We've sent a new confirmation link to your email"), (c) shows a **"Resend Confirmation Email"** self-serve button. Also handles `already_confirmed` → auto-redirect to `/login.html` with a success message.
 
 **Supabase Dashboard (manual — founder action):**
-- Go to **Authentication → Configuration → Email → OTP Expiry** → set to `7200` (2 hours, up from default 3600).
-- This ensures confirmation links stay valid for 2 hours. Rate limits in Supabase are separate — the new resend endpoint uses the *official* resend API which is not subject to the same 3/hr re-signup limit.
+- Go to **Authentication → Configuration → Email → OTP Expiry** → set to `3600` (1 hour - default).
+- Rate limits in Supabase are separate — the new resend endpoint uses the *official* resend API which is not subject to the same 3/hr re-signup limit.
 
 **New UX flow (after fix):**
 ```
